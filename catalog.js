@@ -196,17 +196,140 @@ function normalizeProduct(raw, index) {
   };
 }
 
+// ───────────────────────────────────────────────────────────────────────────
+// ARMAS CON FOTOS REALES (Wikimedia Commons, licencias libres con crédito)
+// ───────────────────────────────────────────────────────────────────────────
+// Fotos de referencia del modelo; la unidad disponible puede variar en
+// calibre, largo de cañón, terminación y accesorios. Cada ficha enlaza al
+// sitio oficial de la marca. Datos técnicos generales del modelo: confirmar
+// la variante exacta con la armería.
+const official = {
+  remington: { label: 'Sitio oficial Remington (RemArms)', url: 'https://www.remarms.com/' },
+  beretta: { label: 'Sitio oficial Beretta', url: 'https://www.beretta.com/' },
+  mossberg: { label: 'Sitio oficial Mossberg', url: 'https://www.mossberg.com/' },
+  sw: { label: 'Sitio oficial Smith & Wesson', url: 'https://www.smith-wesson.com/' },
+  colt: { label: 'Sitio oficial Colt', url: 'https://www.colt.com/' },
+  ruger: { label: 'Sitio oficial Ruger', url: 'https://ruger.com/' },
+  taurus: { label: 'Sitio oficial Taurus', url: 'https://www.taurusarmas.com.br/' },
+  cz: sources.cz,
+  marlin: { label: 'Sitio oficial Marlin', url: 'https://www.marlinfirearms.com/' },
+  henry: { label: 'Sitio oficial Henry', url: 'https://www.henryusa.com/' },
+  winchester: { label: 'Sitio oficial Winchester', url: 'https://www.winchesterguns.com/' },
+  tikka: { label: 'Sitio oficial Tikka', url: 'https://www.tikka.fi/' },
+  bersa: sources.bersa,
+};
+
+// [id, código, subcategoría, nombre, marca, fuente oficial, calibre, sistema, capacidad, resumen, descripción, foto]
+const armasLargasYRevolveres = [
+  // Escopetas
+  ['esc-remington-870-fieldmaster', 'ESC-01', 'escopetas', 'Remington 870 Fieldmaster', 'Remington', 'remington', 'Calibre 12 · consultar variante', 'Corredera (acción por bomba)', 'Cargador tubular', 'Escopeta de corredera · calibre 12',
+    'Versión Fieldmaster de la Remington 870, una de las escopetas de corredera más difundidas para caza y tiro deportivo. Robusta y de mantenimiento simple.',
+    commonsPhoto('Remington 870 Fieldmaster.jpg', 'Burnyburnout', 'CC BY-SA 4.0', true)],
+  ['esc-remington-870-wingmaster', 'ESC-02', 'escopetas', 'Remington 870 Wingmaster', 'Remington', 'remington', 'Calibre 12 · consultar variante', 'Corredera (acción por bomba)', 'Cargador tubular', 'Corredera clásica · madera y acero pavonado',
+    'La versión Wingmaster de la 870 combina culata y guardamanos de madera con acabado pavonado. Una clásica para caza.',
+    commonsPhoto('Remington 870 Wmaster.jpg', 'Burnyburnout', 'CC BY-SA 4.0', true)],
+  ['esc-beretta-a400-xtreme-plus', 'ESC-03', 'escopetas', 'Beretta A400 Xtreme Plus', 'Beretta', 'beretta', 'Calibre 12 · recámara 3½"', 'Semiautomática a gas', 'Consultar', 'Semiautomática · calibre 12 · para caza exigente',
+    'Semiautomática de la familia A400 pensada para caza en condiciones duras, con recámara de 3½" y terminación resistente a la intemperie.',
+    commonsPhoto('Beretta-A400-Xtreme-Plus.jpg', 'Picanox', 'CC BY-SA 4.0', true)],
+  ['esc-beretta-a400-xplor-action', 'ESC-04', 'escopetas', 'Beretta A400 Xplor Action', 'Beretta', 'beretta', 'Calibre 12 · consultar variante', 'Semiautomática a gas', 'Consultar', 'Semiautomática · culata de madera',
+    'Versión Xplor Action de la A400, con culata de madera y cajón con terminación de color. Liviana y equilibrada para caza.',
+    commonsPhoto('Beretta-A400-Xplor-Action.jpg', 'Picanox', 'CC BY-SA 4.0', true)],
+  ['esc-beretta-1301-tactical', 'ESC-05', 'escopetas', 'Beretta 1301 Tactical', 'Beretta', 'beretta', 'Calibre 12', 'Semiautomática a gas', 'Consultar', 'Semiautomática · calibre 12 · formato táctico',
+    'Escopeta semiautomática compacta de la línea 1301, de ciclo rápido y controles ampliados. Uso deportivo y de defensa conforme a la normativa vigente.',
+    commonsPhoto('Beretta 1301 Tactical.jpg', 'autor en Commons', 'CC BY-SA 4.0', true)],
+  ['esc-hatsan-escort', 'ESC-06', 'escopetas', 'Hatsan Escort Magnum', 'Hatsan', null, 'Calibre 12', 'Consultar variante', 'Consultar', 'Escopeta calibre 12 · línea Escort',
+    'Escopeta de la línea Escort del fabricante turco Hatsan, reconocida por su buena relación entre precio y prestaciones. Consultá la variante disponible.',
+    commonsPhoto('Escort-Magnum-MPA-12ga.jpg', 'Picanox', 'CC BY-SA 4.0', true)],
+  ['esc-maverick-88', 'ESC-07', 'escopetas', 'Mossberg Maverick 88', 'Mossberg', 'mossberg', 'Calibre 12', 'Corredera (acción por bomba)', 'Cargador tubular', 'Corredera · calibre 12 · versátil y accesible',
+    'Escopeta de corredera de la línea Maverick, fabricada bajo el paraguas de Mossberg. Simple, confiable y accesible.',
+    commonsPhoto('Mossberg Maverick 88.png', 'Dybdal', 'CC BY-SA 4.0', true)],
+  ['esc-mossberg-590', 'ESC-08', 'escopetas', 'Mossberg 590', 'Mossberg', 'mossberg', 'Calibre 12', 'Corredera (acción por bomba)', 'Cargador tubular', 'Corredera · calibre 12 · formato robusto',
+    'Variante de la familia Mossberg 500 con construcción reforzada. Consultá largo de cañón y configuración de la unidad.',
+    commonsPhoto('Mossberg 590.jpg', 'U.S. Bureau of ATF', 'Dominio público · EE. UU.', true)],
+  // Revólveres
+  ['rev-sw-686-plus', 'REV-01', 'revolveres', 'Smith & Wesson 686 Plus', 'Smith & Wesson', 'sw', '.357 Magnum (admite .38 Special)', 'Revólver doble y simple acción', '7 tiros', 'Revólver · .357 Magnum · acero inoxidable',
+    'Revólver de armazón mediano en acero inoxidable, con tambor de siete tiros en la versión Plus. Muy elegido para tiro deportivo.',
+    commonsPhoto('Smith & Wesson .357 Model 686 Plus.jpg', 'Junglecat', 'CC BY-SA 3.0', true)],
+  ['rev-colt-python', 'REV-02', 'revolveres', 'Colt Python', 'Colt', 'colt', '.357 Magnum (admite .38 Special)', 'Revólver doble y simple acción', '6 tiros', 'Revólver · .357 Magnum · acero inoxidable',
+    'Reedición contemporánea del clásico Colt Python, con cañón ventilado y acabado de acero inoxidable. Un ícono entre los revólveres.',
+    commonsPhoto('Colt Python 2020 4 inch.jpg', 'Coati077', 'CC BY-SA 4.0', true)],
+  ['rev-ruger-gp100', 'REV-03', 'revolveres', 'Ruger GP100', 'Ruger', 'ruger', '.357 Magnum (admite .38 Special)', 'Revólver doble y simple acción', '6 tiros · consultar variante', 'Revólver · .357 Magnum · construcción robusta',
+    'Revólver de armazón mediano conocido por su solidez. Versión en acero inoxidable; consultá largo de cañón disponible.',
+    commonsPhoto('Ruger GP100 .357 Stainless.jpg', 'Gordon Gartrell', 'CC BY-SA 2.0', true)],
+  ['rev-taurus-judge', 'REV-04', 'revolveres', 'Taurus Judge Magnum', 'Taurus', 'taurus', '.45 Colt / .410', 'Revólver doble y simple acción', '5 tiros', 'Revólver · .45 Colt / .410',
+    'Revólver de la línea Judge que admite cartuchos .45 Colt y .410. Consultá largo de cañón y terminación.',
+    commonsPhoto('Taurus Judge Magnum noBG.jpg', 'HarveyHenkelmann', 'CC BY-SA 4.0', true)],
+  ['rev-taurus-627-tracker', 'REV-05', 'revolveres', 'Taurus 627 Tracker', 'Taurus', 'taurus', '.357 Magnum (admite .38 Special)', 'Revólver doble y simple acción', '7 tiros', 'Revólver · .357 Magnum · 7 tiros',
+    'Revólver de la línea Tracker con tambor de siete tiros y empuñadura ergonómica. Fabricación brasileña.',
+    commonsPhoto('Taurus-Tracker-627-4.png', 'Wolfram75', 'CC BY-SA 4.0', true)],
+  ['rev-ruger-lcrx', 'REV-06', 'revolveres', 'Ruger LCRx 3"', 'Ruger', 'ruger', '.38 Special +P · consultar variante', 'Revólver doble y simple acción', '5 tiros', 'Revólver liviano · armazón con polímero',
+    'Revólver liviano de la familia LCR, con martillo expuesto en la versión LCRx. Consultá calibre y largo de cañón disponibles.',
+    commonsPhoto('Ruger LCRx 3in.jpg', 'HalfGig', 'CC BY 3.0', true)],
+  // Carabinas
+  ['car-ruger-1022', 'CAR-01', 'carabinas', 'Ruger 10/22', 'Ruger', 'ruger', '.22 LR', 'Semiautomática', 'Cargador rotativo de 10', 'Carabina .22 LR · semiautomática',
+    'Una de las carabinas .22 más populares del mundo, ideal para iniciación, tiro deportivo y control de plagas. Gran disponibilidad de accesorios.',
+    commonsPhoto('Ruger-1022.jpg', 'Dictouray', 'CC BY-SA 3.0', true)],
+  ['car-cz-457-lux', 'CAR-02', 'carabinas', 'CZ 457 Lux', 'CZ', 'cz', '.22 LR · consultar variante', 'Cerrojo', 'Consultar', 'Carabina de cerrojo · culata de madera',
+    'Carabina de cerrojo de la plataforma CZ 457, con culata de madera estilo clásico. Precisión reconocida en calibres de percusión anular.',
+    commonsPhoto('CZ 457 Lux.jpg', 'Fanchigo', 'CC0', true)],
+  ['car-cz-457-inox', 'CAR-03', 'carabinas', 'CZ 457 Inoxidable', 'CZ', 'cz', '.22 LR · consultar variante', 'Cerrojo', 'Consultar', 'Carabina de cerrojo · acero inoxidable',
+    'Variante de la CZ 457 con cañón de acero inoxidable. La foto muestra el arma con óptica montada: consultá qué incluye la unidad.',
+    commonsPhoto('CZ 457 STAILESS.jpg', 'Land68', 'CC0', true)],
+  ['car-marlin-60', 'CAR-04', 'carabinas', 'Marlin Model 60', 'Marlin', 'marlin', '.22 LR', 'Semiautomática', 'Cargador tubular', 'Carabina .22 LR · semiautomática',
+    'Carabina semiautomática .22 LR con cargador tubular, muy difundida para tiro recreativo. Versión con cañón inoxidable y culata laminada.',
+    commonsPhoto('Marlin Model 60 SSBL.JPG', 'Brethart77', 'CC BY-SA 3.0', true)],
+  ['car-marlin-336', 'CAR-05', 'carabinas', 'Marlin 336', 'Marlin', 'marlin', '.30-30 Winchester', 'Acción de palanca', 'Cargador tubular', 'Acción de palanca · .30-30',
+    'Clásica carabina de acción de palanca, muy usada para caza mayor a distancias cortas y medias.',
+    commonsPhoto('Marlin 336W.png', 'Boris Barowski', 'CC BY-SA 3.0', true)],
+  ['car-henry-golden-boy', 'CAR-06', 'carabinas', 'Henry Golden Boy', 'Henry', 'henry', '.22 S / L / LR', 'Acción de palanca', 'Cargador tubular', 'Acción de palanca · .22 · cajón de bronce',
+    'Carabina de palanca .22 con el característico cajón de bronce pulido y culata de nogal. Muy buscada por su terminación.',
+    commonsPhoto('Henry H004 Golden Boy .22 S-L-LR.jpg', 'Dcl412', 'CC BY-SA 4.0', true)],
+  // Fusiles
+  ['fus-remington-700', 'FUS-01', 'fusiles', 'Remington 700', 'Remington', 'remington', 'Varios calibres · consultar', 'Cerrojo', 'Consultar variante', 'Fusil de cerrojo · caza y precisión',
+    'Fusil de cerrojo de referencia para caza y tiro de precisión, con una enorme oferta de calibres y accesorios.',
+    commonsPhoto('Remington 700 Standard.jpg', 'Rizuan', 'CC BY-SA 3.0', true)],
+  ['fus-winchester-70', 'FUS-02', 'fusiles', 'Winchester Model 70 Featherweight', 'Winchester', 'winchester', 'Varios calibres · consultar', 'Cerrojo', 'Consultar variante', 'Fusil de cerrojo · clásico de caza',
+    'Versión Featherweight del clásico Model 70, liviana y con culata de madera. Ideal para caza en recorrido.',
+    commonsPhoto('Winchester Model 70 Classic Featherweight .300 WSM.jpg', 'Efeesh', 'CC BY 4.0', true)],
+  ['fus-tikka-t3-sporter', 'FUS-03', 'fusiles', 'Tikka T3 Sporter', 'Tikka', 'tikka', 'Varios calibres · consultar', 'Cerrojo', 'Consultar variante', 'Fusil de cerrojo · tiro deportivo',
+    'Fusil de cerrojo finlandés orientado al tiro deportivo, con culata regulable. Reconocido por su precisión y suavidad de cerrojo.',
+    commonsPhoto('Tikka-T3-Sporter.jpg', 'Picanox', 'CC BY-SA 4.0', true)],
+  ['fus-ruger-american', 'FUS-04', 'fusiles', 'Ruger American Rifle', 'Ruger', 'ruger', 'Varios calibres · consultar', 'Cerrojo', 'Consultar variante', 'Fusil de cerrojo · caza',
+    'Fusil de cerrojo de excelente relación precio-precisión, con gatillo regulable y culata sintética.',
+    commonsPhoto('Ruger-American-Rifle.jpg', 'Sturm, Ruger & Co.', 'CC BY-SA 3.0', true)],
+  // PCC
+  ['pcc-ruger-pc-carbine', 'PCC-01', 'pcc', 'Ruger PC Carbine', 'Ruger', 'ruger', '9×19 mm', 'Semiautomática', 'Consultar', 'Carabina de calibre de pistola · 9 mm',
+    'Carabina semiautomática en 9 mm con sistema desarmable y cargadores intercambiables según versión.',
+    commonsPhoto('Ruger-PC-Carbine-9mm.jpg', 'Picanox', 'CC BY-SA 4.0', true)],
+  ['pcc-cz-evo3-s1', 'PCC-02', 'pcc', 'CZ Scorpion EVO 3 S1 Carbine', 'CZ', 'cz', '9×19 mm', 'Semiautomática', 'Consultar', 'Carabina de calibre de pistola · 9 mm',
+    'Versión carabina semiautomática de la plataforma Scorpion EVO 3. Consultá configuración y requisitos.',
+    commonsPhoto('CZ EVO 3 S1 right.jpg', 'Costas-1963', 'CC0', true)],
+  // Pistolas adicionales
+  ['pis-bersa-thunder-380', 'PIS-01', 'pistolas', 'Bersa Thunder 380', 'Bersa', 'bersa', '.380 ACP', 'Semiautomática doble y simple acción', 'Consultar', 'Pistola · .380 ACP · fabricación argentina',
+    'Pistola compacta de Bersa, fabricante argentino, muy difundida para uso civil. Foto de la versión niquelada.',
+    commonsPhoto('Bersa Thunder 380 nickel.jpg', 'Ptkfgs', 'Dominio público', true)],
+  ['pis-bersa-thunder-40-pro', 'PIS-02', 'pistolas', 'Bersa Thunder 40 Pro', 'Bersa', 'bersa', '.40 S&W', 'Semiautomática', 'Consultar', 'Pistola · .40 S&W · fabricación argentina',
+    'Pistola de la línea Thunder Pro de Bersa en calibre .40. Consultá disponibilidad y variante.',
+    commonsPhoto('Bersa Thunder 40 Pro.jpg', 'Ws4590', 'CC BY-SA 3.0', true)],
+  ['pis-taurus-g2c', 'PIS-03', 'pistolas', 'Taurus G2C', 'Taurus', 'taurus', '9×19 mm', 'Semiautomática', 'Consultar', 'Pistola compacta · 9 mm',
+    'Pistola compacta de polímero de Taurus, pensada para portación. Consultá cargadores y variante disponible.',
+    commonsPhoto('Taurus G2C 9mm Sn 1C014003 R DSC0275.jpg', 'Self Loader', 'CC BY-SA 4.0', true)],
+].map(([id, code, subcategory, name, brand, source, caliber, action, capacity, shortDescription, description, photo]) => ({
+  id, code, name, brand, sector: 'armeria', category: 'armas', subcategory, caliber, shortDescription,
+  description: `${description} Modelo, variante y disponibilidad deben confirmarse con Armería Parabellum.`,
+  specs: [['Sistema', action], ['Capacidad', capacity]],
+  price: null, regulated: true, photo,
+  sourceUrl: source ? official[source].url : undefined,
+  sourceLabel: source ? official[source].label : undefined,
+}));
+
 const A = 'armeria';
 const C = 'camping';
 const ref = 'Por confirmar';
 
 export const products = [
   ...pistols,
-  ...[
-    ['Fusil · referencia 01', 'FUS-01', 'Plataforma larga · terminación de muestra'],
-    ['Fusil · referencia 02', 'FUS-02', 'Diseño deportivo · terminación de muestra'],
-    ['Fusil · referencia 03', 'FUS-03', 'Configuración de caza · terminación de muestra'],
-  ].map(([name, code, shortDescription], i) => ({ id: `fusil-${i + 1}`, code, name, brand: ref, sector: A, category: 'armas', subcategory: 'fusiles', shortDescription, description: 'Referencia de diseño para presentar el sector. Marca, modelo, calibre, especificaciones, disponibilidad y requisitos deben ser confirmados por la armería antes de publicar.', price: null, icon: '⌁', regulated: true, caliber: 'Consultar con la armería', photo: [photoLibrary.rifleHunt, photoLibrary.rifleClassic, photoLibrary.rifleMuseum][i] })),
+  ...armasLargasYRevolveres,
   { id: 'accesorio-kit-mantenimiento', code: 'ACC-06', name: 'Kit de cuidado y mantenimiento', brand: ref, sector: A, category: 'accesorios', subcategory: 'limpieza', shortDescription: 'Accesorio de cuidado · contenido a confirmar', description: 'Referencia visual de un kit de cuidado. Contenido, compatibilidad, marca y disponibilidad deben confirmarse con la armería.', price: null, icon: '◇' },
   { id: 'accesorio-optica', code: 'ACC-01', name: 'Óptica de precisión', brand: ref, sector: A, category: 'accesorios', subcategory: 'optica', shortDescription: 'Óptica · aumentos y compatibilidad a confirmar', description: 'Referencia visual de óptica. Marca, aumentos, retícula, compatibilidad y disponibilidad deben verificarse con la armería.', price: null, icon: '◉', photo: photoLibrary.scope },
   { id: 'accesorio-binoculares', code: 'ACC-03', name: 'Binoculares de campo', brand: ref, sector: A, category: 'accesorios', subcategory: 'optica', shortDescription: 'Observación outdoor · foto y ficha técnica por confirmar', description: 'Referencia de binoculares para actividades de observación. Aumentos, marca, accesorios y disponibilidad por confirmar.', price: null, icon: '◎', photo: photoLibrary.binoculars },

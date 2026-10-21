@@ -15,7 +15,7 @@
   <meta property="og:locale" content="es_AR">
   <meta property="og:site_name" content="Parabellum La Plata">
   <meta name="twitter:card" content="summary_large_image">
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Store","name":"Armería Parabellum","telephone":"+542212269598","address":{"@type":"PostalAddress","streetAddress":"Calle 13 27","addressLocality":"La Plata","postalCode":"B1902CSA","addressRegion":"Provincia de Buenos Aires","addressCountry":"AR"},"geo":{"@type":"GeoCoordinates","latitude":-34.9066819,"longitude":-57.974618},"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Tuesday","Wednesday","Thursday","Friday"],"opens":"09:00","closes":"17:00"},{"@type":"OpeningHoursSpecification","dayOfWeek":["Saturday"],"opens":"09:00","closes":"14:00"}],"hasMap":"https://www.google.com/maps/place/Armer%C3%ADa+Parabellum/@-34.9066819,-57.974618,17z/data=!4m6!3m5!1s0x95a2e7bab613b10d:0xb1b42b153d8de6f4!8m2!3d-34.9066819!4d-57.974618!16s%2Fg%2F1tdp66ls","sameAs":["https://www.instagram.com/armeria_parabellum","https://www.google.com/maps/place/Armer%C3%ADa+Parabellum/@-34.9066819,-57.974618,17z/data=!4m6!3m5!1s0x95a2e7bab613b10d:0xb1b42b153d8de6f4!8m2!3d-34.9066819!4d-57.974618!16s%2Fg%2F1tdp66ls"]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Store","name":"Armería Parabellum","telephone":"+542212269598","email":"parabellumoutdoor@gmail.com","address":{"@type":"PostalAddress","streetAddress":"Calle 13 27","addressLocality":"La Plata","postalCode":"B1902CSA","addressRegion":"Provincia de Buenos Aires","addressCountry":"AR"},"geo":{"@type":"GeoCoordinates","latitude":-34.9066819,"longitude":-57.974618},"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Tuesday","Wednesday","Thursday","Friday"],"opens":"09:00","closes":"17:00"},{"@type":"OpeningHoursSpecification","dayOfWeek":["Saturday"],"opens":"09:00","closes":"14:00"}],"hasMap":"https://www.google.com/maps/place/Armer%C3%ADa+Parabellum/@-34.9066819,-57.974618,17z/data=!4m6!3m5!1s0x95a2e7bab613b10d:0xb1b42b153d8de6f4!8m2!3d-34.9066819!4d-57.974618!16s%2Fg%2F1tdp66ls","sameAs":["https://www.instagram.com/armeria_parabellum","https://www.google.com/maps/place/Armer%C3%ADa+Parabellum/@-34.9066819,-57.974618,17z/data=!4m6!3m5!1s0x95a2e7bab613b10d:0xb1b42b153d8de6f4!8m2!3d-34.9066819!4d-57.974618!16s%2Fg%2F1tdp66ls"]}</script>
   <!-- seo:fin -->
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -49,38 +49,32 @@
         <div><div class="eyebrow">Armería Parabellum · La Plata</div><h1 id="showroomTitle">Showroom <span>Parabellum</span></h1></div>
         <a class="showroom-consult" href="#catalogo">Explorar catálogo <span>↘</span></a>
       </div>
-      <div class="showroom-frame" id="showroomViewer">
-        <img class="showroom-scene" id="showroomScene" src="assets/cliente/boceto.jpg" alt="Vista principal del showroom de Armería Parabellum" fetchpriority="high">
-        <div class="showroom-image-shade"></div>
-        <div class="scene-caption"><span class="scene-live"><i></i> RECORRIDO VISUAL</span><strong id="sceneTitle">Vista principal</strong><small>Imágenes de referencia · La Plata</small></div>
-        <div class="scene-hotspots" aria-label="Sectores destacados">
-          <button class="scene-hotspot hotspot-rifles" type="button" data-showroom-view="pistolas"><span>✦</span> Pistolas</button>
-          <button class="scene-hotspot hotspot-pistols" type="button" data-showroom-view="accesorios"><span>⌁</span> Accesorios</button>
-          <button class="scene-hotspot hotspot-camping" type="button" data-showroom-view="fusiles"><span>♧</span> Fusiles</button>
+      <div class="showroom-frame" id="showroomViewer" tabindex="0" aria-roledescription="recorrido del local" aria-label="Showroom: usá las flechas del teclado para cambiar de vista">
+        <div class="scene-backdrop" id="sceneBackdrop" aria-hidden="true"></div>
+        <div class="scene-stage" id="sceneStage">
+          <figure class="scene-figure" id="sceneFigure">
+            <div class="scene-zoom" id="sceneZoom">
+              <img class="showroom-scene" id="showroomScene" src="assets/showroom/entrada.jpg" alt="Vista general del local de Armería Parabellum" fetchpriority="high">
+              <span class="scene-light" aria-hidden="true"></span>
+              <span class="scene-scan" aria-hidden="true"></span>
+              <div class="scene-spots" id="sceneSpots" aria-label="Puntos interactivos de la foto"></div>
+            </div>
+          </figure>
         </div>
+        <div class="scene-caption"><span class="scene-live"><i></i> RECORRIDO DEL LOCAL</span><strong id="sceneTitle">Vista principal</strong><small id="sceneHint">Tocá los puntos de la foto para ver cada sector</small><span class="scene-progress" id="sceneProgress" aria-live="polite"></span></div>
         <aside class="showroom-guide" aria-label="Guía de sectores">
-          <div class="guide-heading"><span>Guía del local</span><small>VISTAS DE REFERENCIA</small></div>
+          <div class="guide-heading"><span>Guía del local</span><small>SECTORES</small></div>
           <img class="guide-map" src="assets/cliente/plano-estanteria.jpg" alt="Plano referencial del showroom" loading="lazy">
-          <div class="guide-links">
-            <button class="active" type="button" data-scene-view="entrada"><i></i> Entrada <span>01</span></button>
-            <button type="button" data-scene-view="pistolas"><i></i> Pistolas <span>02</span></button>
-            <button type="button" data-scene-view="fusiles"><i></i> Fusiles <span>03</span></button>
-            <button type="button" data-scene-view="accesorios"><i></i> Óptica y accesorios <span>04</span></button>
-          </div>
+          <div class="guide-links" id="guideLinks"></div>
           <a class="guide-link" href="#contacto">Caja / atención <span>↗</span></a>
         </aside>
         <button class="showroom-fullscreen" id="showroomFullscreen" type="button" aria-label="Ver showroom en pantalla completa" title="Pantalla completa">⛶</button>
       </div>
       <div class="showroom-bottom">
-        <div class="view-navigation"><button type="button" data-view-step="-1" aria-label="Vista anterior">‹</button><span id="sceneCounter">01 <i>/ 04</i></span><button type="button" data-view-step="1" aria-label="Vista siguiente">›</button></div>
-        <span class="view-mark">◉<small>VISTA<br>VISUAL</small></span>
-        <div class="showroom-rail" aria-label="Vistas del showroom">
-          <button class="showroom-thumb active" type="button" data-showroom-view="entrada"><img src="assets/cliente/boceto.jpg" alt="" loading="lazy"><span>Entrada</span></button>
-          <button class="showroom-thumb" type="button" data-showroom-view="pistolas"><img src="assets/cliente/pistol-display.jpg" alt="" loading="lazy"><span>Pistolas</span></button>
-          <button class="showroom-thumb" type="button" data-showroom-view="fusiles"><img src="assets/cliente/sector-fusiles.jpg" alt="" loading="lazy"><span>Fusiles</span></button>
-          <button class="showroom-thumb" type="button" data-showroom-view="accesorios"><img src="assets/cliente/sector-accesorios.jpeg" alt="" loading="lazy"><span>Accesorios</span></button>
-        </div>
-        <span class="view-hint">Elegí una vista o sector<br>para filtrar el catálogo</span>
+        <div class="view-navigation"><button type="button" data-view-step="-1" aria-label="Vista anterior">‹</button><span id="sceneCounter">01 <i>/ 06</i></span><button type="button" data-view-step="1" aria-label="Vista siguiente">›</button></div>
+        <button type="button" class="tour-toggle" id="tourToggle" aria-pressed="false"><span class="tour-icon" aria-hidden="true">▶</span><span class="tour-text">Recorrido automático</span></button>
+        <div class="showroom-rail" id="showroomRail" aria-label="Vistas del showroom"></div>
+        <span class="view-hint">Elegí un sector<br>para filtrar el catálogo</span>
       </div>
     </section>
 
@@ -125,16 +119,25 @@
     </section>
 
     <section class="section gestoria-section" id="gestoria" aria-labelledby="gestoriaTitle">
-      <div class="gestoria-layout">
+      <div class="gestoria-hero">
+        <div class="gestoria-emblem" data-icon="sello" aria-hidden="true"></div>
         <div class="gestoria-intro">
           <div class="eyebrow">Servicio Parabellum</div>
           <h2 id="gestoriaTitle">Gestoría</h2>
-          <p>Te orientamos y acompañamos en los trámites vinculados a tu actividad. Consultanos qué gestiones realizamos y qué documentación corresponde a tu caso.</p>
-          <a class="primary gestoria-cta" href="#contacto" data-inquiry="Hola, Armería Parabellum. Quiero consultar por los servicios de gestoría." hidden>Consultar por gestoría en WhatsApp ↗</a>
-          <small class="gestoria-note">La información de trámites, requisitos y plazos es orientativa y debe confirmarse con la armería.</small>
+          <p>Te orientamos y acompañamos en los trámites vinculados a tu actividad, para que llegues con la documentación correcta y sin vueltas.</p>
+          <div class="gestoria-actions">
+            <a class="primary gestoria-cta" href="#contacto" data-inquiry="Hola, Armería Parabellum. Quiero consultar por los servicios de gestoría." hidden>Consultar por WhatsApp ↗</a>
+            <a class="secondary" href="#contacto">Ver horarios y dirección</a>
+          </div>
         </div>
-        <div data-slot></div>
       </div>
+      <div data-slot></div>
+      <ol class="gestoria-steps" aria-label="Cómo trabajamos">
+        <li><span class="step-icon" data-icon="consulta" aria-hidden="true"></span><b>1 · Consultás</b><small>Nos escribís por WhatsApp o te acercás al local con tu caso.</small></li>
+        <li><span class="step-icon" data-icon="revision" aria-hidden="true"></span><b>2 · Revisamos tu documentación</b><small>Te indicamos qué corresponde a tu trámite según la normativa vigente.</small></li>
+        <li><span class="step-icon" data-icon="acompanamiento" aria-hidden="true"></span><b>3 · Te acompañamos</b><small>Seguimos el trámite con vos hasta su presentación.</small></li>
+      </ol>
+      <small class="gestoria-note">La información de trámites, requisitos y plazos es orientativa y debe confirmarse con la armería y el organismo competente.</small>
     </section>
 
     <section class="section" id="nosotros"><div class="about"><div class="about-visual" aria-hidden="true"><span class="about-monogram">P</span><span>ARMERÍA · LA PLATA</span></div><div><div class="eyebrow">Armería Parabellum · La Plata</div><h2>Una visita, desde donde estés.</h2><p>Una armería con trayectoria, atención personalizada y equipamiento para el tiro deportivo y la caza. La armería confirma disponibilidad, variantes, precios y requisitos de cada artículo.</p><a class="secondary" href="#catalogo">Explorar el catálogo →</a></div></div></section>

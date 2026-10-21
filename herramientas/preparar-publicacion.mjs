@@ -46,6 +46,7 @@ function structuredData(page) {
     '@type': page.schema,
     name: page.schemaName,
     telephone: STORE.phoneIntl,
+    email: STORE.email,
     address: {
       '@type': 'PostalAddress',
       streetAddress: STORE.street.replace('Nº ', ''),

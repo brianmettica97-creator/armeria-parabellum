@@ -97,15 +97,47 @@ export function findSubcategory(sectorId, categoryId, subcategoryId) {
 // por ejemplo 'assets/marcas/glock.svg'. Mientras sea null se muestra el
 // nombre en tipografía, sin imitar el logotipo de la marca.
 // IMPORTANTE: confirmar con el comercio qué marcas trabaja efectivamente.
+// Categorías del carrusel de marcas (se muestran como filtros sobre el carrusel).
+export const brandCategories = [
+  { id: 'armas', label: 'Armas' },
+  { id: 'optica', label: 'Óptica y miras' },
+  { id: 'iluminacion', label: 'Linternas' },
+  { id: 'proteccion', label: 'Protección' },
+  { id: 'equipamiento', label: 'Fundas y equipamiento' },
+  { id: 'limpieza', label: 'Limpieza' },
+  { id: 'seguridad', label: 'Seguridad' },
+];
+
+// Para sumar una marca: agregar una línea con su logo (PNG blanco con fondo
+// transparente en assets/marcas/) y su categoría. El carrusel se arma solo.
 export const brands = [
-  { id: 'glock', name: 'GLOCK', sector: 'armeria', logo: 'assets/marcas/glock.png' },
-  { id: 'cz', name: 'CZ', sector: 'armeria', logo: 'assets/marcas/cz.png' },
-  { id: 'beretta', name: 'Beretta', sector: 'armeria', logo: 'assets/marcas/beretta.png' },
-  { id: 'sig-sauer', name: 'SIG SAUER', sector: 'armeria', logo: 'assets/marcas/sig-sauer.png' },
-  { id: 'bersa', name: 'Bersa', sector: 'armeria', logo: 'assets/marcas/bersa.png' },
-  { id: 'taurus', name: 'Taurus', sector: 'armeria', logo: 'assets/marcas/taurus.png' },
-  { id: 'walther', name: 'Walther', sector: 'armeria', logo: 'assets/marcas/walther.png' },
-  { id: 'canik', name: 'Canik', sector: 'armeria', logo: 'assets/marcas/canik.png' },
+  // Armas
+  { id: 'glock', name: 'GLOCK', sector: 'armeria', category: 'armas', logo: 'assets/marcas/glock.png' },
+  { id: 'cz', name: 'CZ', sector: 'armeria', category: 'armas', logo: 'assets/marcas/cz.png' },
+  { id: 'beretta', name: 'Beretta', sector: 'armeria', category: 'armas', logo: 'assets/marcas/beretta.png' },
+  { id: 'sig-sauer', name: 'SIG SAUER', sector: 'armeria', category: 'armas', logo: 'assets/marcas/sig-sauer.png' },
+  { id: 'bersa', name: 'Bersa', sector: 'armeria', category: 'armas', logo: 'assets/marcas/bersa.png' },
+  { id: 'taurus', name: 'Taurus', sector: 'armeria', category: 'armas', logo: 'assets/marcas/taurus.png' },
+  { id: 'walther', name: 'Walther', sector: 'armeria', category: 'armas', logo: 'assets/marcas/walther.png' },
+  { id: 'canik', name: 'Canik', sector: 'armeria', category: 'armas', logo: 'assets/marcas/canik.png' },
+  // Óptica y miras
+  { id: 'holosun', name: 'Holosun', sector: 'armeria', category: 'optica', logo: 'assets/marcas/holosun.png' },
+  { id: 'osight', name: 'OSIGHT', sector: 'armeria', category: 'optica', logo: 'assets/marcas/osight.png' },
+  // Linternas
+  { id: 'olight', name: 'OLIGHT', sector: 'armeria', category: 'iluminacion', logo: 'assets/marcas/olight.png' },
+  // Streamlight: falta el logotipo; se muestra el nombre hasta recibirlo.
+  { id: 'streamlight', name: 'Streamlight', sector: 'armeria', category: 'iluminacion', logo: null },
+  // Protección
+  { id: 'earmor', name: 'EARMOR', sector: 'armeria', category: 'proteccion', logo: 'assets/marcas/earmor.png' },
+  // Fundas y equipamiento
+  { id: 'ghost', name: 'Ghost', sector: 'armeria', category: 'equipamiento', logo: 'assets/marcas/ghost.png' },
+  { id: 'houston', name: 'Houston', sector: 'armeria', category: 'equipamiento', logo: 'assets/marcas/houston.png' },
+  { id: 'killer-gear', name: 'KILLER GEAR', sector: 'armeria', category: 'equipamiento', logo: 'assets/marcas/killer-gear.png' },
+  { id: 'boer', name: 'Boer', sector: 'armeria', category: 'equipamiento', logo: 'assets/marcas/boer.png' },
+  // Limpieza
+  { id: 'lubrilina', name: 'Lubrilina', sector: 'armeria', category: 'limpieza', logo: 'assets/marcas/lubrilina.png' },
+  // Seguridad
+  { id: 'vaultek', name: 'Vaultek', sector: 'armeria', category: 'seguridad', logo: 'assets/marcas/vaultek.png' },
 ];
 
 // ───────────────────────────────────────────────────────────────────────────

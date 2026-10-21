@@ -97,6 +97,42 @@ export function initCart({ products, findProduct, onChange = () => {} }) {
     return true;
   }
 
+  // Agregado rápido desde la tarjeta (accesorios y productos no regulados).
+  let toastTimer;
+  function toast(message) {
+    let node = document.querySelector('#cartToast');
+    if (!node) {
+      node = document.createElement('div');
+      node.id = 'cartToast';
+      node.className = 'cart-toast';
+      node.setAttribute('role', 'status');
+      node.setAttribute('aria-live', 'polite');
+      document.body.append(node);
+    }
+    node.innerHTML = `<span>${escapeHtml(message)}</span><button type="button" data-toast-open>Ver pedido</button>`;
+    node.querySelector('[data-toast-open]').addEventListener('click', () => { node.classList.remove('show'); update(); openOverlay('cartOverlay'); });
+    node.classList.add('show');
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => node.classList.remove('show'), 3600);
+  }
+
+  function quickAdd(product) {
+    if (!product || !isEligible(product) || product.regulated) return false;
+    const existing = cartItems.find(item => item.id === product.id);
+    if (existing) {
+      const next = clampQuantity(product, existing.qty + 1);
+      if (next === existing.qty) { toast(`${product.name}: ya tenés la cantidad máxima disponible.`); return false; }
+      existing.qty = next;
+      update();
+      toast(`${product.name}: cantidad ${next} en tu pedido.`);
+      return true;
+    }
+    addItem(product);
+    update();
+    toast(`${product.name} se agregó a tu pedido.`);
+    return true;
+  }
+
   function addFromProductDialog(product) {
     const alreadyInCart = inCart(product.id);
     if (!alreadyInCart && !addItem(product)) return;
@@ -289,7 +325,7 @@ export function initCart({ products, findProduct, onChange = () => {} }) {
   checkoutButton.addEventListener('click', finalizeOrder);
 
   update();
-  return { addFromProductDialog, update, inCart, openOverlay, closeOverlay };
+  return { addFromProductDialog, quickAdd, update, inCart, openOverlay, closeOverlay };
 }
 
 /** Enlace de consulta simple (ficha, gestoría, contacto). Devuelve '' si no hay número. */
