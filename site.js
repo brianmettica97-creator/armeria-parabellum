@@ -1,6 +1,6 @@
 // Elementos comunes a todas las páginas: aviso de demo, contacto y horarios,
 // WhatsApp flotante, aviso de mayoría de edad y enlaces legales del pie.
-import { DEMO_MODE, SHOW_DEMO_BANNER, STORE, CONSUMER_COMPLAINTS_URL, whatsappNumber, usingDemoPhone } from './config.js';
+import { DEMO_MODE, SHOW_DEMO_BANNER, STORE, CONSUMER_COMPLAINTS_URL, whatsappNumber } from './config.js';
 
 const DAY_NAMES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
@@ -47,7 +47,7 @@ function waLink(text) {
 function renderDemoBar() {
   document.querySelectorAll('[data-demo-bar]').forEach(bar => {
     bar.hidden = !(DEMO_MODE && SHOW_DEMO_BANNER);
-    if (!bar.hidden) bar.innerHTML = `<strong>Sitio de demostración</strong> · ${usingDemoPhone() ? 'número de WhatsApp ficticio · ' : ''}novedades, ofertas y trámites de ejemplo.`;
+    if (!bar.hidden) bar.innerHTML = `<strong>Sitio de demostración</strong> · novedades, ofertas y trámites de ejemplo.`;
   });
 }
 
@@ -69,6 +69,8 @@ function renderContact() {
         <dl class="contact-list">
           <div><dt>Dirección</dt><dd>${esc(STORE.street)}, ${esc(STORE.city)}<small>${esc(STORE.postalCode)} · ${esc(STORE.region)}</small></dd></div>
           <div><dt>Teléfono</dt><dd><a href="tel:${esc(STORE.phoneIntl)}">${esc(STORE.phoneDisplay)}</a></dd></div>
+          <div><dt>WhatsApp</dt><dd>${wa ? `<a href="${esc(wa)}" target="_blank" rel="noopener noreferrer">+54 9 221 226-9598</a>` : ''}</dd></div>
+          <div><dt>Email</dt><dd><a href="mailto:${esc(STORE.email)}">${esc(STORE.email)}</a></dd></div>
           <div><dt>Instagram</dt><dd><a href="https://www.instagram.com/${esc(STORE.instagram)}" target="_blank" rel="noopener noreferrer">@${esc(STORE.instagram)}</a></dd></div>
         </dl>
         <table class="hours-table">

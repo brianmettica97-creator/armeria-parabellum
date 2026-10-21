@@ -1,11 +1,12 @@
 // Página de sector (Armería o Camping). El sector se toma de <body data-sector>.
 import { products, productsForSector, novedades, ofertas, usados } from './catalog.js';
-import { sectors, findCategory, findSubcategory, brands, gestoriaServices } from './taxonomy.js';
+import { sectors, findCategory, findSubcategory, brands, brandCategories, gestoriaServices } from './taxonomy.js';
 import { DEMO_MODE, NOVEDADES_LIMIT } from './config.js';
 import { initSite } from './site.js';
 import { demoGestoria } from './demo-data.js';
 import { isEligible, availabilityLabel } from './cart.js';
 import { initCart, inquiryUrl } from './cart-ui.js';
+import { icons, iconFor } from './icons.js';
 import { escapeHtml, safeUrl, productImage, priceHtml, productBadges, PLACEHOLDER_IMG } from './utils.js';
 
 const sectorId = document.body.dataset.sector in sectors ? document.body.dataset.sector : 'armeria';
@@ -115,15 +116,21 @@ function renderSidebar() {
   if (!box) return;
   const button = (attrs, label, count, active, icon = '') =>
     `<button type="button" class="filter${active ? ' active' : ''}" ${attrs}>${icon ? `<i aria-hidden="true">${icon}</i>` : ''}<span>${escapeHtml(label)}</span><b>${count}</b></button>`;
-  box.innerHTML = button('data-cat=""', `Todo ${sector.id === 'camping' ? 'Camping' : 'Armería'}`, sectorProducts.length, !state.category, '⌂') +
+  const usedCount = sectorProducts.filter(product => product.condition === 'usado').length;
+  box.innerHTML = button('data-cat=""', `Todo ${sector.id === 'camping' ? 'Camping' : 'Armería'}`, sectorProducts.length, !state.category && !state.condition, '⌂') +
     sector.categories.map(category => {
       const active = state.category === category.id;
       const subs = active && category.subcategories.length
         ? `<div class="subfilters">${category.subcategories.map(sub => `<button type="button" class="subfilter${state.subcategory === sub.id ? ' active' : ''}" data-cat="${category.id}" data-sub="${sub.id}">${escapeHtml(sub.label)} <b>${countIn(category.id, sub.id)}</b></button>`).join('')}</div>`
         : '';
       return button(`data-cat="${category.id}"`, category.label, countIn(category.id), active && !state.subcategory, category.icon) + subs;
-    }).join('');
+    }).join('') + (usedCount ? `<button type="button" class="filter filter-used${state.condition === 'usado' ? ' active' : ''}" data-condition="usado"><i aria-hidden="true">♻</i><span>Usados</span><b>${usedCount}</b></button>` : '');
+  box.querySelector('[data-condition]')?.addEventListener('click', () => {
+    setCondition(state.condition === 'usado' ? '' : 'usado');
+    applyFilter({ category: '', subcategory: '', brand: '', scroll: false });
+  });
   box.querySelectorAll('[data-cat]').forEach(node => node.addEventListener('click', () => {
+    if (node.dataset.cat === '') setCondition('');
     const toggleOff = !node.dataset.sub && state.category === node.dataset.cat && !state.subcategory && node.dataset.cat;
     applyFilter({ category: toggleOff ? '' : node.dataset.cat, subcategory: node.dataset.sub || '', scroll: false });
   }));
@@ -132,7 +139,14 @@ function renderSidebar() {
 function filterLabel() {
   const category = findCategory(sectorId, state.category);
   const sub = findSubcategory(sectorId, state.category, state.subcategory);
-  return [category?.label, sub?.label].filter(Boolean).join(' · ') || sector.name;
+  const parts = [state.condition === 'usado' ? 'Usados' : '', category?.label, sub?.label].filter(Boolean);
+  return parts.join(' · ') || sector.name;
+}
+
+function setCondition(value) {
+  state.condition = value;
+  const select = $('#conditionFilter');
+  if (select) select.value = value;
 }
 
 function cardHtml(product) {
@@ -148,7 +162,11 @@ function cardHtml(product) {
         <h3>${escapeHtml(product.name)}</h3>
         <p>${escapeHtml(product.shortDescription || product.description)}</p>
         <small class="card-availability is-${product.availability}">${availabilityLabel(product)}</small>
-        <div class="card-bottom">${priceHtml(product)}<button class="view" type="button" data-product="${product.id}">Ver ficha</button></div>
+        <div class="card-bottom">${priceHtml(product)}</div>
+        <div class="card-actions">
+          <button class="view" type="button" data-product="${product.id}">Ver ficha</button>
+          ${!product.regulated && isEligible(product) ? `<button class="add-quick" type="button" data-quick-add="${product.id}" aria-label="Agregar ${escapeHtml(product.name)} al pedido">+ Agregar</button>` : ''}
+        </div>
       </div>
     </article>`;
 }
@@ -181,6 +199,12 @@ function renderProducts() {
   $('#resultsCaption').textContent = `${visible.length} producto${visible.length === 1 ? '' : 's'}${state.brand ? ` · marca ${state.brand}` : ''}${state.condition ? ` · ${state.condition === 'usado' ? 'solo usados' : 'solo nuevos'}` : ''} · precio y disponibilidad a confirmar con la armería`;
   grid.setAttribute('aria-label', `${visible.length} productos encontrados`);
   if (!visible.length) {
+    const brandOnly = state.brand && !query && !state.condition && !state.category;
+    if (brandOnly) {
+      const link = inquiryUrl(`Hola, ${sector.name}. Quiero consultar por productos ${state.brand}.`);
+      grid.innerHTML = `<div class="no-results"><p>Todavía no hay productos <strong>${escapeHtml(state.brand)}</strong> publicados en el catálogo.</p><p>Consultá por la línea de productos disponible en el local.</p>${link ? `<a class="secondary" href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">Consultar ${escapeHtml(state.brand)} por WhatsApp ↗</a>` : ''}</div>`;
+      return;
+    }
     const filtered = query || state.brand || state.condition;
     const link = inquiryUrl(`Hola, ${sector.name}. Quiero consultar por ${filterLabel()}.`);
     grid.innerHTML = `<div class="no-results">${filtered
@@ -190,6 +214,17 @@ function renderProducts() {
   }
   grid.innerHTML = visible.map(cardHtml).join('');
 }
+
+// Agregar al pedido desde la tarjeta.
+document.addEventListener('click', event => {
+  const button = event.target.closest('[data-quick-add]');
+  if (!button) return;
+  if (cart.quickAdd(findProduct(button.dataset.quickAdd))) {
+    button.classList.add('added');
+    button.textContent = '✓ Agregado';
+    window.setTimeout(() => { button.classList.remove('added'); button.textContent = '+ Agregar'; }, 1600);
+  }
+});
 
 function bindProductOpeners(root) {
   root?.addEventListener('click', event => {
@@ -205,7 +240,7 @@ $('#brandFilter')?.addEventListener('change', event => { state.brand = event.tar
   if (conditionFilter) {
     conditionFilter.hidden = !sectorProducts.some(product => product.condition === 'usado');
     conditionFilter.value = state.condition;
-    conditionFilter.addEventListener('change', event => { state.condition = event.target.value; writeUrlState(); renderProducts(); });
+    conditionFilter.addEventListener('change', event => { state.condition = event.target.value; writeUrlState(); renderSidebar(); renderProducts(); });
   }
 }
 $('#sortProducts')?.addEventListener('change', event => { state.sort = event.target.value; renderProducts(); });
@@ -237,9 +272,11 @@ function showProduct(product) {
   $('#dialogDescription').textContent = product.condition === 'usado' && product.conditionNotes
     ? `${product.conditionNotes} ${product.description}` : product.description;
   $('#dialogFacts').innerHTML = [
-    ['Marca', product.brand], ['Modelo', product.model], ['Categoría', product.subcategoryLabel || product.categoryLabel],
+    ['Marca', product.brand], product.model && product.model !== product.name ? ['Modelo', product.model] : null, ['Categoría', product.subcategoryLabel || product.categoryLabel],
     ['Estado', product.condition === 'usado' ? `Usado${product.conditionGrade ? ` · ${product.conditionGrade}` : ''}` : 'Nuevo'],
-    product.caliber ? ['Calibre', product.caliber] : null, ['Código', product.code],
+    product.caliber ? ['Calibre', product.caliber] : null,
+    ...(Array.isArray(product.specs) ? product.specs.filter(([, value]) => value) : []),
+    ['Código', product.code],
     product.dateAdded ? ['Ingreso', product.dateAdded.split('-').reverse().join('/')] : null,
   ].filter(Boolean).map(([label, value]) => `<div><small>${label}</small><strong>${escapeHtml(value)}</strong></div>`).join('');
   $('#dialogPrice').innerHTML = `${priceHtml(product)}${product.price !== null ? `<small>${product.demoPrice ? 'Precio de ejemplo' : 'Precio unitario publicado'}</small>` : ''}`;
@@ -315,8 +352,14 @@ function initCarousel(root, { autoplay = false } = {}) {
       clone.dataset.clone = 'true';
       track.append(clone);
     });
-    const firstClone = track.children[originals.length];
-    loopWidth = () => firstClone.offsetLeft - originals[0].offsetLeft;
+    // Ancho de una vuelta completa considerando solo los elementos visibles (filtros).
+    loopWidth = () => {
+      const visible = originals.filter(node => !node.hidden);
+      if (!visible.length) return 0;
+      const gap = parseFloat(getComputedStyle(track).columnGap) || 0;
+      const last = visible[visible.length - 1];
+      return last.offsetLeft + last.offsetWidth + gap - visible[0].offsetLeft;
+    };
     root.classList.add('is-autoplay');
   }
 
@@ -367,6 +410,10 @@ function initCarousel(root, { autoplay = false } = {}) {
     const dt = Math.min(now - last, 64);
     last = now;
     const width = loopWidth();
+    // Si los elementos visibles entran en pantalla, no hace falta moverlos.
+    const fits = width <= track.clientWidth + 1;
+    root.classList.toggle('is-fitting', fits);
+    if (fits) { if (track.scrollLeft) track.scrollLeft = 0; position = 0; window.requestAnimationFrame(frame); return; }
     if (!hovering && now > resumeAt && !document.hidden && width > 0) {
       position += (SPEED * dt) / 1000;
       if (position >= width) position -= width;
@@ -394,16 +441,29 @@ function renderBrands() {
   if (!section) return;
   const list = brands.filter(brand => brand.sector === sectorId);
   if (!list.length) { section.hidden = true; return; }
-  const count = name => sectorProducts.filter(product => product.brand.toLowerCase() === name.toLowerCase()).length;
+  const categoryLabel = id => brandCategories.find(category => category.id === id)?.label || '';
+  const usedCategories = brandCategories.filter(category => list.some(brand => brand.category === category.id));
   const tiles = list.map(brand => `
-    <button type="button" class="brand-tile" data-brand="${escapeHtml(brand.name)}" aria-label="Ver productos ${escapeHtml(brand.name)}">
+    <button type="button" class="brand-tile" data-brand="${escapeHtml(brand.name)}" data-brand-cat="${escapeHtml(brand.category || '')}" aria-label="Ver productos ${escapeHtml(brand.name)}">
       ${brand.logo ? `<img src="${safeUrl(brand.logo)}" alt="${escapeHtml(brand.name)}" decoding="async">` : `<span class="brand-wordmark">${escapeHtml(brand.name)}</span>`}
-      <small>${count(brand.name)} producto${count(brand.name) === 1 ? '' : 's'}</small>
+      <small>${escapeHtml(categoryLabel(brand.category))}</small>
     </button>`).join('');
-  section.querySelector('[data-slot]').innerHTML = carouselShell('brandCarousel', 'Marcas', tiles);
+  const chips = usedCategories.length > 1
+    ? `<div class="brand-filters" role="group" aria-label="Filtrar marcas por rubro">
+        <button type="button" class="brand-chip active" data-brand-filter="">Todas</button>
+        ${usedCategories.map(category => `<button type="button" class="brand-chip" data-brand-filter="${category.id}">${escapeHtml(category.label)}</button>`).join('')}
+      </div>` : '';
+  section.querySelector('[data-slot]').innerHTML = chips + carouselShell('brandCarousel', 'Marcas', tiles);
   initCarousel($('#brandCarousel'), { autoplay: true });
   section.querySelectorAll('[data-brand]').forEach(tile => tile.addEventListener('click', () => {
     applyFilter({ category: '', subcategory: '', brand: tile.dataset.brand });
+  }));
+  section.querySelectorAll('[data-brand-filter]').forEach(chip => chip.addEventListener('click', () => {
+    const value = chip.dataset.brandFilter;
+    section.querySelectorAll('[data-brand-filter]').forEach(other => other.classList.toggle('active', other === chip));
+    section.querySelectorAll('.brand-tile').forEach(tile => { tile.hidden = Boolean(value) && tile.dataset.brandCat !== value; });
+    const track = section.querySelector('.carousel-track');
+    track.scrollLeft = 0;
   }));
 }
 
@@ -473,9 +533,7 @@ function renderUsados() {
     <div class="used-actions"><button type="button" class="secondary" data-show-used>Ver usados en el catálogo →</button></div>`;
   bindProductOpeners(slot);
   slot.querySelector('[data-show-used]').addEventListener('click', () => {
-    state.condition = 'usado';
-    const select = $('#conditionFilter');
-    if (select) select.value = 'usado';
+    setCondition('usado');
     applyFilter({ category: '', subcategory: '', brand: '' });
   });
 }
@@ -486,14 +544,18 @@ function renderGestoria() {
   const services = gestoriaServices.length ? gestoriaServices.map(service => ({ ...service, demo: false })) : DEMO_MODE ? demoGestoria.map(service => ({ ...service, demo: true })) : [];
   section.querySelector('[data-slot]').innerHTML = services.length
     ? `<div class="gestoria-grid">${services.map((service, index) => `
-        <article class="gestoria-card">
-          <span class="gestoria-index">${String(index + 1).padStart(2, '0')}</span>
+        <article class="gestoria-card" style="--i:${index}">
+          <span class="gestoria-icon">${iconFor(service)}</span>
           <h3>${escapeHtml(service.title)}</h3>
           <p>${escapeHtml(service.description || '')}</p>
           ${service.demo ? '<span class="badge badge-demo">Ejemplo</span>' : ''}
+          ${inquiryUrl('x') ? `<a class="gestoria-link" href="${escapeHtml(inquiryUrl(`Hola, Armería Parabellum. Quiero consultar por el trámite: ${service.title}.`))}" target="_blank" rel="noopener noreferrer">Consultar este trámite →</a>` : ''}
         </article>`).join('')}</div>`
     : '<p class="section-empty">El detalle de trámites se publicará cuando la armería lo confirme. Mientras tanto, consultanos por WhatsApp.</p>';
 }
+
+// Íconos declarativos: <span data-icon="nombre">
+document.querySelectorAll('[data-icon]').forEach(node => { if (icons[node.dataset.icon]) node.innerHTML = icons[node.dataset.icon]; });
 
 // Botones que filtran el catálogo por categoría (p. ej. puntos del local outdoor)
 document.querySelectorAll('[data-filter-cat]').forEach(button => button.addEventListener('click', () => {
@@ -529,5 +591,8 @@ bindInquiryLinks();
 }
 
 if ($('#showroomViewer')) {
-  import('./showroom.js').then(module => module.initShowroom({ applyFilter }));
+  const countFor = action => action.brand
+    ? sectorProducts.filter(product => product.brand.toLowerCase() === action.brand.toLowerCase()).length
+    : sectorProducts.filter(product => (!action.category || product.category === action.category) && (!action.subcategory || product.subcategory === action.subcategory)).length;
+  import('./showroom.js').then(module => module.initShowroom({ applyFilter, countFor }));
 }

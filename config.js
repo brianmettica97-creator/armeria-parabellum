@@ -12,13 +12,10 @@ export const DEMO_MODE = true;
 // Barra superior que avisa "sitio de demostración" (desactivada a pedido).
 export const SHOW_DEMO_BANNER = false;
 
-// Número comercial REAL de Armería Parabellum, solo dígitos y en formato
-// internacional: 54 + 9 + código de área sin 0 + número sin 15.
-// Mientras esté vacío y DEMO_MODE sea false, el sitio no abre WhatsApp.
-export const WHATSAPP_PHONE = '';
-
-// Número FICTICIO, usado únicamente cuando DEMO_MODE = true.
-export const DEMO_WHATSAPP_PHONE = '5492210000000';
+// WhatsApp oficial de Armería Parabellum (+54 9 221 226-9598), solo dígitos
+// y en formato internacional: 54 + 9 + código de área sin 0 + número sin 15.
+// Todos los botones de consulta, pedidos y contacto usan este número.
+export const WHATSAPP_PHONE = '5492212269598';
 
 export const STORE_NAME = 'Armería Parabellum';
 
@@ -42,11 +39,7 @@ const validPhone = value => {
 };
 
 export function whatsappNumber() {
-  return validPhone(WHATSAPP_PHONE) || (DEMO_MODE ? validPhone(DEMO_WHATSAPP_PHONE) : '');
-}
-
-export function usingDemoPhone() {
-  return !validPhone(WHATSAPP_PHONE) && DEMO_MODE;
+  return validPhone(WHATSAPP_PHONE);
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -62,6 +55,7 @@ export const STORE = {
   phoneDisplay: '0221 226-9598',
   phoneIntl: '+542212269598',
   instagram: 'armeria_parabellum',
+  email: 'parabellumoutdoor@gmail.com',
   geo: { lat: -34.9066819, lng: -57.974618 },
   mapsUrl: 'https://www.google.com/maps/place/Armer%C3%ADa+Parabellum/@-34.9066819,-57.974618,17z/data=!4m6!3m5!1s0x95a2e7bab613b10d:0xb1b42b153d8de6f4!8m2!3d-34.9066819!4d-57.974618!16s%2Fg%2F1tdp66ls',
   directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=Armer%C3%ADa+Parabellum%2C+13+27%2C+La+Plata',
