@@ -171,6 +171,15 @@ function cardHtml(product) {
     </article>`;
 }
 
+// Catálogo por tandas: muestra unas filas y suma más con "Ver más productos",
+// así la página no se vuelve interminable con cientos de productos.
+let catalogLimit = 0;
+let catalogKey = '';
+function catalogPageSize(grid) {
+  const cols = getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length || 2;
+  return cols * (cols <= 2 ? 5 : 4);
+}
+
 function renderProducts() {
   const grid = $('#productGrid');
   if (!grid) return;
@@ -212,8 +221,25 @@ function renderProducts() {
       : `<p>Todavía no hay productos publicados en <strong>${escapeHtml(filterLabel())}</strong>.</p><p>Consultá disponibilidad directamente con la armería.</p>${link ? `<a class="secondary" href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">Consultar por WhatsApp ↗</a>` : ''}`}</div>`;
     return;
   }
-  grid.innerHTML = visible.map(cardHtml).join('');
+  const key = JSON.stringify([state.category, state.subcategory, state.brand, state.condition, query, state.sort]);
+  if (key !== catalogKey || !catalogLimit) { catalogKey = key; catalogLimit = catalogPageSize(grid); }
+  const shown = visible.slice(0, catalogLimit);
+  const rest = visible.length - shown.length;
+  if (rest > 0) $('#resultsCaption').textContent = $('#resultsCaption').textContent.replace(/^(\d+ productos?)/, `$1 · mostrando ${shown.length}`);
+  grid.innerHTML = shown.map(cardHtml).join('') + (rest > 0
+    ? `<div class="grid-more"><button type="button" class="secondary" data-more>Ver más productos <span>(${rest} más)</span></button></div>`
+    : '');
 }
+
+document.addEventListener('click', event => {
+  if (!event.target.closest('[data-more]')) return;
+  const grid = $('#productGrid');
+  const firstNew = grid.querySelectorAll('.card').length;
+  catalogLimit += catalogPageSize(grid);
+  renderProducts();
+  // Lleva el foco a la primera tarjeta nueva (teclado y lectores de pantalla).
+  grid.querySelectorAll('.card')[firstNew]?.querySelector('.thumb')?.focus({ preventScroll: true });
+});
 
 // Agregar al pedido desde la tarjeta.
 document.addEventListener('click', event => {
@@ -502,8 +528,9 @@ function renderOfertas() {
     slot.innerHTML = `<div class="section-empty"><p>No hay ofertas publicadas en este momento.</p>${link ? `<a class="secondary" href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">Consultar promociones ↗</a>` : ''}</div>`;
     return;
   }
-  slot.innerHTML = `<div class="offers-grid">${items.map(product => `
-    <article class="offer-card">
+  const OFFERS_SHOWN = 4;
+  slot.innerHTML = `<div class="offers-grid">${items.map((product, index) => `
+    <article class="offer-card"${index >= OFFERS_SHOWN ? ' data-extra hidden' : ''}>
       <button type="button" class="offer-media" data-product="${product.id}" aria-label="Ver ficha de ${escapeHtml(product.name)}">
         ${productImage(product, '', product.name)}
         ${product.offer.previousPrice ? `<span class="offer-off">−${Math.round((1 - product.price / product.offer.previousPrice) * 100)}%</span>` : ''}
@@ -515,8 +542,16 @@ function renderOfertas() {
         <small class="card-availability is-${product.availability}">${availabilityLabel(product)}</small>
         <div class="offer-bottom">${priceHtml(product)}<button type="button" class="view" data-product="${product.id}">Ver producto</button></div>
       </div>
-    </article>`).join('')}</div>`;
+    </article>`).join('')}</div>
+    ${items.length > OFFERS_SHOWN ? `<div class="used-actions"><button type="button" class="secondary" data-all-offers aria-expanded="false">Ver todas las ofertas (${items.length})</button></div>` : ''}`;
   bindProductOpeners(slot);
+  slot.querySelector('[data-all-offers]')?.addEventListener('click', event => {
+    const open = event.currentTarget.getAttribute('aria-expanded') !== 'true';
+    slot.querySelectorAll('[data-extra]').forEach(card => { card.hidden = !open; });
+    event.currentTarget.setAttribute('aria-expanded', String(open));
+    event.currentTarget.textContent = open ? 'Mostrar menos' : `Ver todas las ofertas (${items.length})`;
+    if (!open) section.scrollIntoView({ block: 'start' });
+  });
 }
 
 function renderUsados() {
@@ -529,8 +564,9 @@ function renderUsados() {
     slot.innerHTML = `<div class="section-empty"><p>Por el momento no hay usados publicados.</p><p>Si buscás algo en particular, consultanos: ingresan unidades seleccionadas.</p>${link ? `<a class="secondary" href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">Consultar por usados ↗</a>` : ''}</div>`;
     return;
   }
-  slot.innerHTML = `<div class="grid used-grid">${items.map(cardHtml).join('')}</div>
-    <div class="used-actions"><button type="button" class="secondary" data-show-used>Ver usados en el catálogo →</button></div>`;
+  const USED_SHOWN = 4;
+  slot.innerHTML = `<div class="grid used-grid">${items.slice(0, USED_SHOWN).map(cardHtml).join('')}</div>
+    <div class="used-actions"><button type="button" class="secondary" data-show-used>${items.length > USED_SHOWN ? `Ver los ${items.length} usados en el catálogo →` : 'Ver usados en el catálogo →'}</button></div>`;
   bindProductOpeners(slot);
   slot.querySelector('[data-show-used]').addEventListener('click', () => {
     setCondition('usado');

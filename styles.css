@@ -1013,3 +1013,9 @@ a.trust-item:hover{background:#ffffff08}
   .gestoria-card p{font-size:11px;margin:0}
   .gestoria-link{margin-top:4px}
 }
+
+/* Catálogo por tandas */
+.grid-more{grid-column:1/-1;display:flex;justify-content:center;padding:18px 0 4px}.grid-more .secondary{min-height:46px;padding:0 26px}.grid-more span{color:var(--muted)}
+.offer-card[hidden]{display:none!important}
+@media(max-width:560px){.used-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.offers-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.offer-media{height:132px}.offer-off{width:40px;height:40px;font-size:11px;top:8px;right:8px}.offer-copy{padding:10px}.offer-copy h3{font-size:15px}.offer-copy p{font-size:9px}.offer-bottom{flex-direction:column;align-items:stretch;gap:7px}.offer-bottom .price{font-size:14px}.offer-bottom .view{width:100%}.offer-copy .card-badges{flex-wrap:wrap}}
