@@ -1,6 +1,7 @@
 import { DEMO_MODE } from './config.js';
 import { findCategory, findSubcategory } from './taxonomy.js';
 import { demoNovedades, demoOfertas, demoUsados } from './demo-data.js';
+import { supabaseConfigured, fetchProductos } from './supabase-client.js';
 
 // 9x19 mm catalog references for the showroom concept. These are not claims of store stock.
 const sources = {
@@ -327,7 +328,7 @@ const A = 'armeria';
 const C = 'camping';
 const ref = 'Por confirmar';
 
-export const products = [
+const localProducts = [
   ...pistols,
   ...armasLargasYRevolveres,
   { id: 'accesorio-kit-mantenimiento', code: 'ACC-06', name: 'Kit de cuidado y mantenimiento', brand: ref, sector: A, category: 'accesorios', subcategory: 'limpieza', shortDescription: 'Accesorio de cuidado · contenido a confirmar', description: 'Referencia visual de un kit de cuidado. Contenido, compatibilidad, marca y disponibilidad deben confirmarse con la armería.', price: null, icon: '◇' },
@@ -345,6 +346,64 @@ export const products = [
   { id: 'mochila', code: 'CAM-01', name: 'Mochila de expedición', brand: ref, sector: C, category: 'mochilas-bolsos', shortDescription: 'Equipamiento outdoor · capacidad a confirmar', description: 'Referencia para equipamiento de expedición. Marca, capacidad, materiales y disponibilidad por confirmar con la armería.', price: null, icon: '▤', photo: photoLibrary.backpack },
   { id: 'cantimplora', code: 'CAM-03', name: 'Cantimplora outdoor', brand: ref, sector: C, category: 'accesorios-camping', shortDescription: 'Hidratación en exteriores · capacidad a confirmar', description: 'Referencia de recipiente outdoor. Marca, capacidad, material y disponibilidad por confirmar con la armería.', price: null, icon: '♧', photo: photoLibrary.bottle },
 ].map(normalizeProduct);
+
+// ───────────────────────────────────────────────────────────────────────────
+// CATÁLOGO EN SUPABASE
+// ───────────────────────────────────────────────────────────────────────────
+// Si Supabase está configurado se cargan los productos publicados de la tabla
+// `productos`; si falla, tarda demasiado o viene vacía, se usa localProducts.
+// La tabla no guarda icon, specs, fuente oficial, finish, photos ni complements:
+// esos campos se toman de la ficha local con el mismo id.
+const REMOTE_TIMEOUT_MS = 4000;
+const LOCAL_ONLY_FIELDS = ['icon', 'specs', 'sourceUrl', 'sourceLabel', 'finish', 'photos', 'complements'];
+
+function fromRow(row, index) {
+  const local = localProducts.find(product => product.id === row.id);
+  const product = {
+    id: row.id,
+    code: row.code ?? undefined,
+    name: row.name,
+    brand: row.brand ?? undefined,
+    sector: row.sector,
+    category: row.category,
+    subcategory: row.subcategory ?? undefined,
+    shortDescription: row.short_description ?? undefined,
+    description: row.description ?? undefined,
+    price: row.price == null ? null : Number(row.price),
+    offer: row.offer_active ? { active: true, previousPrice: row.previous_price == null ? null : Number(row.previous_price) } : null,
+    stock: row.stock ?? undefined,
+    availability: row.availability ?? undefined,
+    regulated: row.regulated,
+    caliber: row.caliber ?? undefined,
+    condition: row.condition,
+    conditionGrade: row.condition_grade ?? undefined,
+    conditionNotes: row.condition_notes ?? undefined,
+    isNew: row.is_new,
+    dateAdded: row.date_added ?? undefined,
+    published: row.published,
+    photo: row.photo ? { ...row.photo, exact: local?.photo?.src === row.photo.src && Boolean(local.photo.exact) } : local?.photo,
+  };
+  if (local) for (const key of LOCAL_ONLY_FIELDS) if (local[key] !== undefined) product[key] = local[key];
+  return normalizeProduct(product, index);
+}
+
+async function loadRemoteProducts() {
+  if (!supabaseConfigured) return null;
+  try {
+    const rows = await Promise.race([
+      fetchProductos(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('tiempo de espera agotado')), REMOTE_TIMEOUT_MS)),
+    ]);
+    if (!Array.isArray(rows) || rows.length === 0) return null;
+    return rows.map(fromRow);
+  } catch (error) {
+    console.error('Catálogo remoto no disponible, se usa el local:', error);
+    return null;
+  }
+}
+
+// Top-level await: script.js recibe `products` ya resuelto, sin cambios.
+export const products = (await loadRemoteProducts()) ?? localProducts;
 
 // Usados de ejemplo (solo modo demostración): copian la ficha de un modelo del
 // catálogo y se rotulan como "Ejemplo".
