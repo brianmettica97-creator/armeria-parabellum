@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0b0c0c">
+  <title>Panel · Armería Parabellum</title>
+  <link rel="icon" href="assets/iconos/favicon-armeria.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <header class="adm-top">
+    <a class="adm-brand" href="index.html" title="Ver el sitio">
+      <img src="assets/cliente/logo-parabellum.png" alt="">
+      <span>Panel de productos</span>
+    </a>
+    <div class="adm-user" id="userBox" hidden>
+      <span id="userEmail"></span>
+      <button type="button" class="btn ghost" id="logoutBtn">Salir</button>
+    </div>
+  </header>
+
+  <!-- Ingreso -->
+  <main id="loginView" class="adm-center" hidden>
+    <form class="adm-card login" id="loginForm">
+      <h1>Ingresar</h1>
+      <p class="muted">Solo para el personal de Armería Parabellum.</p>
+      <label>Email<input type="email" id="loginEmail" autocomplete="username" required></label>
+      <label>Contraseña<input type="password" id="loginPass" autocomplete="current-password" required></label>
+      <button class="btn primary" type="submit">Ingresar</button>
+      <button class="link" type="button" id="forgotBtn">Olvidé mi contraseña</button>
+      <p class="msg" id="loginMsg" role="status"></p>
+    </form>
+  </main>
+
+  <!-- Nueva contraseña (al volver desde el email de recuperación) -->
+  <main id="recoveryView" class="adm-center" hidden>
+    <form class="adm-card login" id="recoveryForm">
+      <h1>Nueva contraseña</h1>
+      <label>Contraseña nueva (mínimo 8 caracteres)<input type="password" id="newPass" minlength="8" autocomplete="new-password" required></label>
+      <button class="btn primary" type="submit">Guardar contraseña</button>
+      <p class="msg" id="recoveryMsg" role="status"></p>
+    </form>
+  </main>
+
+  <!-- Sin permiso -->
+  <main id="deniedView" class="adm-center" hidden>
+    <div class="adm-card login">
+      <h1>Sin permiso</h1>
+      <p class="muted">Esta cuenta no figura como administradora del catálogo. Pedí que la agreguen a la lista de administradores.</p>
+    </div>
+  </main>
+
+  <!-- Listado -->
+  <main id="listView" class="adm-main" hidden>
+    <div class="adm-toolbar">
+      <button class="btn primary" type="button" id="newBtn">+ Nuevo producto</button>
+      <input type="search" id="search" placeholder="Buscar por nombre, marca o código" aria-label="Buscar">
+      <select id="sectorFilter" aria-label="Sector">
+        <option value="">Todos los sectores</option>
+        <option value="armeria">Armería</option>
+        <option value="camping">Camping &amp; Outdoor</option>
+      </select>
+      <select id="stateFilter" aria-label="Estado">
+        <option value="">Todos</option>
+        <option value="publicados">Publicados</option>
+        <option value="ocultos">Ocultos</option>
+        <option value="sinfoto">Sin foto propia</option>
+        <option value="sinprecio">Sin precio</option>
+        <option value="ofertas">En oferta</option>
+        <option value="usados">Usados</option>
+      </select>
+    </div>
+    <p class="muted" id="listCount"></p>
+    <div class="adm-list" id="list"></div>
+  </main>
+
+  <!-- Editor -->
+  <dialog id="editor" class="adm-editor">
+    <form id="editForm" method="dialog" novalidate>
+      <header class="ed-head">
+        <h2 id="edTitle">Producto</h2>
+        <button type="button" class="btn ghost" data-close>Cerrar</button>
+      </header>
+
+      <section class="ed-section">
+        <h3>1 · Fotos</h3>
+        <div class="photos" id="photoList"></div>
+        <label class="btn upload">
+          <input type="file" id="photoInput" accept="image/*" multiple hidden>
+          + Agregar fotos
+        </label>
+        <p class="hint">La primera foto es la principal. Se achican solas antes de subir. Fondo liso y buena luz.</p>
+      </section>
+
+      <section class="ed-section">
+        <h3>2 · Datos</h3>
+        <label>Nombre del producto *<input id="f_name" required maxlength="120" placeholder="Ej.: Glock 19 Gen5"></label>
+        <div class="row">
+          <label>Marca<input id="f_brand" list="brandList" maxlength="60"></label>
+          <label>Código interno<input id="f_code" maxlength="30" placeholder="Opcional"></label>
+        </div>
+        <datalist id="brandList"></datalist>
+        <div class="row">
+          <label>Sector *<select id="f_sector" required>
+            <option value="armeria">Armería</option>
+            <option value="camping">Camping &amp; Outdoor</option>
+          </select></label>
+          <label>Categoría *<select id="f_category" required></select></label>
+          <label id="subWrap">Subcategoría<select id="f_subcategory"></select></label>
+        </div>
+        <p class="hint" id="regulatedHint" hidden>Esta categoría es <strong>regulada</strong>: en el sitio se vende de a 1 unidad y el pedido pasa por la verificación legal.</p>
+        <label id="caliberWrap">Calibre<input id="f_caliber" maxlength="60" placeholder="Ej.: 9×19 mm"></label>
+        <label>Descripción corta (aparece en la tarjeta)<input id="f_short" maxlength="120"></label>
+        <label>Descripción completa<textarea id="f_description" rows="5" maxlength="3000"></textarea></label>
+      </section>
+
+      <section class="ed-section">
+        <h3>3 · Precio y stock</h3>
+        <div class="row">
+          <label>Precio (en pesos)<input id="f_price" inputmode="decimal" placeholder="Vacío = Consultar precio"></label>
+          <label>Disponibilidad<select id="f_availability">
+            <option value="disponible">Disponible</option>
+            <option value="consultar">Consultar</option>
+            <option value="agotado">Agotado</option>
+          </select></label>
+          <label>Stock<input id="f_stock" inputmode="numeric" placeholder="Opcional"></label>
+        </div>
+        <label class="check"><input type="checkbox" id="f_offer"> Está en oferta</label>
+        <label id="prevWrap" hidden>Precio anterior (tachado)<input id="f_prev" inputmode="decimal" placeholder="Mayor al precio actual"></label>
+      </section>
+
+      <section class="ed-section">
+        <h3>4 · Estado y visibilidad</h3>
+        <div class="row">
+          <label>Condición<select id="f_condition">
+            <option value="nuevo">Nuevo</option>
+            <option value="usado">Usado</option>
+          </select></label>
+          <label id="gradeWrap" hidden>Estado de conservación<select id="f_grade">
+            <option value="">—</option>
+            <option>Excelente</option>
+            <option>Muy bueno</option>
+            <option>Bueno</option>
+            <option>Regular</option>
+          </select></label>
+        </div>
+        <label id="notesWrap" hidden>Observaciones del usado<textarea id="f_notes" rows="3" maxlength="1000" placeholder="Uso, marcas, accesorios incluidos…"></textarea></label>
+        <label class="check"><input type="checkbox" id="f_new"> Mostrar en “Últimos ingresos”</label>
+        <label class="check"><input type="checkbox" id="f_published" checked> Publicado (visible en el sitio)</label>
+      </section>
+
+      <p class="msg" id="edMsg" role="status"></p>
+      <footer class="ed-foot">
+        <button type="button" class="btn danger" id="deleteBtn">Borrar</button>
+        <a class="btn ghost" id="viewLink" target="_blank" rel="noopener">Ver en el sitio</a>
+        <button type="submit" class="btn primary" id="saveBtn">Guardar</button>
+      </footer>
+      <div class="confirm" id="confirmBox" hidden>
+        <p>¿Borrar este producto? No se puede deshacer. Si solo querés sacarlo un tiempo, destildá “Publicado”.</p>
+        <button type="button" class="btn ghost" id="confirmNo">Cancelar</button>
+        <button type="button" class="btn danger" id="confirmYes">Sí, borrar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+  <script type="module" src="admin.js"></script>
+</body>
+</html>

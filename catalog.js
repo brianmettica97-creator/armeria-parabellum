@@ -176,6 +176,10 @@ function normalizeProduct(raw, index) {
   const dateAdded = /^\d{4}-\d{2}-\d{2}$/.test(product.dateAdded || '') ? product.dateAdded : null;
   return {
     ...product,
+    brand: product.brand || '',
+    code: product.code || '',
+    shortDescription: product.shortDescription || '',
+    description: product.description || '',
     model: product.model || product.name,
     categoryLabel: category?.label || 'Sin categoría',
     subcategoryLabel: subcategory?.label || '',
@@ -351,40 +355,58 @@ const localProducts = [
 // CATÁLOGO EN SUPABASE
 // ───────────────────────────────────────────────────────────────────────────
 // Si Supabase está configurado se cargan los productos publicados de la tabla
-// `productos`; si falla, tarda demasiado o viene vacía, se usa localProducts.
-// La tabla no guarda icon, specs, fuente oficial, finish, photos ni complements:
-// esos campos se toman de la ficha local con el mismo id.
+// `productos`. Si Supabase no responde se usa la última copia guardada en el
+// navegador y, si no hay ninguna, el catálogo local (localProducts).
+// Una tabla vacía es válida: significa que el local no tiene nada publicado.
+// La tabla no guarda icon, specs ni fuente oficial: se toman de la ficha local
+// con el mismo id mientras el nombre del producto no haya cambiado.
 const REMOTE_TIMEOUT_MS = 4000;
-const LOCAL_ONLY_FIELDS = ['icon', 'specs', 'sourceUrl', 'sourceLabel', 'finish', 'photos', 'complements'];
+const REMOTE_CACHE_KEY = 'parabellum-catalogo-v1';
+const LOCAL_ONLY_FIELDS = ['icon', 'specs', 'sourceUrl', 'sourceLabel', 'finish', 'complements'];
 
-function fromRow(row, index) {
+const cleanPhoto = photo => (photo && typeof photo.src === 'string' && photo.src ? photo : null);
+
+export function fromRow(row, index = 0) {
   const local = localProducts.find(product => product.id === row.id);
+  const sameModel = Boolean(local && local.name === row.name);
+  const photo = cleanPhoto(row.photo);
+  const samePhoto = Boolean(photo && local?.photo?.src === photo.src);
+  const extraPhotos = Array.isArray(row.photos) ? row.photos.map(cleanPhoto).filter(Boolean) : [];
   const product = {
     id: row.id,
-    code: row.code ?? undefined,
+    code: row.code || undefined,
     name: row.name,
-    brand: row.brand ?? undefined,
+    brand: row.brand || undefined,
     sector: row.sector,
     category: row.category,
-    subcategory: row.subcategory ?? undefined,
-    shortDescription: row.short_description ?? undefined,
-    description: row.description ?? undefined,
+    subcategory: row.subcategory || undefined,
+    shortDescription: row.short_description || undefined,
+    description: row.description || undefined,
     price: row.price == null ? null : Number(row.price),
     offer: row.offer_active ? { active: true, previousPrice: row.previous_price == null ? null : Number(row.previous_price) } : null,
     stock: row.stock ?? undefined,
-    availability: row.availability ?? undefined,
-    regulated: row.regulated,
-    caliber: row.caliber ?? undefined,
+    availability: row.availability || undefined,
+    // Nunca se "desregula" algo que la categoría marca como regulado.
+    regulated: row.regulated ? true : undefined,
+    caliber: row.caliber || undefined,
     condition: row.condition,
-    conditionGrade: row.condition_grade ?? undefined,
-    conditionNotes: row.condition_notes ?? undefined,
+    conditionGrade: row.condition_grade || undefined,
+    conditionNotes: row.condition_notes || undefined,
     isNew: row.is_new,
-    dateAdded: row.date_added ?? undefined,
+    dateAdded: row.date_added || undefined,
     published: row.published,
-    photo: row.photo ? { ...row.photo, exact: local?.photo?.src === row.photo.src && Boolean(local.photo.exact) } : local?.photo,
+    photo: photo ? { ...photo, exact: samePhoto ? Boolean(local.photo.exact) : Boolean(photo.exact) } : (sameModel ? local.photo : undefined),
+    photos: extraPhotos.length ? extraPhotos : (sameModel && (samePhoto || !photo) ? local.photos : []),
   };
-  if (local) for (const key of LOCAL_ONLY_FIELDS) if (local[key] !== undefined) product[key] = local[key];
+  if (sameModel) for (const key of LOCAL_ONLY_FIELDS) if (local[key] !== undefined) product[key] = local[key];
   return normalizeProduct(product, index);
+}
+
+function readCache() {
+  try { const rows = JSON.parse(localStorage.getItem(REMOTE_CACHE_KEY)); return Array.isArray(rows) ? rows : null; } catch { return null; }
+}
+function writeCache(rows) {
+  try { localStorage.setItem(REMOTE_CACHE_KEY, JSON.stringify(rows)); } catch { /* sin almacenamiento */ }
 }
 
 async function loadRemoteProducts() {
@@ -394,11 +416,13 @@ async function loadRemoteProducts() {
       fetchProductos(),
       new Promise((_, reject) => setTimeout(() => reject(new Error('tiempo de espera agotado')), REMOTE_TIMEOUT_MS)),
     ]);
-    if (!Array.isArray(rows) || rows.length === 0) return null;
+    if (!Array.isArray(rows)) throw new Error('respuesta inválida');
+    writeCache(rows);
     return rows.map(fromRow);
   } catch (error) {
-    console.error('Catálogo remoto no disponible, se usa el local:', error);
-    return null;
+    const cached = readCache();
+    console.error(`Catálogo remoto no disponible, se usa ${cached ? 'la última copia guardada' : 'el local'}:`, error);
+    return cached ? cached.map(fromRow) : null;
   }
 }
 

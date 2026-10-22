@@ -37,3 +37,22 @@ Después, dar de alta el sitio en Google Search Console y cargar el `sitemap.xml
 - `legales.html` → términos, privacidad, artículos regulados y defensa del consumidor
 - Enlace directo a un producto: `armeria.html?producto=arma-9`
 - Enlaces directos a una sección: `armeria.html?cat=armas&sub=pistolas#catalogo`
+
+## Catálogo en Supabase y panel de productos
+
+- `supabase-config.js`: URL del proyecto y clave **publicable** (nunca la `service_role`).
+- `admin.html`: panel donde el local carga, edita, oculta y borra productos y sube fotos.
+  Dirección: `https://brianmettica97-creator.github.io/armeria-parabellum/admin.html`.
+- `supabase/migrations/`: estructura de la tabla `productos` y reglas de seguridad.
+  `20261022000000_admin_y_fotos.sql` crea la lista de administradores (`admins`),
+  limita la escritura a esos emails y crea el depósito público de fotos `productos`.
+- Para sumar un administrador: en Supabase → SQL Editor:
+  `insert into public.admins (email) values ('mail@ejemplo.com');`
+  y crear el usuario en Authentication → Users → Add user (con “Auto Confirm User”).
+- En Authentication → Sign In / Providers dejar **desactivado** “Allow new users to sign up”.
+- En Authentication → URL Configuration, poner como Site URL la dirección de `admin.html`
+  para que funcione “Olvidé mi contraseña”.
+- Si Supabase no responde, el sitio muestra la última copia del catálogo que guardó el
+  navegador de cada visitante; si no tiene ninguna, muestra el catálogo de referencia de `catalog.js`.
+- Plan gratuito: Supabase pausa los proyectos sin actividad durante una semana. Si pasa,
+  se reactiva desde el panel de Supabase (Restore project).

@@ -7,7 +7,7 @@
 //         (novedades, ofertas, usados y trámites de gestoría). Los precios y
 //         fichas de ejemplo se rotulan como "Ejemplo" en cada producto.
 // false → PRODUCCIÓN: solo datos reales. Poner en false antes de publicar.
-export const DEMO_MODE = true;
+export const DEMO_MODE = false;
 
 // Barra superior que avisa "sitio de demostración" (desactivada a pedido).
 export const SHOW_DEMO_BANNER = false;

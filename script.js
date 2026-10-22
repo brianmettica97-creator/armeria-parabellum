@@ -253,7 +253,7 @@ $('#searchFocus')?.addEventListener('click', () => {
 function showProduct(product) {
   if (!product) return;
   const gallery = [product.photo, ...product.photos].filter(photo => photo?.src);
-  const photoNote = product.photo?.src?.startsWith('assets/') ? 'Imagen de referencia' : product.photo?.exact ? 'Fotografía referencial del modelo' : 'Imagen de referencia · confirmar variante exacta';
+  const photoNote = product.photo?.src?.startsWith('assets/') ? 'Imagen de referencia' : product.photo?.own ? 'Foto de Armería Parabellum' : product.photo?.exact ? 'Fotografía referencial del modelo' : 'Imagen de referencia · confirmar variante exacta';
   $('#dialogArt').innerHTML = `
     <div class="product-photo-stage">
       <img id="dialogMainPhoto" src="${safeUrl(gallery[0]?.src || PLACEHOLDER_IMG)}" alt="${escapeHtml(photoNote)}: ${escapeHtml(product.name)}" onerror="this.onerror=null;this.src='${PLACEHOLDER_IMG}'">

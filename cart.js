@@ -115,7 +115,7 @@ export function buildWhatsAppMessage(lines, totals) {
     const p = line.product;
     const detail = [
       `${index + 1}. ${p.name}`,
-      `   Marca/modelo: ${p.brand}${p.model && p.model !== p.name ? ` · ${p.model}` : ''} · Cód. ${p.code}`,
+      ...([p.brand, p.model && p.model !== p.name ? p.model : '', p.code ? `Cód. ${p.code}` : ''].some(Boolean) ? [`   ${[p.brand ? `Marca/modelo: ${p.brand}` : '', p.model && p.model !== p.name ? p.model : '', p.code ? `Cód. ${p.code}` : ''].filter(Boolean).join(' · ')}`] : []),
       p.condition === 'usado' ? `   Estado: Usado${p.conditionGrade ? ` · ${p.conditionGrade}` : ''}` : null,
       `   Cantidad: ${line.qty}`,
       `   Precio unitario: ${line.unitPrice === null ? 'Consultar precio' : formatMoney(line.unitPrice)}${p.demoPrice ? ' (precio de ejemplo)' : ''}`,

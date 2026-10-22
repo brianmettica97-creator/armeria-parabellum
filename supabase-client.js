@@ -14,11 +14,20 @@ export function getSupabase() {
   return clientPromise;
 }
 
-/** Lee los productos publicados; devuelve null si no hay conexión. */
+/**
+ * Lee los productos publicados con una consulta REST directa (sin cargar la
+ * librería, para que el catálogo público abra más rápido). Devuelve null si
+ * no hay conexión o Supabase responde con error.
+ */
 export async function fetchProductos() {
-  const supabase = await getSupabase();
-  if (!supabase) return null;
-  const { data, error } = await supabase.from('productos').select('*').eq('published', true).order('code');
-  if (error) { console.error('Supabase:', error.message); return null; }
-  return data;
+  if (!supabaseConfigured) return null;
+  const url = `${SUPABASE_URL}/rest/v1/productos?select=*&published=eq.true&order=code.asc.nullslast`;
+  try {
+    const response = await fetch(url, { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } });
+    if (!response.ok) { console.error('Supabase:', response.status, await response.text()); return null; }
+    return await response.json();
+  } catch (error) {
+    console.error('Supabase:', error);
+    return null;
+  }
 }
