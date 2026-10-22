@@ -36,7 +36,7 @@ export function priceHtml(product) {
 export function productBadges(product) {
   return [
     product.condition === 'usado' ? `<span class="badge badge-used">Usado${product.conditionGrade ? ` · ${product.conditionGrade}` : ''}</span>` : '',
-    product.isNew ? '<span class="badge badge-new">Nuevo</span>' : '',
+    product.isNew ? `<span class="badge badge-new">${product.condition === 'usado' ? 'Recién ingresado' : 'Nuevo'}</span>` : '',
     product.offer ? '<span class="badge badge-offer">Oferta</span>' : '',
     product.demoPrice ? '<span class="badge badge-demo">Precio de ejemplo</span>' : '',
     product.demoUsed ? '<span class="badge badge-demo">Ejemplo</span>' : '',

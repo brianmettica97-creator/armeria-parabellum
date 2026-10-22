@@ -334,6 +334,13 @@ $('#editForm').addEventListener('submit', async event => {
   const { data, error } = await query;
   $('#saveBtn').disabled = false;
   if (error) { setMsg(msg, `No se pudo guardar: ${error.message}`, 'err'); return; }
+  // Borra del depósito las fotos propias que se quitaron del producto.
+  const kept = new Set([data.photo?.src, ...(data.photos || []).map(p => p.src)]);
+  const marker = `/object/public/${BUCKET}/`;
+  const removed = [editing?.photo, ...(editing?.photos || [])]
+    .filter(p => p?.own && p.src.includes(marker) && !kept.has(p.src))
+    .map(p => decodeURIComponent(p.src.split(marker)[1].split('?')[0]));
+  if (removed.length) sb.storage.from(BUCKET).remove(removed);
   const index = all.findIndex(row => row.id === data.id);
   if (index >= 0) all.splice(index, 1);
   all.unshift(data);

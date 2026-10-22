@@ -155,7 +155,7 @@ export function initCart({ products, findProduct, onChange = () => {} }) {
         ${productImage(item)}
         <span class="complement-copy">
           <strong>${escapeHtml(item.name)}</strong>
-          <small>${escapeHtml(item.brand)} · ${escapeHtml(item.shortDescription || '')}</small>
+          <small>${escapeHtml([item.brand, item.shortDescription].filter(Boolean).join(' · '))}</small>
           <span class="complement-meta"><b>${escapeHtml(priceLabel(item))}${item.demoPrice ? ' · ejemplo' : ''}</b><em class="is-${item.availability}">${escapeHtml(availabilityLabel(item))}</em></span>
         </span>
       </label>`).join('');
@@ -204,7 +204,7 @@ export function initCart({ products, findProduct, onChange = () => {} }) {
       <div class="cart-row" data-id="${escapeHtml(p.id)}">
         ${productImage(p, 'cart-thumb')}
         <div class="cart-info">
-          <small>${escapeHtml(p.brand)} · ${escapeHtml(p.code)}</small>
+          <small>${escapeHtml([p.brand, p.code].filter(Boolean).join(' · '))}</small>
           <strong>${escapeHtml(p.name)}</strong>
           <span class="cart-unit">${line.unitPrice === null ? 'Consultar precio' : `${formatMoney(line.unitPrice)} c/u${p.demoPrice ? ' · ejemplo' : ''}`}</span>
           <span class="cart-availability is-${p.availability}">${escapeHtml(availabilityLabel(p))}</span>

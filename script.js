@@ -270,13 +270,13 @@ function showProduct(product) {
   $('#dialogTitle').textContent = product.name;
   $('#dialogLead').textContent = product.shortDescription || product.description;
   $('#dialogDescription').textContent = product.condition === 'usado' && product.conditionNotes
-    ? `${product.conditionNotes} ${product.description}` : product.description;
+    ? `${product.conditionNotes} ${product.description}`.trim() : product.description;
   $('#dialogFacts').innerHTML = [
-    ['Marca', product.brand], product.model && product.model !== product.name ? ['Modelo', product.model] : null, ['Categoría', product.subcategoryLabel || product.categoryLabel],
+    product.brand ? ['Marca', product.brand] : null, product.model && product.model !== product.name ? ['Modelo', product.model] : null, ['Categoría', product.subcategoryLabel || product.categoryLabel],
     ['Estado', product.condition === 'usado' ? `Usado${product.conditionGrade ? ` · ${product.conditionGrade}` : ''}` : 'Nuevo'],
     product.caliber ? ['Calibre', product.caliber] : null,
     ...(Array.isArray(product.specs) ? product.specs.filter(([, value]) => value) : []),
-    ['Código', product.code],
+    product.code ? ['Código', product.code] : null,
     product.dateAdded ? ['Ingreso', product.dateAdded.split('-').reverse().join('/')] : null,
   ].filter(Boolean).map(([label, value]) => `<div><small>${label}</small><strong>${escapeHtml(value)}</strong></div>`).join('');
   $('#dialogPrice').innerHTML = `${priceHtml(product)}${product.price !== null ? `<small>${product.demoPrice ? 'Precio de ejemplo' : 'Precio unitario publicado'}</small>` : ''}`;
@@ -297,7 +297,7 @@ function showProduct(product) {
   action.onclick = () => cart.addFromProductDialog(product);
 
   const consult = $('#dialogWhatsApp');
-  const url = inquiryUrl(`Hola, ${sector.name}. Quiero consultar por: ${product.name} (${product.brand} · Cód. ${product.code}). ¿Me confirman disponibilidad y precio?`);
+  const url = inquiryUrl(`Hola, ${sector.name}. Quiero consultar por: ${product.name}${[product.brand, product.code && `Cód. ${product.code}`].filter(Boolean).length ? ` (${[product.brand, product.code && `Cód. ${product.code}`].filter(Boolean).join(' · ')})` : ''}. ¿Me confirman disponibilidad y precio?`);
   consult.hidden = !url;
   if (url) consult.href = url;
 
@@ -479,11 +479,11 @@ function renderNovedades() {
   slot.innerHTML = carouselShell('novedadesCarousel', 'Últimos ingresos', items.map(product => `
     <article class="nov-card">
       <button type="button" class="nov-media" data-product="${product.id}" aria-label="Ver ficha de ${escapeHtml(product.name)}">
-        <span class="badge badge-new">Nuevo</span>
+        <span class="badge badge-new">${product.condition === 'usado' ? 'Usado · recién ingresado' : 'Nuevo'}</span>
         ${productImage(product, '', product.name)}
       </button>
       <div class="nov-copy">
-        <small>${escapeHtml(product.brand)} · ${escapeHtml(product.subcategoryLabel || product.categoryLabel)}</small>
+        <small>${escapeHtml([product.brand, product.subcategoryLabel || product.categoryLabel].filter(Boolean).join(' · '))}</small>
         <h3>${escapeHtml(product.name)}</h3>
         <button type="button" class="nov-link" data-product="${product.id}">Ver ficha →</button>
       </div>
