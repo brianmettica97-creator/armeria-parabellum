@@ -17,7 +17,7 @@ const logo = (x, y, label, brand = label, w = 8, h = 5) => ({ x, y, label, note:
 
 export const showroomViews = [
   {
-    id: 'entrada', title: 'Vista principal', image: 'assets/showroom/entrada.jpg', thumb: 'assets/showroom/entrada-mini.jpg',
+    id: 'entrada', title: 'Vista principal', image: 'assets/new/vista-principal.jpg', thumb: 'assets/new/vista-principal-mini.jpg',
     alt: 'Pasillo central del local con vitrinas, paredes de armas y carteles de marcas', filter: { category: '' },
     spots: [
       { x: 11, y: 40, label: 'Armas largas', note: 'Escopetas, carabinas y fusiles', action: { category: ARMAS, subcategory: 'armas-largas' } },
@@ -35,7 +35,7 @@ export const showroomViews = [
     ],
   },
   {
-    id: 'pistolas', title: 'Pistolas y escopetas', image: 'assets/showroom/pistolas-escopetas.jpg', thumb: 'assets/showroom/pistolas-escopetas-mini.jpg',
+    id: 'pistolas', title: 'Pistolas y escopetas', image: 'assets/new/pistolas-escopetas.jpg', thumb: 'assets/new/pistolas-escopetas-mini.jpg',
     alt: 'Pared de escopetas y vitrina con pistolas', filter: { category: ARMAS, subcategory: 'escopetas' }, focus: { x: 11, y: 42 },
     spots: [
       { x: 28, y: 24, label: 'Escopetas', action: { category: ARMAS, subcategory: 'escopetas' } },
@@ -66,7 +66,7 @@ export const showroomViews = [
     ],
   },
   {
-    id: 'opticas', title: 'Ópticas y accesorios', image: 'assets/showroom/opticas-municiones.jpg', thumb: 'assets/showroom/opticas-municiones-mini.jpg',
+    id: 'opticas', title: 'Ópticas y accesorios', image: 'assets/new/opticas-accesorios.jpg', thumb: 'assets/new/opticas-accesorios-mini.jpg',
     alt: 'Sección de accesorios y ópticas: miras, miras láser, fundas, kits de limpieza y extensiones', filter: { category: 'accesorios', subcategory: 'optica' }, focus: { x: 46, y: 58 },
     spots: [
       { x: 17, y: 44, label: 'Miras y ópticas', action: { category: 'accesorios', subcategory: 'optica' } },

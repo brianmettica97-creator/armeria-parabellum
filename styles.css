@@ -615,11 +615,11 @@ body[data-sector] main{display:block}
 
 /* ── Camping: identidad Outdoor Parabellum (bosque + madera) ── */
 .sector-camping{--bg:#121810;--forest:linear-gradient(180deg,#14201399,#0f150dcc)}
-.sector-camping::before{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,#0f150dd0,#120e0ae6),url('assets/camping/outdoor-fondo.jpg') center/cover no-repeat,#121810;pointer-events:none}
+.sector-camping::before{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,#0f150dd0,#120e0ae6),url('assets/new/outdoor-lago.jpg') center/cover no-repeat,#121810;pointer-events:none}
 .sector-camping{background:#121810}
 .camp-logo{width:auto;height:64px;border-radius:3px;box-shadow:0 4px 14px #0008}
 .camp-hero{min-height:clamp(440px,48vw,580px);align-items:center;border-bottom:4px solid #2a1b10}
-.camp-hero-media{background:radial-gradient(ellipse 60% 45% at 75% 100%,#ff9a3c33,transparent 70%),linear-gradient(90deg,#0d140cf2 0%,#0d140cb3 42%,#0d140c33 75%),linear-gradient(0deg,#1b130d 0%,transparent 35%),url('assets/camping/outdoor-fondo.jpg') center/cover,#18231a;filter:none}
+.camp-hero-media{background:radial-gradient(ellipse 60% 45% at 75% 100%,#ff9a3c33,transparent 70%),linear-gradient(90deg,#0d140cf2 0%,#0d140cb3 42%,#0d140c33 75%),linear-gradient(0deg,#1b130d 0%,transparent 35%),url('assets/new/outdoor-lago.jpg') center/cover,#18231a;filter:none}
 .camp-hero-emblem{position:absolute;z-index:-1;right:clamp(20px,7vw,110px);top:50%;width:clamp(240px,30vw,400px);aspect-ratio:1;transform:translateY(-50%);border-radius:6px;-webkit-mask-image:radial-gradient(ellipse 72% 72% at 50% 50%,#000 58%,transparent 100%);mask-image:radial-gradient(ellipse 72% 72% at 50% 50%,#000 58%,transparent 100%);filter:drop-shadow(0 20px 40px #000)}
 .camp-hero h1{color:#f6edd8}
 .camp-hero-content .eyebrow{color:#f3cf8f}
@@ -631,7 +631,7 @@ body[data-sector] main{display:block}
 .sector-camping .topbar{background:linear-gradient(180deg,#1d150ef2,#16100bf2),var(--wood)}
 
 /* ── Portada: panel Camping con la imagen Outdoor Parabellum ── */
-.gate-camping .gate-bg{background:radial-gradient(ellipse 70% 40% at 50% 100%,#ff9a3c40,transparent 70%),radial-gradient(ellipse at 50% 42%,transparent 0,#0a0f09b3 78%),linear-gradient(0deg,#120c08 0%,transparent 45%),url('assets/camping/outdoor-fondo.jpg') center/cover,#18231a;filter:brightness(.82)}
+.gate-camping .gate-bg{background:radial-gradient(ellipse 70% 40% at 50% 100%,#ff9a3c40,transparent 70%),radial-gradient(ellipse at 50% 42%,transparent 0,#0a0f09b3 78%),linear-gradient(0deg,#120c08 0%,transparent 45%),url('assets/new/outdoor-lago.jpg') center/cover,#18231a;filter:brightness(.82)}
 .gate-camping:hover .gate-bg{filter:brightness(.95)}
 .gate-camping .gate-content{padding:0;background:none;box-shadow:none;border-radius:0}
 .gate-logo-camping{width:min(360px,80%);aspect-ratio:1;object-fit:cover;-webkit-mask-image:radial-gradient(ellipse 66% 66% at 50% 50%,#000 60%,transparent 100%);mask-image:radial-gradient(ellipse 66% 66% at 50% 50%,#000 60%,transparent 100%)}
