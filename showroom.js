@@ -82,6 +82,8 @@ export const showroomViews = [
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 const TOUR_MS = 7000;
+// Si la pestaña está en segundo plano las animaciones se pausan: este respaldo evita que la transición quede colgada.
+const settle = (animation, ms) => Promise.race([animation.finished.catch(() => {}), new Promise(resolve => window.setTimeout(resolve, ms + 250))]);
 
 export function initShowroom({ applyFilter, countFor }) {
   const $ = selector => document.querySelector(selector);
@@ -231,7 +233,7 @@ export function initShowroom({ applyFilter, countFor }) {
           : [{ transform: 'translateX(0)', opacity: 1 }, { transform: `translateX(${-6 * direction}%)`, opacity: 0 }];
       outAnimation?.cancel();
       outAnimation = figure.animate(out, { duration: zoomIn ? 520 : 300, easing: 'cubic-bezier(.55,0,.8,.4)', fill: 'forwards' });
-      await Promise.all([preload(view.image), outAnimation.finished.catch(() => {})]);
+      await Promise.all([preload(view.image), settle(outAnimation, zoomIn ? 520 : 300)]);
       if (token !== switchToken) return;
     }
     scene.src = view.image;
@@ -252,7 +254,7 @@ export function initShowroom({ applyFilter, countFor }) {
           : [{ transform: `translateX(${6 * direction}%)`, opacity: 0 }, { transform: 'translateX(0)', opacity: 1 }];
       outAnimation?.cancel();
       figure.getAnimations().forEach(animation => animation.cancel());
-      await figure.animate(enter, { duration: zoomOut ? 560 : 460, easing: 'cubic-bezier(.2,.6,.3,1)' }).finished.catch(() => {});
+      await settle(figure.animate(enter, { duration: zoomOut ? 560 : 460, easing: 'cubic-bezier(.2,.6,.3,1)' }), zoomOut ? 560 : 460);
       if (token !== switchToken) return;
       frame.classList.remove('is-zooming');
     } else {
