@@ -1161,3 +1161,60 @@ a.trust-item:hover{background:#ffffff08}
 .camp-scene-frame .camp-hotspot{z-index:2}
 .camp-scene-frame .is-outlet-spot{background:#6b2415e6;border-color:#ffc9a8}
 @media(max-width:700px){.camp-scene-frame .camp-hotspot{padding:0;width:28px;height:28px;justify-content:center;border-radius:50%}.camp-scene-frame .camp-hotspot span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}}
+
+/* ═════════════════ Ajustes del cliente (fase 2): Outdoor ═════════════════ */
+.camp-hero-emblem{right:auto;left:74%;top:44%;transform:translate(-50%,-50%)}
+@media(max-width:850px){.camp-hero-emblem{left:70%;opacity:.3}}
+.camp-lines{grid-template-columns:repeat(10,minmax(0,1fr))}
+@media(max-width:1000px){.camp-lines{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(max-width:560px){.camp-lines{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.camp-scene{padding-bottom:28px}
+.camp-local{padding-top:28px}
+
+/* ═════════════════ Carrito: vías de finalización ═════════════════ */
+.cart-actions{display:grid;gap:10px;margin-top:20px}
+.cart-actions .cart-continue{order:-1;width:100%;min-height:54px;margin:0;padding:14px 18px;border:1px solid var(--gold);background:transparent;color:#f0d49a;font:700 13px var(--sans);letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .2s,color .2s}
+.cart-actions .cart-continue:hover{background:#d5a75b22;color:#fff}
+.cart-actions .primary{width:100%;min-height:54px;margin:0;font-size:12px;letter-spacing:.1em}
+.cart-actions .whatsapp-checkout{background:#1f9d55;color:#fff}
+.cart-actions .whatsapp-checkout:hover:not(:disabled){background:#27b564}
+.cart-actions .online-checkout{background:#2b6cd4;color:#fff}
+.cart-actions .online-checkout:hover:not(:disabled){background:#3a7fea}
+.cart-actions .primary:disabled{background:#3a3d3a;color:#8d908a;cursor:not-allowed}
+@media(min-width:640px){.cart-actions{grid-template-columns:1fr 1fr}.cart-actions .cart-continue{grid-column:1/-1}}
+.online-dialog form{display:grid;gap:14px}
+.online-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.online-grid label{display:grid;gap:5px;font-size:11px;letter-spacing:.06em;color:#d7c496}
+.online-grid .wide{grid-column:1/-1}
+.online-grid input{min-height:42px;padding:0 12px;border:1px solid var(--line);background:#0f1211;color:var(--ink);font:14px var(--sans)}
+.online-grid input:focus{outline:2px solid var(--gold);outline-offset:0}
+.online-options{margin:0;padding:10px 12px;border:1px solid var(--line);display:grid;gap:8px}
+.online-options legend{padding:0 6px;color:#d7c496;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.online-options label{display:flex;gap:10px;align-items:center;font-size:13px;cursor:pointer}
+.online-options input{accent-color:#d5a75b;width:16px;height:16px}
+@media(max-width:560px){.online-grid{grid-template-columns:1fr}}
+
+/* ═════════════════ Landing: "Bienvenido a Parabellum" ═════════════════ */
+.gate-page{position:relative}
+.gate-welcome{position:absolute;z-index:3;top:clamp(26px,7vh,70px);left:0;right:0;text-align:center;pointer-events:none;text-shadow:0 4px 24px #000}
+.gate-welcome h1{margin:0;font:700 clamp(30px,5.2vw,64px)/1.05 'Cinzel','Trajan Pro','Times New Roman',serif;letter-spacing:.03em;text-transform:uppercase;color:#f2efe6}
+.gate-welcome p{margin:8px 0 0;font:400 clamp(17px,2.2vw,28px) var(--sans,system-ui,sans-serif);color:#f2efe6}
+.gate-shield{position:absolute;z-index:3;left:50%;top:50%;width:clamp(74px,9vw,128px);height:auto;transform:translate(-50%,-44%);filter:drop-shadow(0 12px 22px #000c);pointer-events:none}
+.gate-panel .gate-content{padding-top:clamp(70px,12vh,140px);gap:20px}
+.gate-armeria .gate-bg{filter:brightness(.55) blur(2px)}
+.gate-camping .gate-bg{filter:brightness(.62) saturate(.7) hue-rotate(-8deg) blur(2px);background:linear-gradient(0deg,#0a1410cc,transparent 55%),radial-gradient(ellipse at 50% 42%,transparent 0,#06100acc 85%),linear-gradient(#1f3a26aa,#0f2316aa),url('assets/new/outdoor-lago.jpg') center/cover,#10231a}
+.gate-armeria:hover .gate-bg{filter:brightness(.7) blur(1px)}
+.gate-camping:hover .gate-bg{filter:brightness(.78) saturate(.8) hue-rotate(-8deg) blur(1px)}
+.gate-text{max-width:340px;font-size:clamp(14px,1.3vw,17px);color:#f2efe6;text-shadow:0 2px 12px #000}
+.gate-button{margin-top:8px;padding:14px 34px;border-radius:999px;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.gate-armeria .gate-button{background:#1a1511d9;color:#e9c987;border:2px solid #d5a75b;box-shadow:0 10px 30px #0008}
+.gate-armeria:hover .gate-button{background:#d5a75b;color:#141410;box-shadow:0 14px 40px #d5a75b55}
+.gate-camping .gate-button{background:#1f4a2cd9;color:#f2efe6;border:2px solid #4f9b62;box-shadow:0 10px 30px #0008}
+.gate-camping:hover .gate-button{background:#2f7a43;color:#fff;box-shadow:0 14px 40px #4f9b6255}
+@media(max-width:760px){
+  .gate-welcome{position:relative;top:auto;padding:30px 16px 6px;background:#0b0c0c}
+  .gate-shield{top:auto;left:auto;transform:none;position:relative;display:block;width:70px;margin:0;padding:6px 0 14px;box-sizing:content-box;background:#0b0c0c;order:0;margin-inline:auto}.gate-page{align-items:stretch}.gate-shield{align-self:center}
+  .gate-panel .gate-content{padding-top:0}
+}
+.camp-hero-emblem{left:76%;-webkit-mask-image:radial-gradient(ellipse 78% 78% at 50% 50%,#000 82%,transparent 100%);mask-image:radial-gradient(ellipse 78% 78% at 50% 50%,#000 82%,transparent 100%)}
+.camp-hero-emblem{-webkit-mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent),linear-gradient(0deg,transparent,#000 12%,#000 88%,transparent);-webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent),linear-gradient(0deg,transparent,#000 12%,#000 88%,transparent);mask-composite:intersect}

@@ -176,11 +176,16 @@ backButton.type = 'button';
 backButton.className = 'back-float';
 backButton.hidden = true;
 document.body.append(backButton);
-backButton.addEventListener('click', () => history.back());
+// Sin historial propio (entrada directa a una sección) vuelve al catálogo completo en vez de no hacer nada.
+backButton.addEventListener('click', () => {
+  if (navDepth >= 1) { history.back(); return; }
+  applyFilter({ category: '', subcategory: '', brand: '', push: false });
+});
 function updateBackButton() {
   const dialogOpen = document.querySelector('#productOverlay')?.classList.contains('open');
-  backButton.hidden = navDepth < 1 || Boolean(dialogOpen);
-  const label = history.state?.backLabel;
+  const filtered = Boolean(state.category || state.subcategory || state.brand);
+  backButton.hidden = (navDepth < 1 && !filtered) || Boolean(dialogOpen);
+  const label = navDepth >= 1 ? history.state?.backLabel : sector.name;
   backButton.innerHTML = `<span aria-hidden="true">←</span> Volver${label ? ` <small>a ${escapeHtml(label)}</small>` : ''}`;
   backButton.setAttribute('aria-label', `Volver${label ? ` a ${label}` : ''}`);
 }
@@ -728,5 +733,5 @@ if ($('#showroomViewer')) {
   const countFor = action => action.brand
     ? sectorProducts.filter(product => product.brand.toLowerCase() === action.brand.toLowerCase()).length
     : sectorProducts.filter(product => (!action.category || product.category === action.category) && matchesSub(product, sectorId, action.category, action.subcategory)).length;
-  import('./showroom.js?v=20261023b').then(module => module.initShowroom({ applyFilter, countFor }));
+  import('./showroom.js?v=20261024a').then(module => module.initShowroom({ applyFilter, countFor }));
 }

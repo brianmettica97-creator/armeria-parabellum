@@ -7,6 +7,8 @@ import {
 } from './cart.js';
 import { escapeHtml, productImage, priceLabel } from './utils.js';
 
+const ONLINE_NOTE = 'El pago online con tarjeta se habilita al activar la pasarela de pagos del sitio. Mientras tanto, al confirmar se abre WhatsApp con tus datos y el pedido para que un asesor te envíe el link de pago o los datos de la transferencia y el costo de envío.';
+
 const DIALOGS = `
   <div class="overlay" id="productOverlay" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
     <div class="dialog product-dialog">
@@ -63,10 +65,45 @@ const DIALOGS = `
         <summary>Ver el mensaje que se va a preparar</summary>
         <pre id="cartMessage"></pre>
       </details>
-      <button class="primary whatsapp-checkout" id="checkout" type="button" disabled>Finalizar pedido por WhatsApp</button>
+      <div class="cart-actions">
+        <button class="cart-continue" type="button" data-close="cartOverlay"><span aria-hidden="true">←</span> Seguir comprando</button>
+        <button class="primary online-checkout" id="onlineCheckout" type="button" disabled><span aria-hidden="true">💳</span> Comprar Online para Envío</button>
+        <button class="primary whatsapp-checkout" id="checkout" type="button" disabled><span aria-hidden="true">🟢</span> Finalizar Pedido por WhatsApp</button>
+      </div>
       <p class="checkout-status" id="checkoutStatus" role="status" aria-live="polite"></p>
-      <p class="modal-note">Al continuar se abre WhatsApp con el mensaje listo para revisar. El pedido no se envía ni queda confirmado hasta que lo envíes desde WhatsApp y la armería confirme stock, precio y condiciones.</p>
-      <button class="cart-continue" type="button" data-close="cartOverlay">← Seguir viendo el catálogo</button>
+      <p class="modal-note"><b>Comprar Online para Envío:</b> cargás tus datos y recibís el pedido en tu domicilio. <b>Finalizar por WhatsApp:</b> coordinás el pedido y el retiro en el local con un asesor. En ambos casos el pedido no queda confirmado hasta que la armería verifique stock, precio y condiciones.</p>
+    </div>
+  </div>
+  <div class="overlay" id="onlineOverlay" role="dialog" aria-modal="true" aria-labelledby="onlineTitle">
+    <div class="dialog cart-dialog online-dialog">
+      <button class="close" data-close="onlineOverlay" aria-label="Cerrar">×</button>
+      <div class="eyebrow">Compra online · envío a domicilio</div>
+      <h2 id="onlineTitle">Tus datos de envío</h2>
+      <form id="onlineForm" novalidate>
+        <div class="online-grid">
+          <label>Nombre y apellido<input name="nombre" autocomplete="name" required></label>
+          <label>Teléfono<input name="telefono" type="tel" autocomplete="tel" inputmode="tel" required></label>
+          <label class="wide">Email<input name="email" type="email" autocomplete="email" required></label>
+          <label class="wide">Calle y número (piso/depto)<input name="direccion" autocomplete="street-address" required></label>
+          <label>Localidad<input name="localidad" autocomplete="address-level2" required></label>
+          <label>Código postal<input name="cp" autocomplete="postal-code" required></label>
+          <label class="wide">Provincia<input name="provincia" autocomplete="address-level1" required></label>
+        </div>
+        <fieldset class="online-options"><legend>Medio de pago</legend>
+          <label><input type="radio" name="pago" value="Tarjeta de crédito/débito" checked> Tarjeta de crédito o débito</label>
+          <label><input type="radio" name="pago" value="Transferencia bancaria"> Transferencia bancaria</label>
+        </fieldset>
+        <fieldset class="online-options"><legend>Medio de envío</legend>
+          <label><input type="radio" name="envio" value="Envío a domicilio" checked> Envío a domicilio (costo a confirmar según destino)</label>
+        </fieldset>
+        <div class="cart-summary" id="onlineSummary"></div>
+        <p class="checkout-status" id="onlineStatus" role="status" aria-live="polite"></p>
+        <div class="cart-actions">
+          <button class="cart-continue" type="button" data-close="onlineOverlay"><span aria-hidden="true">←</span> Volver al pedido</button>
+          <button class="primary online-checkout" type="submit"><span aria-hidden="true">💳</span> Confirmar compra online</button>
+        </div>
+        <p class="modal-note">${ONLINE_NOTE}</p>
+      </form>
     </div>
   </div>`;
 
@@ -86,6 +123,7 @@ export function initCart({ products, findProduct, onChange = () => {} }) {
   }
 
   const checkoutButton = $('#checkout');
+  const onlineButton = $('#onlineCheckout');
   const checkoutStatus = $('#checkoutStatus');
   const regulatedAck = $('#regulatedAck');
   const regulatedAckInput = $('#regulatedAckInput');
@@ -269,7 +307,8 @@ export function initCart({ products, findProduct, onChange = () => {} }) {
 
     const phoneReady = Boolean(whatsappNumber());
     checkoutButton.disabled = !lines.length || !phoneReady;
-    checkoutButton.textContent = checkoutNeedsReview ? 'Revisé los cambios · Abrir WhatsApp' : 'Finalizar pedido por WhatsApp';
+    onlineButton.disabled = !lines.length || !phoneReady;
+    checkoutButton.innerHTML = checkoutNeedsReview ? 'Revisé los cambios · Abrir WhatsApp' : '<span aria-hidden="true">🟢</span> Finalizar Pedido por WhatsApp';
     if (!phoneReady) checkoutStatus.textContent = 'WhatsApp no disponible: falta configurar el número comercial del sitio.';
     else if (!lines.length && !pendingChanges.length) checkoutStatus.textContent = '';
     onChange();
@@ -320,6 +359,50 @@ export function initCart({ products, findProduct, onChange = () => {} }) {
     update();
     checkoutStatus.innerHTML = `Abrimos WhatsApp con tu mensaje. <b>Revisalo y envialo desde WhatsApp</b>: el pedido no queda confirmado hasta que la armería responda.${opened ? '' : ` Si no se abrió, <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">tocá acá para abrir WhatsApp</a>.`}`;
   }
+
+  // Compra online (productos no controlados). La pasarela de pago aún no está conectada:
+  // al confirmar, los datos y el pedido se envían por WhatsApp para coordinar el pago y el envío.
+  const onlineForm = $('#onlineForm');
+  const onlineStatus = $('#onlineStatus');
+  function openOnline() {
+    if (!cartItems.length) return;
+    const lines = buildLines(cartItems, findProduct);
+    const totals = computeTotals(lines);
+    $('#onlineSummary').innerHTML = totals.estimatedTotal === null
+      ? '<div class="total-row"><span>Total estimado</span><strong>A confirmar</strong></div>'
+      : `<div class="total-row"><span>${totals.complete ? 'Total estimado' : 'Total parcial'}</span><strong>${formatMoney(totals.estimatedTotal)}</strong></div><small>No incluye el costo de envío, que se confirma según el destino.</small>`;
+    onlineStatus.textContent = '';
+    closeOverlay('cartOverlay');
+    openOverlay('onlineOverlay');
+  }
+  onlineButton.addEventListener('click', openOnline);
+  onlineForm.addEventListener('submit', event => {
+    event.preventDefault();
+    const phone = whatsappNumber();
+    const data = Object.fromEntries(new FormData(onlineForm).entries());
+    const missing = [...onlineForm.querySelectorAll('input[required]')].find(input => !input.value.trim());
+    if (missing) { onlineStatus.textContent = 'Completá todos los datos de envío para continuar.'; missing.focus(); return; }
+    if (!/^\S+@\S+\.\S+$/.test(data.email.trim())) { onlineStatus.textContent = 'Revisá el email: no parece válido.'; onlineForm.elements.email.focus(); return; }
+    if (!phone) { onlineStatus.textContent = 'WhatsApp no disponible: falta configurar el número comercial del sitio.'; return; }
+    const lines = buildLines(cartItems, findProduct);
+    if (!lines.length) { onlineStatus.textContent = 'Tu pedido está vacío.'; return; }
+    const message = [
+      'COMPRA ONLINE CON ENVÍO A DOMICILIO',
+      '',
+      buildWhatsAppMessage(lines, computeTotals(lines)),
+      '',
+      'Datos de envío:',
+      `Nombre: ${data.nombre.trim()}`,
+      `Teléfono: ${data.telefono.trim()}`,
+      `Email: ${data.email.trim()}`,
+      `Domicilio: ${data.direccion.trim()}, ${data.localidad.trim()} (CP ${data.cp.trim()}), ${data.provincia.trim()}`,
+      `Medio de envío: ${data.envio}`,
+      `Medio de pago elegido: ${data.pago}`,
+    ].join('\n');
+    const url = whatsappUrl(phone, message);
+    const opened = window.open(url, '_blank', 'noopener,noreferrer');
+    onlineStatus.innerHTML = `Abrimos WhatsApp con tu compra. <b>Enviá el mensaje</b> y un asesor te confirmará stock, costo de envío y cómo pagar.${opened ? '' : ` Si no se abrió, <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">tocá acá</a>.`}`;
+  });
 
   regulatedAckInput.addEventListener('change', () => { if (regulatedAckInput.checked) checkoutStatus.textContent = ''; });
   document.querySelectorAll('[data-open-cart]').forEach(button => button.addEventListener('click', () => { update(); openOverlay('cartOverlay'); }));
