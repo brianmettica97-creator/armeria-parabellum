@@ -12,29 +12,36 @@
 // Los puntos se ubicaron sobre lo que se identifica en cada foto (sectores y
 // carteles de marca); no representan unidades específicas en stock.
 const ARMAS = 'armas';
-const logo = (x, y, label, brand = label) => ({ x, y, label, note: 'Marca', logo: { w: 12, h: 4.6 }, action: { brand } });
+// Zona clickeable sobre el cartel de una marca (w / h en % de la foto).
+const logo = (x, y, label, brand = label, w = 8, h = 5) => ({ x, y, label, note: 'Marca', logo: { w, h }, action: { brand } });
 
 export const showroomViews = [
   {
     id: 'entrada', title: 'Vista principal', image: 'assets/showroom/entrada.jpg', thumb: 'assets/showroom/entrada-mini.jpg',
-    alt: 'Pasillo central del local con vitrinas y paredes de armas', filter: { category: '' },
+    alt: 'Pasillo central del local con vitrinas, paredes de armas y carteles de marcas', filter: { category: '' },
     spots: [
-      { x: 7, y: 40, label: 'Armas largas', note: 'Escopetas, carabinas y fusiles', action: { category: ARMAS, subcategory: 'armas-largas' } },
-      { x: 25, y: 47, label: 'Municiones, accesorios y recarga', note: 'Entrar a este sector', action: { view: 'accesorios' } },
-      { x: 42, y: 37, label: 'Arma corta', note: 'Pistolas y revólveres · entrar al mostrador', action: { view: 'mostrador' } },
-      { x: 88, y: 30, label: 'Fusiles', action: { category: ARMAS, subcategory: 'fusiles' } },
-      { x: 78, y: 61, label: 'Revólveres', action: { category: ARMAS, subcategory: 'revolveres' } },
-      { x: 89, y: 75, label: 'Pistolas', action: { category: ARMAS, subcategory: 'pistolas' } },
+      { x: 11, y: 40, label: 'Armas largas', note: 'Escopetas, carabinas y fusiles', action: { category: ARMAS, subcategory: 'armas-largas' } },
+      { x: 17, y: 78, label: 'Arma corta', note: 'Pistolas y revólveres', action: { category: ARMAS, subcategory: 'armas-cortas' } },
+      { x: 46, y: 60, label: 'Municiones, accesorios y recarga', note: 'Entrar a este sector', action: { view: 'accesorios' } },
+      { x: 88, y: 32, label: 'Fusiles', action: { category: ARMAS, subcategory: 'fusiles' } },
+      { x: 87, y: 82, label: 'Revólveres', action: { category: ARMAS, subcategory: 'revolveres' } },
+      // Carteles de marcas de la pared del fondo y de la pared derecha.
+      logo(32.5, 27.5, 'Ruger', 'Ruger', 6, 5), logo(36.5, 28, 'CZ', 'CZ', 5, 5), logo(32.5, 35.5, 'Glock', 'GLOCK', 6, 4.5),
+      logo(36.3, 35, 'Heckler & Koch', 'Heckler & Koch', 6, 5), logo(59.5, 28, 'FN Herstal', 'FN Herstal', 8, 5),
+      logo(59.5, 34.5, 'Beretta', 'Beretta', 8, 3.5),
+      logo(76, 19, 'Sig Sauer', 'SIG SAUER', 9, 5), logo(76, 24.5, 'Remington', 'Remington', 9, 4),
+      logo(77, 44.5, 'Browning', 'Browning', 10, 4),
+      logo(94, 23.5, 'Colt', 'Colt', 9, 6), logo(94, 35.5, 'Mossberg', 'Mossberg', 10, 4), logo(94, 46, 'Taurus', 'Taurus', 10, 4),
     ],
   },
   {
     id: 'pistolas', title: 'Pistolas y escopetas', image: 'assets/showroom/pistolas-escopetas.jpg', thumb: 'assets/showroom/pistolas-escopetas-mini.jpg',
-    alt: 'Pared de escopetas y vitrina con pistolas', filter: { category: ARMAS, subcategory: 'escopetas' }, focus: { x: 12, y: 42 },
+    alt: 'Pared de escopetas y vitrina con pistolas', filter: { category: ARMAS, subcategory: 'escopetas' }, focus: { x: 11, y: 42 },
     spots: [
-      { x: 23, y: 19, label: 'Escopetas', action: { category: ARMAS, subcategory: 'escopetas' } },
-      { x: 28, y: 68, label: 'Pistolas', action: { category: ARMAS, subcategory: 'pistolas' } },
-      { x: 54, y: 63, label: 'Valijas y estuches', action: { category: 'accesorios', subcategory: 'fundas-transporte' } },
-      { x: 91, y: 58, label: 'Municiones', action: { category: 'municiones' } },
+      { x: 28, y: 24, label: 'Escopetas', action: { category: ARMAS, subcategory: 'escopetas' } },
+      { x: 30, y: 82, label: 'Pistolas', action: { category: ARMAS, subcategory: 'pistolas' } },
+      { x: 53, y: 77, label: 'Valijas y estuches', action: { category: 'accesorios', subcategory: 'fundas-transporte' } },
+      { x: 74, y: 69, label: 'Municiones', action: { category: 'municiones' } },
     ],
   },
   {
@@ -48,7 +55,7 @@ export const showroomViews = [
   },
   {
     id: 'accesorios', title: 'Accesorios', image: 'assets/showroom/accesorios-marcas.jpg', thumb: 'assets/showroom/accesorios-marcas-mini.jpg',
-    alt: 'Pared de accesorios con protección auditiva, anteojos, miras, recarga y fundas', filter: { category: 'accesorios' }, focus: { x: 25, y: 36 },
+    alt: 'Pared de accesorios con protección auditiva, anteojos, miras, recarga y fundas', filter: { category: 'accesorios' }, focus: { x: 46, y: 58 },
     spots: [
       { x: 14, y: 30, label: 'Auriculares de tiro', note: 'EARMOR', action: { category: 'accesorios', subcategory: 'auriculares' } },
       { x: 34, y: 22, label: 'Anteojos de protección', note: 'Shilba', action: { category: 'accesorios', subcategory: 'proteccion' } },
@@ -59,27 +66,15 @@ export const showroomViews = [
     ],
   },
   {
-    id: 'opticas', title: 'Ópticas y municiones', image: 'assets/showroom/opticas-municiones.jpg', thumb: 'assets/showroom/opticas-municiones-mini.jpg',
-    alt: 'Pared de ópticas, linternas y láseres, y vitrinas con cajas de municiones', filter: { category: 'accesorios', subcategory: 'optica' }, focus: { x: 62, y: 44 },
+    id: 'opticas', title: 'Ópticas y accesorios', image: 'assets/showroom/opticas-municiones.jpg', thumb: 'assets/showroom/opticas-municiones-mini.jpg',
+    alt: 'Sección de accesorios y ópticas: miras, miras láser, fundas, kits de limpieza y extensiones', filter: { category: 'accesorios', subcategory: 'optica' }, focus: { x: 46, y: 58 },
     spots: [
-      { x: 26, y: 17, label: 'Miras y ópticas', action: { category: 'accesorios', subcategory: 'optica' } },
-      { x: 11, y: 35, label: 'Linternas', action: { category: 'accesorios', subcategory: 'linternas' } },
-      { x: 30, y: 37, label: 'Láseres', action: { category: 'accesorios', subcategory: 'laseres' } },
-      { x: 33, y: 74, label: 'Municiones', action: { category: 'municiones' } },
-    ],
-  },
-  {
-    id: 'mostrador', title: 'Arma corta', image: 'assets/showroom/mostrador.jpg', thumb: 'assets/showroom/mostrador-mini.jpg',
-    alt: 'Mostrador de atención con vitrinas de pistolas y revólveres y carteles de marcas', filter: { category: ARMAS, subcategory: 'armas-cortas' }, focus: { x: 42, y: 36 },
-    spots: [
-      { x: 37, y: 57, label: 'Pistolas', action: { category: ARMAS, subcategory: 'pistolas' } },
-      { x: 90, y: 66, label: 'Revólveres', action: { category: ARMAS, subcategory: 'revolveres' } },
-      { x: 76, y: 53, label: 'Municiones', action: { category: 'municiones' } },
-      // Logos de los carteles: cada uno filtra la tienda por esa marca.
-      logo(22, 21.5, 'Ruger'), logo(22, 28, 'Tanfoglio'), logo(22, 33, 'Marlin'), logo(22, 37.5, 'Bersa'),
-      logo(22, 44, 'Mauser'), logo(22, 49.5, 'Remington'),
-      logo(60, 20.5, 'Mossberg'), logo(60, 26.5, 'Benelli'), logo(60, 32.5, 'Colt'),
-      logo(60, 38.5, 'Smith & Wesson'), logo(60, 45, 'CZ'),
+      { x: 17, y: 44, label: 'Miras y ópticas', action: { category: 'accesorios', subcategory: 'optica' } },
+      { x: 37, y: 57, label: 'Miras láser', action: { category: 'accesorios', subcategory: 'laseres' } },
+      { x: 54, y: 43, label: 'Fundas', action: { category: 'accesorios', subcategory: 'fundas-transporte' } },
+      { x: 72, y: 58, label: 'Kits de limpieza', action: { category: 'accesorios', subcategory: 'limpieza' } },
+      { x: 88, y: 44, label: 'Extensiones y otros', action: { category: 'accesorios', subcategory: 'otros' } },
+      { x: 65, y: 87, label: 'Estuches y valijas', action: { category: 'accesorios', subcategory: 'fundas-transporte' } },
     ],
   },
 ];

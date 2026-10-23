@@ -685,7 +685,7 @@ document.querySelectorAll('[data-icon]').forEach(node => { if (icons[node.datase
 
 // Botones que filtran el catálogo por categoría (p. ej. puntos del local outdoor)
 document.querySelectorAll('[data-filter-cat]').forEach(button => button.addEventListener('click', () => {
-  applyFilter({ category: button.dataset.filterCat, subcategory: '', brand: '' });
+  applyFilter({ category: button.dataset.filterCat, subcategory: button.dataset.filterSub || '', brand: '' });
 }));
 
 // Enlaces de consulta general: <a data-inquiry="texto del mensaje">

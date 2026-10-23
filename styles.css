@@ -1153,3 +1153,11 @@ a.trust-item:hover{background:#ffffff08}
 .sector-camping .cart-thumb{background:#efe7da}
 @media(max-width:560px){.cart-thumb{width:66px;height:66px}}
 .showroom-frame.skip-figure-reveal.is-revealing .scene-figure{animation:none}
+
+/* Escena principal de Outdoor con todas las líneas */
+.camp-scene{background:linear-gradient(180deg,#0f150dd9,#17110cee)}
+.camp-scene-frame img{aspect-ratio:1600/894;filter:saturate(1.05) brightness(1)}
+.camp-scene-frame:after{background:linear-gradient(0deg,#0d090655,transparent 22%)}
+.camp-scene-frame .camp-hotspot{z-index:2}
+.camp-scene-frame .is-outlet-spot{background:#6b2415e6;border-color:#ffc9a8}
+@media(max-width:700px){.camp-scene-frame .camp-hotspot{padding:0;width:28px;height:28px;justify-content:center;border-radius:50%}.camp-scene-frame .camp-hotspot span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}}
