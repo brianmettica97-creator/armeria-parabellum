@@ -128,7 +128,7 @@ export function initCart({ products, findProduct, onChange = () => {} }) {
   const regulatedAck = $('#regulatedAck');
   const regulatedAckInput = $('#regulatedAckInput');
 
-  const openOverlay = id => $(`#${id}`).classList.add('open');
+  const openOverlay = id => { document.querySelector('#cartToast')?.classList.remove('show'); $(`#${id}`).classList.add('open'); };
   const closeOverlay = id => $(`#${id}`).classList.remove('open');
   const inCart = id => cartItems.some(item => item.id === id);
 

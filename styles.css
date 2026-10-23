@@ -1218,3 +1218,6 @@ a.trust-item:hover{background:#ffffff08}
 }
 .camp-hero-emblem{left:76%;-webkit-mask-image:radial-gradient(ellipse 78% 78% at 50% 50%,#000 82%,transparent 100%);mask-image:radial-gradient(ellipse 78% 78% at 50% 50%,#000 82%,transparent 100%)}
 .camp-hero-emblem{-webkit-mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent),linear-gradient(0deg,transparent,#000 12%,#000 88%,transparent);-webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent),linear-gradient(0deg,transparent,#000 12%,#000 88%,transparent);mask-composite:intersect}
+.online-dialog .eyebrow{padding-right:48px}
+.cart-toast{opacity:0;visibility:hidden;transition:transform .3s,opacity .3s,visibility .3s}
+.cart-toast.show{opacity:1;visibility:visible}
