@@ -403,7 +403,7 @@ function filteredContacts() {
 
 function renderContacts() {
   const rows = filteredContacts();
-  if (contacts.length) $('#contactsInfo').textContent = `${rows.length} de ${contacts.length} contactos`;
+  $('#contactsInfo').textContent = contacts.length ? `${rows.length} de ${contacts.length} contactos` : '';
   const date = iso => new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   $('#contactsTable').innerHTML = rows.length ? `
     <thead><tr><th>Fecha</th><th>Nombre</th><th>Teléfono</th><th>Email</th><th>CLU</th><th>Sector</th><th></th></tr></thead>
