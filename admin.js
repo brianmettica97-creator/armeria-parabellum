@@ -10,7 +10,7 @@ const MAX_SIDE = 1600;       // px del lado mayor después de achicar
 const JPEG_QUALITY = 0.82;
 
 const $ = selector => document.querySelector(selector);
-const views = ['loginView', 'recoveryView', 'deniedView', 'listView'];
+const views = ['loginView', 'recoveryView', 'deniedView', 'listView', 'contactsView'];
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const money = value => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 2 }).format(value);
 
@@ -23,7 +23,11 @@ let draftId = '';      // id reservado para un producto nuevo (carpeta de sus fo
 // Se lee antes de iniciar Supabase, que limpia la dirección al procesarla.
 const isRecovery = location.hash.includes('type=recovery');
 
-function show(id) { views.forEach(view => { $(`#${view}`).hidden = view !== id; }); }
+function show(id) {
+  views.forEach(view => { $(`#${view}`).hidden = view !== id; });
+  $('#admTabs').hidden = !['listView', 'contactsView'].includes(id);
+  document.querySelectorAll('#admTabs [data-tab]').forEach(tab => tab.classList.toggle('active', tab.dataset.tab === id));
+}
 function toast(text, error = false) {
   const node = $('#toast');
   node.textContent = text; node.className = `toast${error ? ' err' : ''}`; node.hidden = false;
@@ -55,6 +59,7 @@ async function enter(session) {
   if (error || !isAdmin) { entered = false; show('deniedView'); return; }
   show('listView');
   await loadList();
+  loadContacts();
 }
 
 $('#loginForm').addEventListener('submit', async event => {
@@ -163,7 +168,11 @@ function categoryRegulated() {
   return Boolean(sub?.regulated ?? cat?.regulated);
 }
 function updateRegulated() {
-  $('#regulatedHint').hidden = !categoryRegulated();
+  const forced = categoryRegulated();
+  $('#regulatedHint').hidden = !forced;
+  if (!forced && f('regulated').disabled) f('regulated').checked = false; // venía de una categoría controlada
+  f('regulated').disabled = forced;
+  if (forced) f('regulated').checked = true;
   $('#caliberWrap').hidden = f('sector').value !== 'armeria';
 }
 function updateConditional() {
@@ -202,6 +211,9 @@ function openEditor(row) {
   f('notes').value = row?.condition_notes || '';
   f('new').checked = row ? Boolean(row.is_new) : true;
   f('published').checked = row ? row.published !== false : true;
+  f('regulated').disabled = false;
+  f('regulated').checked = Boolean(row?.regulated);
+  updateRegulated();
   photos = [row?.photo, ...(Array.isArray(row?.photos) ? row.photos : [])].filter(p => p?.src);
   renderPhotos();
   updateConditional();
@@ -309,7 +321,7 @@ function collect() {
     previous_price: previous,
     stock,
     availability: stock === 0 ? 'agotado' : f('availability').value,
-    regulated: categoryRegulated(),
+    regulated: categoryRegulated() || f('regulated').checked,
     condition: used ? 'usado' : 'nuevo',
     condition_grade: used ? (f('grade').value || null) : null,
     condition_notes: used ? (f('notes').value.trim() || null) : null,
@@ -365,3 +377,67 @@ $('#confirmYes').addEventListener('click', async () => {
 });
 
 start();
+
+// ─────────────────────────── Contactos (formulario de novedades) ───────────────────────────
+let contacts = [];
+const cluLabel = { si: 'Sí', no: 'No', tramite: 'En trámite' };
+document.querySelectorAll('#admTabs [data-tab]').forEach(tab => tab.addEventListener('click', () => show(tab.dataset.tab)));
+
+async function loadContacts() {
+  const { data, error } = await sb.from('contactos').select('*').order('created_at', { ascending: false });
+  if (error) {
+    $('#contactsInfo').textContent = error.code === '42P01' || /does not exist|schema cache/i.test(error.message)
+      ? 'Falta crear la tabla de contactos: correr el SQL 20261023000000_contactos.sql en Supabase.'
+      : `No se pudieron cargar los contactos: ${error.message}`;
+    contacts = [];
+  } else contacts = data;
+  $('#contactsCount').textContent = contacts.length ? `(${contacts.length})` : '';
+  renderContacts();
+}
+
+function filteredContacts() {
+  const q = $('#contactSearch').value.trim().toLowerCase();
+  const clu = $('#cluFilter').value;
+  return contacts.filter(c => (!clu || c.clu === clu) && (!q || [c.nombre, c.telefono, c.email].some(v => String(v || '').toLowerCase().includes(q))));
+}
+
+function renderContacts() {
+  const rows = filteredContacts();
+  if (contacts.length) $('#contactsInfo').textContent = `${rows.length} de ${contacts.length} contactos`;
+  const date = iso => new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  $('#contactsTable').innerHTML = rows.length ? `
+    <thead><tr><th>Fecha</th><th>Nombre</th><th>Teléfono</th><th>Email</th><th>CLU</th><th>Sector</th><th></th></tr></thead>
+    <tbody>${rows.map(c => `<tr>
+      <td>${date(c.created_at)}</td><td>${esc(c.nombre)}</td>
+      <td><a href="https://wa.me/${esc(String(c.telefono).replace(/\D/g, ''))}" target="_blank" rel="noopener">${esc(c.telefono)}</a></td>
+      <td><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></td>
+      <td>${esc(cluLabel[c.clu] || '—')}</td><td>${c.sector === 'camping' ? 'Outdoor' : 'Armería'}</td>
+      <td><button type="button" class="link danger-link" data-del-contact="${esc(c.id)}">Borrar</button></td>
+    </tr>`).join('')}</tbody>` : '<tbody><tr><td class="empty">Todavía no hay contactos.</td></tr></tbody>';
+}
+['#contactSearch', '#cluFilter'].forEach(sel => $(sel).addEventListener('input', renderContacts));
+
+$('#contactsTable').addEventListener('click', async event => {
+  const button = event.target.closest('[data-del-contact]');
+  if (!button) return;
+  if (button.dataset.confirm !== 'yes') { button.dataset.confirm = 'yes'; button.textContent = '¿Seguro? Tocá de nuevo'; return; }
+  const { error } = await sb.from('contactos').delete().eq('id', button.dataset.delContact);
+  if (error) { toast(`No se pudo borrar: ${error.message}`, true); return; }
+  contacts = contacts.filter(c => c.id !== button.dataset.delContact);
+  $('#contactsCount').textContent = contacts.length ? `(${contacts.length})` : '';
+  renderContacts();
+  toast('Contacto borrado.');
+});
+
+$('#exportCsv').addEventListener('click', () => {
+  const rows = filteredContacts();
+  const cell = value => `"${String(value ?? '').replace(/"/g, '""')}"`;
+  const lines = [['Fecha', 'Nombre', 'Teléfono', 'Email', 'CLU', 'Sector'].map(cell).join(';'),
+    ...rows.map(c => [new Date(c.created_at).toLocaleString('es-AR'), c.nombre, c.telefono, c.email, cluLabel[c.clu] || '', c.sector === 'camping' ? 'Outdoor' : 'Armería'].map(cell).join(';'))];
+  const blob = new Blob([`\ufeff${lines.join('\r\n')}`], { type: 'text/csv;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `contactos-parabellum-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+});

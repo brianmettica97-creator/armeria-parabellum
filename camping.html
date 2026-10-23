@@ -47,14 +47,25 @@
       <div class="camp-hero-media" aria-hidden="true"></div>
       <img class="camp-hero-emblem" src="assets/camping/outdoor-emblema.jpg" alt="" aria-hidden="true">
       <div class="camp-hero-content">
-        <div class="eyebrow">Outdoor Parabellum · La Plata</div>
-        <h1 id="campTitle">Camping <span>&amp;</span> Outdoor</h1>
-        <p>Equipamiento para acampar, explorar y pasar la noche afuera: carpas, bolsas de dormir, iluminación, cocina de campamento y herramientas.</p>
+        <div class="eyebrow">Bienvenido a Outdoor Parabellum · La Plata</div>
+        <h1 id="campTitle">Tu próxima salida <span>empieza acá</span></h1>
+        <p>Camping, pesca, náutica, cuchillería, indumentaria y tiro recreativo: todo el equipamiento para el aire libre, con el asesoramiento de Parabellum.</p>
         <div class="camp-hero-actions">
           <a class="primary" href="#catalogo">Ver productos</a>
           <a class="secondary" href="#local">Recorrer el local</a>
         </div>
       </div>
+      <nav class="camp-lines" aria-label="Líneas de Outdoor Parabellum">
+        <button type="button" data-filter-cat="carpas"><b aria-hidden="true">△</b><span>Camping</span></button>
+        <button type="button" data-filter-cat="pesca"><b aria-hidden="true">⌇</b><span>Pesca</span></button>
+        <button type="button" data-filter-cat="nautica"><b aria-hidden="true">≈</b><span>Náutica y kayaks</span></button>
+        <button type="button" data-filter-cat="cuchillos"><b aria-hidden="true">◇</b><span>Cuchillería</span></button>
+        <button type="button" data-filter-cat="encendedores"><b aria-hidden="true">♦</b><span>Zippo y encendedores</span></button>
+        <button type="button" data-filter-cat="indumentaria"><b aria-hidden="true">⌂</b><span>Indumentaria</span></button>
+        <button type="button" data-filter-cat="tiro-recreativo"><b aria-hidden="true">➶</b><span>Tiro recreativo</span></button>
+        <button type="button" data-filter-cat="binoculares"><b aria-hidden="true">∞</b><span>Binoculares</span></button>
+        <button type="button" data-filter-cat="outlet" class="is-outlet"><b aria-hidden="true">%</b><span>Outlet</span></button>
+      </nav>
     </section>
 
     <div class="trust-strip" data-trust></div>
@@ -68,7 +79,7 @@
           <button type="button" class="camp-hotspot" data-filter-cat="carpas" style="--x:29%;--y:33%"><i aria-hidden="true"></i><span>Carpas</span></button>
           <button type="button" class="camp-hotspot" data-filter-cat="anafes" style="--x:19%;--y:57%"><i aria-hidden="true"></i><span>Anafes</span></button>
           <button type="button" class="camp-hotspot" data-filter-cat="linternas" style="--x:21%;--y:70%"><i aria-hidden="true"></i><span>Linternas</span></button>
-          <button type="button" class="camp-hotspot" data-filter-cat="cuchillos" style="--x:60%;--y:73%"><i aria-hidden="true"></i><span>Herramientas</span></button>
+          <button type="button" class="camp-hotspot" data-filter-cat="cuchillos" style="--x:60%;--y:73%"><i aria-hidden="true"></i><span>Cuchillería</span></button>
           <button type="button" class="camp-hotspot" data-filter-cat="accesorios-camping" style="--x:88%;--y:62%"><i aria-hidden="true"></i><span>Accesorios</span></button>
           <button type="button" class="camp-hotspot" data-filter-cat="bolsas-dormir" style="--x:79%;--y:85%"><i aria-hidden="true"></i><span>Bolsas de dormir</span></button>
         </div>
@@ -78,9 +89,14 @@
           <button type="button" class="camp-chip" data-filter-cat="carpas">Carpas</button>
           <button type="button" class="camp-chip" data-filter-cat="anafes">Anafes</button>
           <button type="button" class="camp-chip" data-filter-cat="linternas">Linternas</button>
-          <button type="button" class="camp-chip" data-filter-cat="cuchillos">Herramientas</button>
+          <button type="button" class="camp-chip" data-filter-cat="cuchillos">Cuchillería</button>
           <button type="button" class="camp-chip" data-filter-cat="accesorios-camping">Accesorios</button>
           <button type="button" class="camp-chip" data-filter-cat="bolsas-dormir">Bolsas de dormir</button>
+          <button type="button" class="camp-chip" data-filter-cat="pesca">Pesca</button>
+          <button type="button" class="camp-chip" data-filter-cat="nautica">Kayaks</button>
+          <button type="button" class="camp-chip" data-filter-cat="indumentaria">Indumentaria</button>
+          <button type="button" class="camp-chip" data-filter-cat="tiro-recreativo">Tiro recreativo</button>
+          <button type="button" class="camp-chip" data-filter-cat="outlet">Outlet</button>
       </div>
     </section>
 
@@ -120,6 +136,8 @@
       <div class="section-head"><div><div class="eyebrow">Segunda mano</div><h2 id="usadosTitle">Usados outdoor</h2></div><p>Equipos usados revisados por el local. Cada ficha detalla el estado de la unidad.</p></div>
       <div data-slot></div>
     </section>
+
+    <section class="section leads-section" id="novedades-ofertas" aria-labelledby="leadsTitle" data-leads></section>
 
     <section class="section camp-cross" aria-label="Armería Parabellum">
       <div class="camp-cross-box">

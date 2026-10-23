@@ -14,15 +14,23 @@ export const sectors = {
     page: 'armeria.html',
     categories: [
       {
-        id: 'armas', label: 'Armas', icon: '✦', regulated: true,
+        // Las armas se muestran como accesos independientes (una sección por
+        // tipo) en la barra lateral y en el showroom. `flatten` hace que cada
+        // subcategoría aparezca como entrada propia; los grupos permiten
+        // filtrar varias juntas (armas largas / armas cortas).
+        id: 'armas', label: 'Armas', icon: '✦', regulated: true, flatten: true,
         subcategories: [
-          { id: 'pistolas', label: 'Pistolas' },
-          { id: 'revolveres', label: 'Revólveres' },
-          { id: 'escopetas', label: 'Escopetas' },
-          { id: 'carabinas', label: 'Carabinas' },
-          { id: 'fusiles', label: 'Fusiles' },
-          { id: 'pcc', label: 'PCC' },
-          { id: 'permisos-especiales', label: 'Material con permisos especiales' },
+          { id: 'pistolas', label: 'Pistolas', icon: '⌐' },
+          { id: 'revolveres', label: 'Revólveres', icon: '◎' },
+          { id: 'escopetas', label: 'Escopetas', icon: '═' },
+          { id: 'carabinas', label: 'Carabinas', icon: '─' },
+          { id: 'fusiles', label: 'Fusiles', icon: '≡' },
+          { id: 'pcc', label: 'PCC', icon: '▭' },
+          { id: 'permisos-especiales', label: 'Material con permisos especiales', icon: '⚑' },
+        ],
+        groups: [
+          { id: 'armas-largas', label: 'Armas largas', subs: ['escopetas', 'carabinas', 'fusiles'] },
+          { id: 'armas-cortas', label: 'Armas cortas', subs: ['pistolas', 'revolveres'] },
         ],
       },
       {
@@ -42,16 +50,24 @@ export const sectors = {
         ],
       },
       {
+        // Accesorios organizados por tipo de producto (no por marca).
         id: 'accesorios', label: 'Accesorios', icon: '◉',
         subcategories: [
-          { id: 'limpieza', label: 'Limpieza de armas' },
-          { id: 'optica', label: 'Óptica' },
+          { id: 'auriculares', label: 'Auriculares de tiro' },
+          { id: 'protectores-auditivos', label: 'Protectores auditivos' },
+          { id: 'proteccion', label: 'Anteojos y protección' },
+          { id: 'optica', label: 'Miras y ópticas' },
+          { id: 'laseres', label: 'Láseres' },
           { id: 'linternas', label: 'Linternas' },
+          { id: 'fundas-transporte', label: 'Fundas, guardado y transporte' },
           { id: 'correaje', label: 'Correaje' },
           { id: 'cajas-portamuniciones', label: 'Cajas portamuniciones' },
-          { id: 'proteccion', label: 'Protección personal' },
-          { id: 'fundas-transporte', label: 'Fundas y transporte' },
+          { id: 'limpieza', label: 'Limpieza de armas' },
           { id: 'otros', label: 'Otros accesorios' },
+        ],
+        // Accesos destacados: filtran por marca dentro de la categoría.
+        featured: [
+          { brand: 'KILLER GEAR', label: 'Killer Gear', note: 'Guardado, fundas y transporte' },
         ],
       },
       {
@@ -67,17 +83,40 @@ export const sectors = {
     id: 'camping',
     name: 'Camping & Outdoor',
     page: 'camping.html',
+    // En el menú, Camping muestra un único desplegable con todas las categorías.
+    navMenu: 'single',
     categories: [
       { id: 'carpas', label: 'Carpas', icon: '△', subcategories: [] },
       { id: 'bolsas-dormir', label: 'Bolsas de dormir', icon: '☾', subcategories: [] },
-      { id: 'cuchillos', label: 'Cuchillos y herramientas', icon: '◇', subcategories: [] },
+      { id: 'mochilas-bolsos', label: 'Mochilas y bolsos', icon: '▤', subcategories: [] },
+      { id: 'bolsos-estancos', label: 'Bolsos estancos', icon: '◒', subcategories: [] },
+      { id: 'mesas', label: 'Mesas plegables', icon: '⊓', subcategories: [] },
+      { id: 'anafes', label: 'Anafes', icon: '♨', subcategories: [] },
       { id: 'linternas', label: 'Linternas', icon: '◉', subcategories: [] },
       { id: 'reflectores', label: 'Reflectores', icon: '☼', subcategories: [] },
-      { id: 'anafes', label: 'Anafes', icon: '♨', subcategories: [] },
-      { id: 'bolsos-estancos', label: 'Bolsos estancos', icon: '◒', subcategories: [] },
-      { id: 'mochilas-bolsos', label: 'Mochilas y bolsos', icon: '▤', subcategories: [] },
-      { id: 'mesas', label: 'Mesas plegables', icon: '⊓', subcategories: [] },
+      {
+        id: 'pesca', label: 'Pesca', icon: '⌇',
+        subcategories: [
+          { id: 'mosca', label: 'Cañas para mosca' },
+          { id: 'telescopicas', label: 'Cañas telescópicas' },
+          { id: 'tramos', label: 'Cañas de distintos tramos' },
+          { id: 'accesorios-pesca', label: 'Reeles y accesorios de pesca' },
+        ],
+      },
+      { id: 'nautica', label: 'Náutica y kayaks', icon: '≈', subcategories: [] },
+      { id: 'cuchillos', label: 'Cuchillería y herramientas', icon: '◇', subcategories: [] },
+      { id: 'encendedores', label: 'Zippo y encendedores', icon: '♦', subcategories: [] },
+      { id: 'indumentaria', label: 'Indumentaria', icon: '⌂', subcategories: [] },
+      {
+        id: 'tiro-recreativo', label: 'Tiro recreativo', icon: '➶',
+        subcategories: [
+          { id: 'arco-flecha', label: 'Arco y flecha' },
+          { id: 'aire-comprimido', label: 'Aire comprimido' },
+        ],
+      },
+      { id: 'binoculares', label: 'Binoculares', icon: '∞', subcategories: [] },
       { id: 'accesorios-camping', label: 'Accesorios de camping', icon: '♧', subcategories: [] },
+      { id: 'outlet', label: 'Outlet', icon: '%', subcategories: [] },
     ],
   },
 };
@@ -88,6 +127,18 @@ export function findCategory(sectorId, categoryId) {
 
 export function findSubcategory(sectorId, categoryId, subcategoryId) {
   return findCategory(sectorId, categoryId)?.subcategories.find(sub => sub.id === subcategoryId) || null;
+}
+
+// Grupo de subcategorías (p. ej. armas largas = escopetas + carabinas + fusiles).
+export function findGroup(sectorId, categoryId, groupId) {
+  return findCategory(sectorId, categoryId)?.groups?.find(group => group.id === groupId) || null;
+}
+
+// ¿El producto entra en el filtro de subcategoría o grupo?
+export function matchesSub(product, sectorId, categoryId, subId) {
+  if (!subId) return true;
+  const group = findGroup(sectorId, categoryId, subId);
+  return group ? group.subs.includes(product.subcategory) : product.subcategory === subId;
 }
 
 // ───────────────────────────────────────────────────────────────────────────

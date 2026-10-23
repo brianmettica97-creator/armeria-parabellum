@@ -14,6 +14,10 @@ export function formatMoney(value) {
 const toCents = value => Math.round(value * 100);
 const fromCents = cents => cents / 100;
 
+// Aviso para materiales controlados (ficha y catálogo de Armería).
+export const CONTROLLED_SHORT = 'Material controlado: por normativa legal no se vende online. Consultalo con nuestros asesores por WhatsApp para adquirirlo o iniciar el trámite. La línea Outdoor, las miras y los accesorios sí se suman al pedido.';
+export const CONTROLLED_NOTICE = 'Los productos de la línea Outdoor, las miras y los accesorios se suman al pedido y se coordinan por WhatsApp. Los materiales controlados (armas y municiones) no admiten venta online por normativa legal: para adquirirlos o iniciar el trámite, consultá directamente con nuestros asesores por WhatsApp.';
+
 export function isEligible(product) {
   return Boolean(product && product.published !== false && product.availability !== 'agotado');
 }
@@ -82,6 +86,10 @@ export function validateItems(items, findProduct) {
     }
     if (product.availability === 'agotado') {
       changes.push({ type: 'removed', id: item.id, name: label, detail: 'figura sin stock y se quitó del pedido.' });
+      continue;
+    }
+    if (product.regulated) {
+      changes.push({ type: 'removed', id: item.id, name: label, detail: 'es material controlado: se consulta directamente por WhatsApp y se quitó del pedido.' });
       continue;
     }
     const qty = clampQuantity(product, item.qty);

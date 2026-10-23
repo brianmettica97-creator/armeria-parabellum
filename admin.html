@@ -53,6 +53,11 @@
   </main>
 
   <!-- Listado -->
+  <nav class="adm-tabs" id="admTabs" hidden aria-label="Secciones del panel">
+    <button type="button" class="active" data-tab="listView">Productos</button>
+    <button type="button" data-tab="contactsView">Contactos <span id="contactsCount"></span></button>
+  </nav>
+
   <main id="listView" class="adm-main" hidden>
     <div class="adm-toolbar">
       <button class="btn primary" type="button" id="newBtn">+ Nuevo producto</button>
@@ -74,6 +79,22 @@
     </div>
     <p class="muted" id="listCount"></p>
     <div class="adm-list" id="list"></div>
+  </main>
+
+  <!-- Contactos del formulario de novedades -->
+  <main id="contactsView" class="adm-main" hidden>
+    <div class="adm-toolbar contacts-toolbar">
+      <input type="search" id="contactSearch" placeholder="Buscar por nombre, teléfono o email" aria-label="Buscar contactos">
+      <select id="cluFilter" aria-label="CLU">
+        <option value="">CLU: todos</option>
+        <option value="si">Con CLU</option>
+        <option value="tramite">CLU en trámite</option>
+        <option value="no">Sin CLU</option>
+      </select>
+      <button type="button" class="btn" id="exportCsv">Descargar planilla (CSV)</button>
+    </div>
+    <p class="muted" id="contactsInfo"></p>
+    <div class="adm-table-wrap"><table class="adm-table" id="contactsTable"></table></div>
   </main>
 
   <!-- Editor -->
@@ -110,7 +131,8 @@
           <label>Categoría *<select id="f_category" required></select></label>
           <label id="subWrap">Subcategoría<select id="f_subcategory"></select></label>
         </div>
-        <p class="hint" id="regulatedHint" hidden>Esta categoría es <strong>regulada</strong>: en el sitio se vende de a 1 unidad y el pedido pasa por la verificación legal.</p>
+        <label class="check"><input type="checkbox" id="f_regulated"> Material controlado (solo consulta por WhatsApp, sin carrito)</label>
+        <p class="hint" id="regulatedHint" hidden>Esta categoría es siempre <strong>material controlado</strong>: en el sitio no se agrega al pedido, se consulta por WhatsApp.</p>
         <label id="caliberWrap">Calibre<input id="f_caliber" maxlength="60" placeholder="Ej.: 9×19 mm"></label>
         <label>Descripción corta (aparece en la tarjeta)<input id="f_short" maxlength="120"></label>
         <label>Descripción completa<textarea id="f_description" rows="5" maxlength="3000"></textarea></label>

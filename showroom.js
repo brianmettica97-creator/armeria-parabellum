@@ -1,74 +1,85 @@
 // Showroom de Armería con fotos reales del local y puntos interactivos.
 //
 // Cada vista tiene:
-//   filter: filtro del catálogo que se aplica al elegir la vista.
+//   filter: filtro del catálogo que se aplica (sin mover la página) al elegir la vista.
+//   focus:  punto de la foto principal donde está ese sector; la transición
+//           hace zoom hacia ahí al entrar y desde ahí al volver.
 //   spots:  puntos sobre la foto. x / y son porcentajes de la imagen (0–100).
 //           action: { category, subcategory } → filtra el catálogo
 //                   { brand }                  → filtra por marca
-//                   { view }                   → pasa a otra vista del local
+//                   { view }                   → hace zoom a otra vista del local
+//           logo: { w, h } → zona rectangular sobre un logo (en % de la foto)
 // Los puntos se ubicaron sobre lo que se identifica en cada foto (sectores y
 // carteles de marca); no representan unidades específicas en stock.
+const ARMAS = 'armas';
+const logo = (x, y, label, brand = label) => ({ x, y, label, note: 'Marca', logo: { w: 12, h: 4.6 }, action: { brand } });
+
 export const showroomViews = [
   {
     id: 'entrada', title: 'Vista principal', image: 'assets/showroom/entrada.jpg', thumb: 'assets/showroom/entrada-mini.jpg',
     alt: 'Pasillo central del local con vitrinas y paredes de armas', filter: { category: '' },
     spots: [
-      { x: 7, y: 40, label: 'Armas largas', action: { category: 'armas' } },
-      { x: 88, y: 30, label: 'Fusiles', action: { category: 'armas', subcategory: 'fusiles' } },
-      { x: 89, y: 75, label: 'Pistolas', action: { category: 'armas', subcategory: 'pistolas' } },
-      { x: 78, y: 61, label: 'CZ', note: 'Marca', action: { brand: 'CZ' } },
-      { x: 42, y: 37, label: 'Mostrador', note: 'Ver el mostrador de atención', action: { view: 'mostrador' } },
+      { x: 7, y: 40, label: 'Armas largas', note: 'Escopetas, carabinas y fusiles', action: { category: ARMAS, subcategory: 'armas-largas' } },
+      { x: 25, y: 47, label: 'Municiones, accesorios y recarga', note: 'Entrar a este sector', action: { view: 'accesorios' } },
+      { x: 42, y: 37, label: 'Arma corta', note: 'Pistolas y revólveres · entrar al mostrador', action: { view: 'mostrador' } },
+      { x: 88, y: 30, label: 'Fusiles', action: { category: ARMAS, subcategory: 'fusiles' } },
+      { x: 78, y: 61, label: 'Revólveres', action: { category: ARMAS, subcategory: 'revolveres' } },
+      { x: 89, y: 75, label: 'Pistolas', action: { category: ARMAS, subcategory: 'pistolas' } },
     ],
   },
   {
     id: 'pistolas', title: 'Pistolas y escopetas', image: 'assets/showroom/pistolas-escopetas.jpg', thumb: 'assets/showroom/pistolas-escopetas-mini.jpg',
-    alt: 'Pared de escopetas y vitrina con pistolas', filter: { category: 'armas', subcategory: 'pistolas' },
+    alt: 'Pared de escopetas y vitrina con pistolas', filter: { category: ARMAS, subcategory: 'escopetas' }, focus: { x: 12, y: 42 },
     spots: [
-      { x: 25, y: 19, label: 'Escopetas', action: { category: 'armas', subcategory: 'escopetas' } },
-      { x: 30, y: 68, label: 'Pistolas', action: { category: 'armas', subcategory: 'pistolas' } },
-      { x: 55, y: 63, label: 'Valijas y estuches', action: { category: 'accesorios', subcategory: 'fundas-transporte' } },
-      { x: 92, y: 58, label: 'Municiones', action: { category: 'municiones' } },
+      { x: 23, y: 19, label: 'Escopetas', action: { category: ARMAS, subcategory: 'escopetas' } },
+      { x: 28, y: 68, label: 'Pistolas', action: { category: ARMAS, subcategory: 'pistolas' } },
+      { x: 54, y: 63, label: 'Valijas y estuches', action: { category: 'accesorios', subcategory: 'fundas-transporte' } },
+      { x: 91, y: 58, label: 'Municiones', action: { category: 'municiones' } },
     ],
   },
   {
     id: 'fusiles', title: 'Fusiles y revólveres', image: 'assets/showroom/fusiles-revolveres.jpg', thumb: 'assets/showroom/fusiles-revolveres-mini.jpg',
-    alt: 'Pared de fusiles y vitrina con revólveres', filter: { category: 'armas', subcategory: 'fusiles' },
+    alt: 'Pared de fusiles y vitrina con revólveres', filter: { category: ARMAS, subcategory: 'fusiles' }, focus: { x: 85, y: 45 },
     spots: [
-      { x: 62, y: 22, label: 'Fusiles', action: { category: 'armas', subcategory: 'fusiles' } },
-      { x: 49, y: 71, label: 'Revólveres', action: { category: 'armas', subcategory: 'revolveres' } },
-      { x: 22, y: 62, label: 'CZ', note: 'Marca', action: { brand: 'CZ' } },
+      { x: 70, y: 22, label: 'Fusiles', action: { category: ARMAS, subcategory: 'fusiles' } },
+      { x: 30, y: 30, label: 'Carabinas', action: { category: ARMAS, subcategory: 'carabinas' } },
+      { x: 57, y: 71, label: 'Revólveres', action: { category: ARMAS, subcategory: 'revolveres' } },
     ],
   },
   {
     id: 'accesorios', title: 'Accesorios', image: 'assets/showroom/accesorios-marcas.jpg', thumb: 'assets/showroom/accesorios-marcas-mini.jpg',
-    alt: 'Pared de accesorios con protección auditiva, anteojos, miras, recarga y fundas', filter: { category: 'accesorios' },
+    alt: 'Pared de accesorios con protección auditiva, anteojos, miras, recarga y fundas', filter: { category: 'accesorios' }, focus: { x: 25, y: 36 },
     spots: [
-      { x: 16, y: 33, label: 'EARMOR', note: 'Protección auditiva', action: { brand: 'EARMOR' } },
-      { x: 38, y: 32, label: 'Anteojos de protección', action: { category: 'accesorios', subcategory: 'proteccion' } },
-      { x: 54, y: 32, label: 'Holosun', note: 'Miras', action: { brand: 'Holosun' } },
-      { x: 69, y: 37, label: 'Recarga', action: { category: 'recarga' } },
-      { x: 91, y: 32, label: 'Ghost', note: 'Fundas', action: { brand: 'Ghost' } },
-      { x: 47, y: 78, label: 'Miras y ópticas', action: { category: 'accesorios', subcategory: 'optica' } },
+      { x: 14, y: 30, label: 'Auriculares de tiro', note: 'EARMOR', action: { category: 'accesorios', subcategory: 'auriculares' } },
+      { x: 34, y: 22, label: 'Anteojos de protección', note: 'Shilba', action: { category: 'accesorios', subcategory: 'proteccion' } },
+      { x: 52, y: 33, label: 'Miras y red dots', note: 'Holosun', side: 'right', action: { category: 'accesorios', subcategory: 'optica' } },
+      { x: 70, y: 45, label: 'Recarga', note: 'Lyman', side: 'right', action: { category: 'recarga' } },
+      { x: 91, y: 30, label: 'Fundas y portacargadores', note: 'Ghost', action: { category: 'accesorios', subcategory: 'fundas-transporte' } },
+      { x: 47, y: 78, label: 'Municiones', note: 'Ver todo en el catálogo', action: { category: 'municiones' } },
     ],
   },
   {
     id: 'opticas', title: 'Ópticas y municiones', image: 'assets/showroom/opticas-municiones.jpg', thumb: 'assets/showroom/opticas-municiones-mini.jpg',
-    alt: 'Pared de ópticas y vitrinas con cajas de municiones', filter: { category: 'accesorios', subcategory: 'optica' },
+    alt: 'Pared de ópticas, linternas y láseres, y vitrinas con cajas de municiones', filter: { category: 'accesorios', subcategory: 'optica' }, focus: { x: 62, y: 44 },
     spots: [
-      { x: 26, y: 37, label: 'Ópticas', action: { category: 'accesorios', subcategory: 'optica' } },
-      { x: 33, y: 80, label: 'Municiones', action: { category: 'municiones' } },
-      { x: 80, y: 48, label: 'Fusiles', action: { category: 'armas', subcategory: 'fusiles' } },
+      { x: 26, y: 17, label: 'Miras y ópticas', action: { category: 'accesorios', subcategory: 'optica' } },
+      { x: 11, y: 35, label: 'Linternas', action: { category: 'accesorios', subcategory: 'linternas' } },
+      { x: 30, y: 37, label: 'Láseres', action: { category: 'accesorios', subcategory: 'laseres' } },
+      { x: 33, y: 74, label: 'Municiones', action: { category: 'municiones' } },
     ],
   },
   {
-    id: 'mostrador', title: 'Mostrador', image: 'assets/showroom/mostrador.jpg', thumb: 'assets/showroom/mostrador-mini.jpg',
-    alt: 'Mostrador de atención con carteles de marcas y rifles de caza', filter: { category: '' },
+    id: 'mostrador', title: 'Arma corta', image: 'assets/showroom/mostrador.jpg', thumb: 'assets/showroom/mostrador-mini.jpg',
+    alt: 'Mostrador de atención con vitrinas de pistolas y revólveres y carteles de marcas', filter: { category: ARMAS, subcategory: 'armas-cortas' }, focus: { x: 42, y: 36 },
     spots: [
-      { x: 80, y: 31, label: 'Rifles de caza', note: 'Fusiles', action: { category: 'armas', subcategory: 'fusiles' } },
-      { x: 37, y: 57, label: 'Pistolas', action: { category: 'armas', subcategory: 'pistolas' } },
+      { x: 37, y: 57, label: 'Pistolas', action: { category: ARMAS, subcategory: 'pistolas' } },
+      { x: 90, y: 66, label: 'Revólveres', action: { category: ARMAS, subcategory: 'revolveres' } },
       { x: 76, y: 53, label: 'Municiones', action: { category: 'municiones' } },
-      { x: 22, y: 37, label: 'Bersa', note: 'Marca', action: { brand: 'Bersa' } },
-      { x: 60, y: 45, label: 'CZ', note: 'Marca', action: { brand: 'CZ' } },
+      // Logos de los carteles: cada uno filtra la tienda por esa marca.
+      logo(22, 21.5, 'Ruger'), logo(22, 28, 'Tanfoglio'), logo(22, 33, 'Marlin'), logo(22, 37.5, 'Bersa'),
+      logo(22, 44, 'Mauser'), logo(22, 49.5, 'Remington'),
+      logo(60, 20.5, 'Mossberg'), logo(60, 26.5, 'Benelli'), logo(60, 32.5, 'Colt'),
+      logo(60, 38.5, 'Smith & Wesson'), logo(60, 45, 'CZ'),
     ],
   },
 ];
@@ -92,10 +103,11 @@ export function initShowroom({ applyFilter, countFor }) {
   const visited = new Map(showroomViews.map(view => [view.id, new Set()]));
   let current = 0;
   let switchToken = 0;
+  let outAnimation = null; // salida de la vista anterior (se cancela al entrar la nueva)
 
   // Guía lateral y miniaturas, generadas desde la misma lista de vistas.
   $('#guideLinks').innerHTML = showroomViews.map((view, index) =>
-    `<button type="button" data-scene-view="${view.id}"><i></i> ${esc(view.title)} <span>${String(index + 1).padStart(2, '0')}</span></button>`).join('');
+    `<button type="button" data-scene-view="${view.id}"><em>${String(index + 1).padStart(2, '0')}</em> <i></i> ${esc(view.title)}</button>`).join('');
   $('#showroomRail').innerHTML = showroomViews.map(view =>
     `<button class="showroom-thumb" type="button" data-showroom-view="${view.id}"><img src="${view.thumb}" alt="" loading="lazy"><span>${esc(view.title)}</span><i class="thumb-progress" aria-hidden="true"></i></button>`).join('');
 
@@ -156,12 +168,13 @@ export function initShowroom({ applyFilter, countFor }) {
   function renderSpots(view) {
     const seen = visited.get(view.id);
     spotsBox.innerHTML = view.spots.map((spot, index) => {
-      const sideClass = spot.x > 62 ? ' spot-left' : spot.x < 30 ? ' spot-right' : '';
+      const sideClass = spot.side ? ` spot-${spot.side}` : spot.x > 62 ? ' spot-left' : spot.x < 30 ? ' spot-right' : '';
       const vertical = spot.y < 22 ? ' spot-below' : '';
-      return `<button type="button" class="spot${sideClass}${vertical}${seen.has(index) ? ' is-visited' : ''}" data-spot="${index}" style="--x:${spot.x}%;--y:${spot.y}%;--i:${index}" aria-label="${esc(spot.label)}: ${esc(describe(spot))}">
-        <i class="spot-ring" aria-hidden="true"></i>
-        <i class="spot-dot" aria-hidden="true"></i>
-        <span class="spot-label" aria-hidden="true"><b>${esc(spot.label)}</b><small>${esc(describe(spot))}</small><em>${spot.action.view ? 'Ir →' : 'Ver en el catálogo →'}</em></span>
+      const area = spot.logo ? ` spot-logo" style="--x:${spot.x}%;--y:${spot.y}%;--w:${spot.logo.w}%;--h:${spot.logo.h}%;--i:${index}` : `" style="--x:${spot.x}%;--y:${spot.y}%;--i:${index}`;
+      return `<button type="button" class="spot${sideClass}${vertical}${seen.has(index) ? ' is-visited' : ''}${spot.action.view ? ' spot-go' : ''}${area}" data-spot="${index}" aria-label="${esc(spot.label)}: ${esc(describe(spot))}">
+        ${spot.logo ? '' : '<i class="spot-ring" aria-hidden="true"></i><i class="spot-dot" aria-hidden="true"></i>'}
+        ${spot.logo ? '' : `<span class="spot-tag" aria-hidden="true">${esc(spot.label)}${spot.action.view ? ' <i>↗</i>' : ''}</span>`}
+        <span class="spot-label" aria-hidden="true"><b>${esc(spot.logo ? `Productos ${spot.label}` : spot.label)}</b><small>${esc(describe(spot))}</small><em>${spot.action.view ? 'Entrar a este sector →' : 'Ver en el catálogo →'}</em></span>
       </button>`;
     }).join('');
     spotsBox.querySelectorAll('.spot').forEach(button => {
@@ -198,16 +211,32 @@ export function initShowroom({ applyFilter, countFor }) {
     const token = ++switchToken;
     const view = showroomViews[index];
     const changing = index !== current || !scene.src.endsWith(view.image);
+    const previous = showroomViews[current];
+    const direction = index >= current ? 1 : -1;
     current = index;
 
     $('#sceneCounter').innerHTML = `${String(index + 1).padStart(2, '0')} <i>/ ${String(showroomViews.length).padStart(2, '0')}</i>`;
     document.querySelectorAll('[data-showroom-view]').forEach(button => button.classList.toggle('active', button.dataset.showroomView === id));
     document.querySelectorAll('[data-scene-view]').forEach(button => button.classList.toggle('active', button.dataset.sceneView === id));
-    if (filter && view.filter) applyFilter({ ...view.filter, brand: '', scroll: false });
+    if (filter && view.filter) applyFilter({ ...view.filter, brand: '', scroll: false, push: false });
 
-    if (changing && !reduceMotion) {
-      frame.classList.add('is-switching');
-      await Promise.all([preload(view.image), new Promise(resolve => window.setTimeout(resolve, 260))]);
+    // Transición: desde la vista principal hace zoom hacia el sector elegido;
+    // al volver, sale desde ese sector; entre sectores se desliza de costado.
+    const zoomIn = previous?.id === 'entrada' && view.focus;
+    const zoomOut = view.id === 'entrada' && previous?.focus;
+    const origin = zoomIn ? view.focus : zoomOut ? previous.focus : null;
+    const animate = changing && !reduceMotion && typeof figure.animate === 'function';
+    if (animate) {
+      frame.classList.add('is-zooming');
+      figure.style.transformOrigin = origin ? `${origin.x}% ${origin.y}%` : '50% 50%';
+      const out = zoomIn
+        ? [{ transform: 'scale(1)', opacity: 1, filter: 'blur(0)' }, { transform: 'scale(2.4)', opacity: 0.15, filter: 'blur(3px)' }]
+        : zoomOut
+          ? [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(.82)', opacity: 0 }]
+          : [{ transform: 'translateX(0)', opacity: 1 }, { transform: `translateX(${-6 * direction}%)`, opacity: 0 }];
+      outAnimation?.cancel();
+      outAnimation = figure.animate(out, { duration: zoomIn ? 520 : 300, easing: 'cubic-bezier(.55,0,.8,.4)', fill: 'forwards' });
+      await Promise.all([preload(view.image), outAnimation.finished.catch(() => {})]);
       if (token !== switchToken) return;
     }
     scene.src = view.image;
@@ -216,7 +245,27 @@ export function initShowroom({ applyFilter, countFor }) {
     $('#sceneTitle').textContent = view.title;
     renderSpots(view);
     if (scene.complete) fit();
+    else await new Promise(resolve => scene.addEventListener('load', () => { fit(); resolve(); }, { once: true }));
+    if (token !== switchToken) return;
     frame.classList.remove('is-switching');
+    if (animate) {
+      figure.style.transformOrigin = origin ? `${origin.x}% ${origin.y}%` : '50% 50%';
+      const enter = zoomIn
+        ? [{ transform: 'scale(1.25)', opacity: 0.35 }, { transform: 'scale(1)', opacity: 1 }]
+        : zoomOut
+          ? [{ transform: 'scale(2.4)', opacity: 0.2, filter: 'blur(3px)' }, { transform: 'scale(1)', opacity: 1, filter: 'blur(0)' }]
+          : [{ transform: `translateX(${6 * direction}%)`, opacity: 0 }, { transform: 'translateX(0)', opacity: 1 }];
+      outAnimation?.cancel();
+      figure.getAnimations().forEach(animation => animation.cancel());
+      await figure.animate(enter, { duration: zoomOut ? 560 : 460, easing: 'cubic-bezier(.2,.6,.3,1)' }).finished.catch(() => {});
+      if (token !== switchToken) return;
+      frame.classList.remove('is-zooming');
+    } else {
+      outAnimation?.cancel();
+      figure.getAnimations().forEach(animation => animation.cancel());
+      frame.classList.remove('is-zooming');
+    }
+    frame.classList.toggle('skip-figure-reveal', Boolean(animate)); // la foto ya entró con el zoom
     if (!reduceMotion) { replayAnimation('is-revealing'); }
     if (fromTour) restartThumbProgress();
   }
@@ -300,10 +349,8 @@ export function initShowroom({ applyFilter, countFor }) {
   }
 
   document.querySelectorAll('[data-showroom-view]').forEach(button => button.addEventListener('click', () => setView(button.dataset.showroomView)));
-  document.querySelectorAll('[data-scene-view]').forEach(button => button.addEventListener('click', () => {
-    setView(button.dataset.sceneView);
-    $('#catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }));
+  // La guía y las miniaturas cambian de vista dentro del showroom (no saltan al catálogo).
+  document.querySelectorAll('[data-scene-view]').forEach(button => button.addEventListener('click', () => setView(button.dataset.sceneView)));
   document.querySelectorAll('[data-view-step]').forEach(button => button.addEventListener('click', () => step(Number(button.dataset.viewStep))));
   $('#showroomFullscreen')?.addEventListener('click', async () => {
     try {

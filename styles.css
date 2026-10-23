@@ -1019,3 +1019,137 @@ a.trust-item:hover{background:#ffffff08}
 .offer-card[hidden]{display:none!important}
 @media(max-width:560px){.used-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.offers-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.offer-media{height:132px}.offer-off{width:40px;height:40px;font-size:11px;top:8px;right:8px}.offer-copy{padding:10px}.offer-copy h3{font-size:15px}.offer-copy p{font-size:9px}.offer-bottom{flex-direction:column;align-items:stretch;gap:7px}.offer-bottom .price{font-size:14px}.offer-bottom .view{width:100%}.offer-copy .card-badges{flex-wrap:wrap}}
+
+/* Armas como accesos independientes en la barra lateral */
+.filter-heading{margin:10px 0 2px;padding:8px 9px 4px;border-top:1px solid #2a2d2e}
+.filter-heading-link{display:flex;justify-content:space-between;width:100%;padding:4px 0;border:0;background:none;color:var(--gold);font-size:8px;letter-spacing:.2em;text-transform:uppercase;text-align:left}
+.filter-heading-link b{color:#8f9491;font-weight:500}
+.filter-heading-link.active,.filter-heading-link:hover{color:#f0d49a}
+.subfilter-featured{border:1px solid #d5a75b55!important;color:#f0d49a!important}
+.subfilter-featured small{display:block;color:#9da19d;font-size:8px;letter-spacing:.04em;text-transform:none}
+.nav-menu-group{color:var(--gold)!important}
+.nav-menu-featured{border-top:1px solid #ffffff1a;color:#f0d49a!important}
+.nav-menu-featured small{display:block;color:#9da19d;font-size:9px;letter-spacing:.02em;text-transform:none}
+@media(max-width:560px){.filter-heading{display:none}}
+
+/* Materiales controlados: consulta directa por WhatsApp */
+.controlled-banner{margin:14px 0;padding:12px 14px;border:1px solid #d5a75b55;border-left:3px solid var(--gold);background:#1c1a14;color:#e6dcc4;font-size:12px;line-height:1.55}
+.dialog-whatsapp.is-primary{display:flex;align-items:center;justify-content:center;width:100%;min-height:50px;margin:4px 0 6px;background:#1f9d55;border:0;color:#fff;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;text-decoration:none}
+.dialog-whatsapp.is-primary:hover{background:#23b260}
+.dialog-secondary:has(.is-primary){flex-direction:column;align-items:stretch}
+.add-quick.add-wa{display:inline-flex;align-items:center;justify-content:center;background:#1f9d55;border-color:#1f9d55;color:#fff;text-decoration:none}
+.add-quick.add-wa:hover{background:#23b260}
+.controlled-strip{display:flex;gap:10px;align-items:flex-start;margin:0 0 12px;padding:10px 12px;border:1px solid #2f3334;background:#141718;color:#b9bcb7;font-size:10px;line-height:1.55}
+.controlled-strip span{color:var(--gold);font-size:14px;line-height:1}
+@media(max-width:560px){.controlled-strip{font-size:9px}}
+
+/* Ficha de producto: tipografía más limpia y jerarquía clara */
+.product-dialog .dialog-copy h2{font:600 clamp(26px,2.6vw,34px)/1.15 var(--sans);letter-spacing:-.01em;color:#f3efe6;margin:10px 0 12px}
+.product-dialog .dialog-copy .product-lead{font-size:15px;line-height:1.55;color:#ece4d2}
+.product-dialog .dialog-copy p.dialog-description{color:#c2c4bf;font-size:14px;line-height:1.65;margin:0}
+.dialog-description.is-clamped{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.read-more{margin:4px 0 12px;padding:4px 0;border:0;background:none;color:var(--gold);font-size:12px;font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.product-dialog .dialog-facts small{font-size:9px}
+.product-dialog .dialog-facts strong{font-size:13px}
+.product-dialog .dialog-price .price{font-size:28px}
+.dialog-back{position:absolute;left:14px;top:13px;z-index:2;display:inline-flex;align-items:center;gap:6px;height:35px;padding:0 12px;border:1px solid var(--line);background:#111a;color:#e8e4da;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.dialog-back:hover{border-color:var(--gold);color:var(--gold)}
+
+/* Botón flotante "Volver" */
+.back-float{position:fixed;left:18px;bottom:22px;z-index:9;display:inline-flex;align-items:center;gap:8px;max-width:min(70vw,360px);min-height:46px;padding:0 18px;border:1px solid #d5a75b88;border-radius:999px;background:#101213ee;color:#f0d49a;font-size:12px;font-weight:700;letter-spacing:.06em;box-shadow:0 10px 28px #000a;backdrop-filter:blur(6px);animation:back-in .25s ease-out}
+.back-float small{overflow:hidden;color:#c9c7bf;font-weight:500;text-overflow:ellipsis;white-space:nowrap;letter-spacing:0}
+.back-float:hover{border-color:var(--gold);background:#1a1c1d}
+.back-float[hidden]{display:none}
+@keyframes back-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media(max-width:560px){.back-float{left:12px;bottom:16px;min-height:42px;padding:0 14px;font-size:11px}.back-float small{max-width:34vw}}
+@media(prefers-reduced-motion:reduce){.back-float{animation:none}}
+
+/* Showroom: puntos más grandes, con nombre visible y buen contraste */
+.spot{width:44px;height:44px;margin:-22px 0 0 -22px}
+.spot-dot{inset:9px;background:#f0c66e;border:3px solid #fff;box-shadow:0 0 0 3px #000b,0 0 0 0 #f0c66eaa,0 6px 16px #000d}
+.spot-tag{position:absolute;left:calc(100% - 4px);top:50%;transform:translateY(-50%);display:inline-flex;align-items:center;gap:5px;padding:6px 10px 6px 9px;border:1px solid #f0c66e;border-radius:3px;background:#0b0c0ce6;color:#fff7e6;font:700 11px/1 var(--sans);letter-spacing:.05em;white-space:nowrap;box-shadow:0 6px 18px #000c;pointer-events:none;transition:background .18s,color .18s}
+.spot-tag i{color:#f0c66e;font-style:normal}
+.spot-left .spot-tag{left:auto;right:calc(100% - 4px)}
+.spot:hover .spot-tag,.spot:focus-visible .spot-tag,.spot.is-open .spot-tag{background:#f0c66e;color:#121212}
+.spot:hover .spot-tag i,.spot.is-open .spot-tag i{color:#121212}
+.spot-go .spot-dot{background:#fff;border-color:#f0c66e}
+.spot:hover .spot-tag,.spot:focus-visible .spot-tag{opacity:0}
+.spot:hover .spot-label,.spot:focus-visible .spot-label{z-index:2}
+/* Logos de los carteles: zona clickeable con borde sutil */
+.spot-logo{width:var(--w);height:var(--h);margin:0;transform:translate(-50%,-50%);border:1px solid #f0c66e40;border-radius:3px;background:transparent;transition:border-color .18s,box-shadow .18s,background .18s}
+.spot-logo:hover,.spot-logo:focus-visible,.spot-logo.is-open{border-color:#f0c66e;background:#f0c66e1f;box-shadow:0 0 18px #f0c66e66;outline:none}
+.spot-logo .spot-label{min-width:140px}
+.spot-logo.is-visited{border-color:#f0c66e70}
+.showroom-frame.is-revealing .spot-logo{animation:none}
+/* Durante el zoom entre vistas se ocultan los puntos */
+.showroom-frame.is-zooming .scene-spots{opacity:0;pointer-events:none}
+.scene-spots{transition:opacity .25s}
+.scene-figure{will-change:transform}
+@media(max-width:560px){
+  .spot{width:38px;height:38px;margin:-19px 0 0 -19px}
+  .spot-dot{inset:8px}
+  .spot-tag{padding:4px 7px;font-size:9px;letter-spacing:.02em}
+  .spot-logo{width:var(--w);height:var(--h);margin:0}
+}
+/* Guía del local más prolija: lista numerada sin plano */
+.showroom-guide .guide-map{display:none}
+.guide-links button{gap:10px;min-height:38px;font-size:.72rem;letter-spacing:.01em}
+.guide-links button em{color:#8d8b84;font-size:.6rem;font-style:normal;font-variant-numeric:tabular-nums}
+.guide-links button.active{color:#f6dda2;font-weight:600}
+.guide-links button.active em{color:#f0c66e}
+.guide-heading span{font-size:.8rem}
+.spot.is-open .spot-tag{opacity:0}
+.spot-logo{border:1px dashed #f0c66e99;box-shadow:inset 0 0 0 1px #0006}
+.spot-right .spot-tag{left:calc(100% - 4px);right:auto}
+
+/* ── Portada (pedido del cliente): logos más grandes y fondo desenfocado ── */
+.gate-armeria .gate-bg{filter:brightness(.78) blur(5px)}
+.gate-armeria:hover .gate-bg{filter:brightness(.9) blur(4px)}
+.gate-camping .gate-bg{filter:brightness(.7) blur(6px) saturate(.8)}
+.gate-camping:hover .gate-bg{filter:brightness(.82) blur(5px) saturate(.9)}
+.gate-bg{inset:-4%}
+.gate-logo{width:min(600px,100%)}
+.gate-logo-camping{width:min(330px,76%);filter:saturate(.85) brightness(.94)}
+.gate-text{font-size:15px}
+.gate-content{gap:18px}
+@media(max-width:760px){.gate-logo{width:min(400px,92%)}.gate-logo-camping{width:min(250px,66%)}}
+.gate-logo-camping{-webkit-mask-image:radial-gradient(ellipse 58% 58% at 50% 50%,#000 74%,transparent 100%);mask-image:radial-gradient(ellipse 58% 58% at 50% 50%,#000 74%,transparent 100%)}
+
+/* ── Outdoor: bienvenida y accesos a todas las líneas ── */
+.camp-hero{flex-direction:column;align-items:stretch;justify-content:center}
+.camp-hero h1{font-size:clamp(40px,5.6vw,72px)}
+.camp-hero h1 span{display:block}
+.camp-lines{position:relative;z-index:1;display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:1px;margin:0 clamp(20px,6vw,90px) clamp(26px,4vw,44px);border:1px solid #f3cf8f40;background:#f3cf8f26;backdrop-filter:blur(8px)}
+.camp-lines button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-height:86px;padding:12px 6px;border:0;background:#140e09d9;color:#f6edd8;font:600 11px/1.25 var(--sans);letter-spacing:.04em;text-align:center;transition:background .2s,color .2s,transform .2s}
+.camp-lines b{font:400 22px/1 var(--serif);color:#ffbf6b}
+.camp-lines button:hover,.camp-lines button:focus-visible{background:#3a2615f2;color:#fff}
+.camp-lines button:hover b{transform:translateY(-2px)}
+.camp-lines .is-outlet{background:#5a1f12d9}
+.camp-lines .is-outlet:hover{background:#7a2a18f2}
+@media(max-width:1000px){.camp-lines{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(max-width:560px){.camp-lines{grid-template-columns:repeat(3,minmax(0,1fr));margin:0 14px 24px}.camp-lines button{min-height:70px;font-size:10px}.camp-lines b{font-size:18px}}
+
+/* ── Formulario de novedades y ofertas ── */
+.leads-section{background:linear-gradient(180deg,#0e1011cc,#151312cc)}
+.leads-box{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:clamp(24px,5vw,70px);align-items:center;max-width:1180px;margin:0 auto;padding:clamp(22px,4vw,44px);border:1px solid #d5a75b44;background:#0b0c0ce6}
+.leads-copy h2{margin:10px 0 12px;font:400 clamp(26px,3.4vw,40px)/1.1 var(--serif)}
+.leads-copy p{margin:0;color:#b9bab3;font-size:14px;line-height:1.65}
+.leads-form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.leads-form label{display:grid;gap:6px;color:#cfcfc8;font-size:11px;letter-spacing:.04em}
+.leads-form input,.leads-form select{width:100%;min-height:46px;padding:0 12px;border:1px solid #3b3f40;background:#090b0c;color:var(--ink);font:14px var(--sans);outline:none}
+.leads-form input:focus,.leads-form select:focus{border-color:var(--gold)}
+.leads-form .leads-check{grid-column:1/-1;display:flex;align-items:flex-start;gap:10px;font-size:12px;line-height:1.5;letter-spacing:0}
+.leads-check input{width:20px;min-height:20px;height:20px;margin:0;accent-color:var(--gold);flex:0 0 20px}
+.leads-check a{color:var(--gold);text-decoration:underline}
+.leads-form .primary{grid-column:1/-1;margin:0;min-height:50px}
+.leads-hp{position:absolute!important;left:-9999px;width:1px;height:1px;overflow:hidden}
+.leads-msg{grid-column:1/-1;min-height:1.3em;margin:0;font-size:13px}
+.leads-msg.ok{color:#8fd18a}.leads-msg.err{color:#f0a197}
+.sector-camping .leads-box{border-color:#e6a65c55;background:#140e09e6}
+@media(max-width:820px){.leads-box{grid-template-columns:1fr}.leads-form{grid-template-columns:1fr}}
+
+/* Carrito: miniaturas más grandes y nítidas */
+.cart-thumb{width:88px;height:88px;padding:5px;background:#eceae4;border-color:#ffffff30;border-radius:3px}
+.sector-camping .cart-thumb{background:#efe7da}
+@media(max-width:560px){.cart-thumb{width:66px;height:66px}}
+.showroom-frame.skip-figure-reveal.is-revealing .scene-figure{animation:none}

@@ -1,10 +1,10 @@
 // Página de sector (Armería o Camping). El sector se toma de <body data-sector>.
 import { products, productsForSector, novedades, ofertas, usados } from './catalog.js';
-import { sectors, findCategory, findSubcategory, brands, brandCategories, gestoriaServices } from './taxonomy.js';
+import { sectors, findCategory, findSubcategory, findGroup, matchesSub, brands, brandCategories, gestoriaServices } from './taxonomy.js';
 import { DEMO_MODE, NOVEDADES_LIMIT } from './config.js';
 import { initSite } from './site.js';
 import { demoGestoria } from './demo-data.js';
-import { isEligible, availabilityLabel } from './cart.js';
+import { isEligible, availabilityLabel, CONTROLLED_NOTICE, CONTROLLED_SHORT } from './cart.js';
 import { initCart, inquiryUrl } from './cart-ui.js';
 import { icons, iconFor } from './icons.js';
 import { escapeHtml, safeUrl, productImage, priceHtml, productBadges, PLACEHOLDER_IMG } from './utils.js';
@@ -21,17 +21,24 @@ initSite({ ageCheck: sectorId === 'armeria' });
 
 // ───────────────────────────── Estado del catálogo ─────────────────────────────
 const state = { category: '', subcategory: '', brand: '', query: '', sort: 'featured', condition: '' };
+let lastState = { ...state };
 
 function readUrlState() {
   const params = new URLSearchParams(window.location.search);
   const category = findCategory(sectorId, params.get('cat')) ? params.get('cat') : '';
   state.category = category;
-  state.subcategory = category && findSubcategory(sectorId, category, params.get('sub')) ? params.get('sub') : '';
+  const sub = params.get('sub');
+  state.subcategory = category && (findSubcategory(sectorId, category, sub) || findGroup(sectorId, category, sub)) ? sub : '';
   state.brand = params.get('marca') || '';
   state.condition = ['nuevo', 'usado'].includes(params.get('estado')) ? params.get('estado') : '';
 }
 
-function writeUrlState() {
+// Historial propio: cada cambio de sección queda en el historial del navegador,
+// así el botón "Volver" (y el del navegador) devuelven al punto anterior.
+let navDepth = history.state?.depth || 0;
+
+function writeUrlState({ push = false } = {}) {
+  const previousLabel = filterLabelFor(lastState);
   const params = new URLSearchParams();
   const openProduct = new URLSearchParams(window.location.search).get('producto');
   if (openProduct) params.set('producto', openProduct);
@@ -40,7 +47,17 @@ function writeUrlState() {
   if (state.brand) params.set('marca', state.brand);
   if (state.condition) params.set('estado', state.condition);
   const query = params.toString();
-  history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`);
+  const url = `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`;
+  const changed = url !== `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  if (push && changed) {
+    history.replaceState({ ...(history.state || {}), depth: navDepth, scrollY: window.scrollY }, '', window.location.href);
+    navDepth += 1;
+    history.pushState({ depth: navDepth, backLabel: previousLabel }, '', url);
+  } else {
+    history.replaceState({ ...(history.state || {}), depth: navDepth }, '', url);
+  }
+  lastState = { ...state };
+  updateBackButton();
 }
 
 function categoryHref(category = '', subcategory = '') {
@@ -50,13 +67,13 @@ function categoryHref(category = '', subcategory = '') {
   return `?${params.toString()}#catalogo`;
 }
 
-const countIn = (category, subcategory) => sectorProducts.filter(product => product.category === category && (!subcategory || product.subcategory === subcategory)).length;
+const countIn = (category, subcategory) => sectorProducts.filter(product => product.category === category && matchesSub(product, sectorId, category, subcategory)).length;
 
-function applyFilter({ category = '', subcategory = '', brand, scroll = true } = {}) {
+function applyFilter({ category = '', subcategory = '', brand, scroll = true, push = true } = {}) {
   state.category = category;
   state.subcategory = subcategory;
   if (brand !== undefined) state.brand = brand;
-  writeUrlState();
+  writeUrlState({ push });
   renderSidebar();
   renderProducts();
   if (scroll) $('#catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -67,7 +84,7 @@ function renderNav() {
   const nav = $('#mainNav');
   if (!nav) return;
   const extraLinks = [...nav.querySelectorAll('[data-nav-extra]')].map(link => link.outerHTML);
-  const hasSubcategories = sector.categories.some(category => category.subcategories.length);
+  const hasSubcategories = sector.navMenu !== 'single' && sector.categories.some(category => category.subcategories.length);
   const menu = (label, href, attrs, items) => `
     <li class="nav-item has-menu">
       <a class="nav-link" href="${href}" ${attrs}>${escapeHtml(label)}</a>
@@ -77,7 +94,9 @@ function renderNav() {
   const groups = hasSubcategories
     ? sector.categories.map(category => menu(category.label, categoryHref(category.id), `data-cat="${category.id}"`,
       `<a href="${categoryHref(category.id)}" data-cat="${category.id}" class="nav-menu-all">Ver todo ${escapeHtml(category.label)} <span>${countIn(category.id)}</span></a>` +
-      category.subcategories.map(sub => `<a href="${categoryHref(category.id, sub.id)}" data-cat="${category.id}" data-sub="${sub.id}">${escapeHtml(sub.label)} <span>${countIn(category.id, sub.id)}</span></a>`).join('')))
+      (category.groups || []).map(group => `<a href="${categoryHref(category.id, group.id)}" data-cat="${category.id}" data-sub="${group.id}" class="nav-menu-group">${escapeHtml(group.label)} <span>${countIn(category.id, group.id)}</span></a>`).join('') +
+      category.subcategories.map(sub => `<a href="${categoryHref(category.id, sub.id)}" data-cat="${category.id}" data-sub="${sub.id}">${escapeHtml(sub.label)} <span>${countIn(category.id, sub.id)}</span></a>`).join('') +
+      (category.featured || []).map(item => `<a href="${categoryHref(category.id)}" data-cat="${category.id}" data-brand="${escapeHtml(item.brand)}" class="nav-menu-featured">★ ${escapeHtml(item.label)} <small>${escapeHtml(item.note)}</small></a>`).join('')))
     : [menu('Categorías', categoryHref(), 'data-cat=""',
       `<a href="${categoryHref()}" data-cat="" class="nav-menu-all">Ver todo <span>${sectorProducts.length}</span></a>` +
       sector.categories.map(category => `<a href="${categoryHref(category.id)}" data-cat="${category.id}">${escapeHtml(category.label)} <span>${countIn(category.id)}</span></a>`).join(''))];
@@ -85,7 +104,7 @@ function renderNav() {
 
   nav.querySelectorAll('[data-cat]').forEach(link => link.addEventListener('click', event => {
     event.preventDefault();
-    applyFilter({ category: link.dataset.cat, subcategory: link.dataset.sub || '', brand: '' });
+    applyFilter({ category: link.dataset.cat, subcategory: link.dataset.sub || '', brand: link.dataset.brand || '' });
     closeMobileNav();
   }));
   nav.querySelectorAll('.nav-caret').forEach(button => button.addEventListener('click', () => {
@@ -120,8 +139,13 @@ function renderSidebar() {
   box.innerHTML = button('data-cat=""', `Todo ${sector.id === 'camping' ? 'Camping' : 'Armería'}`, sectorProducts.length, !state.category && !state.condition, '⌂') +
     sector.categories.map(category => {
       const active = state.category === category.id;
+      if (category.flatten) {
+        // Cada tipo de arma es una entrada propia: un solo clic hasta el listado.
+        return `<div class="filter-heading"><button type="button" class="filter-heading-link${active && !state.subcategory ? ' active' : ''}" data-cat="${category.id}">${escapeHtml(category.label)} <b>${countIn(category.id)}</b></button></div>` +
+          category.subcategories.map(sub => button(`data-cat="${category.id}" data-sub="${sub.id}" data-flat`, sub.label, countIn(category.id, sub.id), active && state.subcategory === sub.id, sub.icon || category.icon)).join('');
+      }
       const subs = active && category.subcategories.length
-        ? `<div class="subfilters">${category.subcategories.map(sub => `<button type="button" class="subfilter${state.subcategory === sub.id ? ' active' : ''}" data-cat="${category.id}" data-sub="${sub.id}">${escapeHtml(sub.label)} <b>${countIn(category.id, sub.id)}</b></button>`).join('')}</div>`
+        ? `<div class="subfilters">${category.subcategories.map(sub => `<button type="button" class="subfilter${state.subcategory === sub.id ? ' active' : ''}" data-cat="${category.id}" data-sub="${sub.id}">${escapeHtml(sub.label)} <b>${countIn(category.id, sub.id)}</b></button>`).join('')}${(category.featured || []).map(item => `<button type="button" class="subfilter subfilter-featured${state.brand.toLowerCase() === item.brand.toLowerCase() ? ' active' : ''}" data-cat="${category.id}" data-brand="${escapeHtml(item.brand)}">★ ${escapeHtml(item.label)} <small>${escapeHtml(item.note)}</small></button>`).join('')}</div>`
         : '';
       return button(`data-cat="${category.id}"`, category.label, countIn(category.id), active && !state.subcategory, category.icon) + subs;
     }).join('') + (usedCount ? `<button type="button" class="filter filter-used${state.condition === 'usado' ? ' active' : ''}" data-condition="usado"><i aria-hidden="true">♻</i><span>Usados</span><b>${usedCount}</b></button>` : '');
@@ -131,17 +155,50 @@ function renderSidebar() {
   });
   box.querySelectorAll('[data-cat]').forEach(node => node.addEventListener('click', () => {
     if (node.dataset.cat === '') setCondition('');
-    const toggleOff = !node.dataset.sub && state.category === node.dataset.cat && !state.subcategory && node.dataset.cat;
-    applyFilter({ category: toggleOff ? '' : node.dataset.cat, subcategory: node.dataset.sub || '', scroll: false });
+    const toggleOff = !node.dataset.sub && !node.dataset.brand && state.category === node.dataset.cat && !state.subcategory && node.dataset.cat;
+    applyFilter({ category: toggleOff ? '' : node.dataset.cat, subcategory: node.dataset.sub || '', brand: node.dataset.brand || '', scroll: false });
   }));
 }
 
-function filterLabel() {
-  const category = findCategory(sectorId, state.category);
-  const sub = findSubcategory(sectorId, state.category, state.subcategory);
-  const parts = [state.condition === 'usado' ? 'Usados' : '', category?.label, sub?.label].filter(Boolean);
+function filterLabelFor(snapshot) {
+  const category = findCategory(sectorId, snapshot.category);
+  const sub = findSubcategory(sectorId, snapshot.category, snapshot.subcategory) || findGroup(sectorId, snapshot.category, snapshot.subcategory);
+  const parts = [snapshot.condition === 'usado' ? 'Usados' : '', category?.flatten && sub ? '' : category?.label, sub?.label, snapshot.brand].filter(Boolean);
   return parts.join(' · ') || sector.name;
 }
+function filterLabel() {
+  return filterLabelFor({ ...state, brand: '' });
+}
+
+// Botón flotante "Volver": aparece cuando hay un paso anterior dentro del sitio.
+const backButton = document.createElement('button');
+backButton.type = 'button';
+backButton.className = 'back-float';
+backButton.hidden = true;
+document.body.append(backButton);
+backButton.addEventListener('click', () => history.back());
+function updateBackButton() {
+  const dialogOpen = document.querySelector('#productOverlay')?.classList.contains('open');
+  backButton.hidden = navDepth < 1 || Boolean(dialogOpen);
+  const label = history.state?.backLabel;
+  backButton.innerHTML = `<span aria-hidden="true">←</span> Volver${label ? ` <small>a ${escapeHtml(label)}</small>` : ''}`;
+  backButton.setAttribute('aria-label', `Volver${label ? ` a ${label}` : ''}`);
+}
+
+window.addEventListener('popstate', event => {
+  navDepth = event.state?.depth || 0;
+  readUrlState();
+  setCondition(state.condition);
+  lastState = { ...state };
+  renderSidebar();
+  renderProducts();
+  const productId = new URLSearchParams(window.location.search).get('producto');
+  const overlay = $('#productOverlay');
+  if (productId && !overlay.classList.contains('open')) showProduct(findProduct(productId), { push: false });
+  if (!productId && overlay.classList.contains('open')) cart.closeOverlay('productOverlay');
+  if (Number.isFinite(event.state?.scrollY)) window.scrollTo({ top: event.state.scrollY, behavior: 'instant' });
+  updateBackButton();
+});
 
 function setCondition(value) {
   state.condition = value;
@@ -165,7 +222,9 @@ function cardHtml(product) {
         <div class="card-bottom">${priceHtml(product)}</div>
         <div class="card-actions">
           <button class="view" type="button" data-product="${product.id}">Ver ficha</button>
-          ${!product.regulated && isEligible(product) ? `<button class="add-quick" type="button" data-quick-add="${product.id}" aria-label="Agregar ${escapeHtml(product.name)} al pedido">+ Agregar</button>` : ''}
+          ${product.regulated
+            ? (inquiryUrl('x') ? `<a class="add-quick add-wa" href="${escapeHtml(productInquiryUrl(product))}" target="_blank" rel="noopener noreferrer" aria-label="Consultar ${escapeHtml(product.name)} por WhatsApp">WhatsApp</a>` : '')
+            : isEligible(product) ? `<button class="add-quick" type="button" data-quick-add="${product.id}" aria-label="Agregar ${escapeHtml(product.name)} al pedido">+ Agregar</button>` : ''}
         </div>
       </div>
     </article>`;
@@ -183,7 +242,7 @@ function catalogPageSize(grid) {
 function renderProducts() {
   const grid = $('#productGrid');
   if (!grid) return;
-  const inScope = sectorProducts.filter(product => (!state.category || product.category === state.category) && (!state.subcategory || product.subcategory === state.subcategory));
+  const inScope = sectorProducts.filter(product => (!state.category || product.category === state.category) && matchesSub(product, sectorId, state.category, state.subcategory));
   const brandOptions = [...new Set(inScope.map(product => product.brand))].sort((a, b) => a.localeCompare(b, 'es'));
   if (state.brand && !brandOptions.some(brand => brand.toLowerCase() === state.brand.toLowerCase())) brandOptions.push(state.brand);
   const brandFilter = $('#brandFilter');
@@ -252,6 +311,11 @@ document.addEventListener('click', event => {
   }
 });
 
+function productInquiryUrl(product) {
+  const detail = [product.brand, product.code && `Cód. ${product.code}`].filter(Boolean).join(' · ');
+  return inquiryUrl(`Hola, ${sector.name}. Quiero consultar por: ${product.name}${detail ? ` (${detail})` : ''}. ¿Me confirman disponibilidad, precio y los pasos para adquirirlo?`);
+}
+
 function bindProductOpeners(root) {
   root?.addEventListener('click', event => {
     const trigger = event.target.closest('[data-product]');
@@ -276,7 +340,7 @@ $('#searchFocus')?.addEventListener('click', () => {
 });
 
 // ───────────────────────────── Ficha de producto ─────────────────────────────
-function showProduct(product) {
+function showProduct(product, { push = true } = {}) {
   if (!product) return;
   const gallery = [product.photo, ...product.photos].filter(photo => photo?.src);
   const photoNote = product.photo?.src?.startsWith('assets/') ? 'Imagen de referencia' : product.photo?.own ? 'Foto de Armería Parabellum' : product.photo?.exact ? 'Fotografía referencial del modelo' : 'Imagen de referencia · confirmar variante exacta';
@@ -297,6 +361,17 @@ function showProduct(product) {
   $('#dialogLead').textContent = product.shortDescription || product.description;
   $('#dialogDescription').textContent = product.condition === 'usado' && product.conditionNotes
     ? `${product.conditionNotes} ${product.description}`.trim() : product.description;
+  // Descripción acotada: se muestra completa solo si el visitante la pide.
+  const description = $('#dialogDescription');
+  const readMore = $('#dialogReadMore');
+  description.classList.add('is-clamped');
+  readMore.hidden = true;
+  readMore.textContent = 'Leer más';
+  requestAnimationFrame(() => { readMore.hidden = description.scrollHeight <= description.clientHeight + 2; });
+  readMore.onclick = () => {
+    const open = description.classList.toggle('is-clamped');
+    readMore.textContent = open ? 'Leer más' : 'Leer menos';
+  };
   $('#dialogFacts').innerHTML = [
     product.brand ? ['Marca', product.brand] : null, product.model && product.model !== product.name ? ['Modelo', product.model] : null, ['Categoría', product.subcategoryLabel || product.categoryLabel],
     ['Estado', product.condition === 'usado' ? `Usado${product.conditionGrade ? ` · ${product.conditionGrade}` : ''}` : 'Nuevo'],
@@ -309,28 +384,40 @@ function showProduct(product) {
   const availabilityNode = $('#dialogAvailability');
   availabilityNode.textContent = availabilityLabel(product) + (product.availability !== 'agotado' ? ' · la armería confirma el stock al responder' : '');
   availabilityNode.className = `availability is-${product.availability}`;
-  $('#dialogNote').textContent = product.regulated
-    ? 'Artículo regulado. Se gestiona como consulta: la armería verifica la documentación y las autorizaciones legales antes de cualquier operación.'
-    : 'Confirmá marca, precio y disponibilidad con la armería.';
+  $('#dialogNote').textContent = product.regulated ? '' : 'Confirmá marca, precio y disponibilidad con la armería.';
+  $('#dialogNote').hidden = product.regulated;
   const links = [];
   if (product.sourceUrl) links.push(`<a href="${safeUrl(product.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(product.sourceLabel || 'Referencia del fabricante')} ↗</a>`);
   if (product.photo?.sourceUrl) links.push(`<a href="${safeUrl(product.photo.sourceUrl)}" target="_blank" rel="noopener noreferrer">Foto: ${escapeHtml(product.photo.author)} · ${escapeHtml(product.photo.license)} ↗</a>`);
   $('#dialogLinks').innerHTML = links.join('');
 
   const action = $('#dialogAction');
+  action.hidden = product.regulated;
   action.disabled = !isEligible(product);
-  action.textContent = !isEligible(product) ? 'Sin stock' : cart.inCart(product.id) ? 'Ya está en tu pedido · ver pedido' : product.regulated ? 'Agregar a la consulta' : 'Agregar al pedido';
+  action.textContent = !isEligible(product) ? 'Sin stock' : cart.inCart(product.id) ? 'Ya está en tu pedido · ver pedido' : 'Agregar al pedido';
   action.onclick = () => cart.addFromProductDialog(product);
 
+  // Materiales controlados: sin carrito, consulta directa por WhatsApp.
+  const controlled = $('#dialogControlled');
+  controlled.hidden = !product.regulated;
+  controlled.textContent = CONTROLLED_SHORT;
   const consult = $('#dialogWhatsApp');
-  const url = inquiryUrl(`Hola, ${sector.name}. Quiero consultar por: ${product.name}${[product.brand, product.code && `Cód. ${product.code}`].filter(Boolean).length ? ` (${[product.brand, product.code && `Cód. ${product.code}`].filter(Boolean).join(' · ')})` : ''}. ¿Me confirman disponibilidad y precio?`);
+  const url = productInquiryUrl(product);
   consult.hidden = !url;
   if (url) consult.href = url;
+  consult.classList.toggle('is-primary', product.regulated);
+  consult.textContent = product.regulated ? 'Consultar por WhatsApp' : 'Consultar por WhatsApp ↗';
 
   // Enlace propio del producto: se puede copiar o compartir.
   const params = new URLSearchParams(window.location.search);
-  params.set('producto', product.id);
-  history.replaceState(null, '', `${window.location.pathname}?${params.toString()}${window.location.hash}`);
+  if (params.get('producto') !== product.id) {
+    params.set('producto', product.id);
+    const url = `${window.location.pathname}?${params.toString()}${window.location.hash}`;
+    if (push) {
+      history.replaceState({ ...(history.state || {}), depth: navDepth, scrollY: window.scrollY }, '', window.location.href);
+      history.pushState({ depth: navDepth, dialog: true, backLabel: filterLabel() }, '', url);
+    } else history.replaceState({ ...(history.state || {}), depth: navDepth }, '', url);
+  }
   const shareButton = $('#dialogShare');
   shareButton.textContent = 'Compartir producto';
   shareButton.onclick = async () => {
@@ -349,12 +436,15 @@ function showProduct(product) {
 
 // Al cerrar la ficha se quita el producto de la dirección.
 new MutationObserver(() => {
+  updateBackButton();
   if ($('#productOverlay').classList.contains('open')) return;
   const params = new URLSearchParams(window.location.search);
   if (!params.has('producto')) return;
+  // Si la ficha se abrió desde el sitio, cerrar = volver un paso (no se pierde el lugar).
+  if (history.state?.dialog) { history.back(); return; }
   params.delete('producto');
   const query = params.toString();
-  history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`);
+  history.replaceState({ ...(history.state || {}), depth: navDepth }, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`);
 }).observe($('#productOverlay'), { attributes: true, attributeFilter: ['class'] });
 
 window.parabellumShowProduct = id => showProduct(findProduct(id));
@@ -607,6 +697,11 @@ function bindInquiryLinks() {
   });
 }
 
+// Aviso de materiales controlados arriba del listado (solo Armería).
+if (sectorId === 'armeria' && $('#resultsCaption')) {
+  $('#resultsCaption').insertAdjacentHTML('beforebegin', `<p class="controlled-strip"><span aria-hidden="true">⚖</span> ${escapeHtml(CONTROLLED_NOTICE)}</p>`);
+}
+
 // ───────────────────────────── Inicio ─────────────────────────────
 readUrlState();
 renderNav();
@@ -623,12 +718,15 @@ bindInquiryLinks();
 // Enlace directo a un producto: ?producto=id
 {
   const linked = findProduct(new URLSearchParams(window.location.search).get('producto'));
-  if (linked && linked.sector === sectorId && linked.published) showProduct(linked);
+  if (linked && linked.sector === sectorId && linked.published) showProduct(linked, { push: false });
 }
+
+// Formulario de novedades y ofertas
+if ($('[data-leads]')) import('./leads.js').then(module => module.initLeads($('[data-leads]'), { sector: sectorId }));
 
 if ($('#showroomViewer')) {
   const countFor = action => action.brand
     ? sectorProducts.filter(product => product.brand.toLowerCase() === action.brand.toLowerCase()).length
-    : sectorProducts.filter(product => (!action.category || product.category === action.category) && (!action.subcategory || product.subcategory === action.subcategory)).length;
+    : sectorProducts.filter(product => (!action.category || product.category === action.category) && matchesSub(product, sectorId, action.category, action.subcategory)).length;
   import('./showroom.js').then(module => module.initShowroom({ applyFilter, countFor }));
 }

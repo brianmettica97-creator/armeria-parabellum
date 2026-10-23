@@ -11,6 +11,7 @@ const DIALOGS = `
   <div class="overlay" id="productOverlay" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
     <div class="dialog product-dialog">
       <button class="close" data-close="productOverlay" aria-label="Cerrar">×</button>
+      <button class="dialog-back" type="button" data-close="productOverlay"><span aria-hidden="true">←</span> Volver</button>
       <div class="dialog-art" id="dialogArt"></div>
       <div class="dialog-copy">
         <div class="eyebrow" id="dialogCategory"></div>
@@ -18,7 +19,8 @@ const DIALOGS = `
         <h2 id="dialogTitle"></h2>
         <p class="product-lead" id="dialogLead"></p>
         <div class="dialog-facts" id="dialogFacts"></div>
-        <p id="dialogDescription"></p>
+        <p id="dialogDescription" class="dialog-description"></p>
+        <button type="button" class="read-more" id="dialogReadMore" hidden>Leer más</button>
         <div class="dialog-links" id="dialogLinks"></div>
         <div class="dialog-price" id="dialogPrice"></div>
         <div class="availability" id="dialogAvailability"></div>
@@ -28,6 +30,7 @@ const DIALOGS = `
           <a class="dialog-whatsapp" id="dialogWhatsApp" target="_blank" rel="noopener noreferrer" hidden>Consultar por WhatsApp ↗</a>
           <button class="dialog-share" id="dialogShare" type="button">Compartir producto</button>
         </div>
+        <p class="controlled-banner" id="dialogControlled" hidden></p>
       </div>
     </div>
   </div>
@@ -92,7 +95,7 @@ export function initCart({ products, findProduct, onChange = () => {} }) {
   const inCart = id => cartItems.some(item => item.id === id);
 
   function addItem(product, qty = 1) {
-    if (!isEligible(product) || inCart(product.id)) return false; // evita duplicados
+    if (!isEligible(product) || product.regulated || inCart(product.id)) return false; // controlados: solo WhatsApp
     cartItems.push({ id: product.id, name: product.name, qty: clampQuantity(product, qty), priceSeen: product.price, availabilitySeen: product.availability });
     return true;
   }
@@ -134,6 +137,7 @@ export function initCart({ products, findProduct, onChange = () => {} }) {
   }
 
   function addFromProductDialog(product) {
+    if (product.regulated) return;
     const alreadyInCart = inCart(product.id);
     if (!alreadyInCart && !addItem(product)) return;
     closeOverlay('productOverlay');
