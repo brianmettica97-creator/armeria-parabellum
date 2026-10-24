@@ -20,18 +20,16 @@ export const showroomViews = [
     id: 'entrada', title: 'Vista principal', image: 'assets/new/vista-principal.jpg', thumb: 'assets/new/vista-principal-mini.jpg',
     alt: 'Pasillo central del local con vitrinas, paredes de armas y carteles de marcas', filter: { category: '' },
     spots: [
-      { x: 11, y: 40, label: 'Armas largas', note: 'Escopetas, carabinas y fusiles', action: { category: ARMAS, subcategory: 'armas-largas' } },
-      { x: 17, y: 78, label: 'Arma corta', note: 'Pistolas y revólveres', action: { category: ARMAS, subcategory: 'armas-cortas' } },
-      { x: 46, y: 60, label: 'Municiones, accesorios y recarga', note: 'Entrar a este sector', action: { view: 'accesorios' } },
-      { x: 88, y: 32, label: 'Fusiles', action: { category: ARMAS, subcategory: 'fusiles' } },
-      { x: 87, y: 82, label: 'Revólveres', action: { category: ARMAS, subcategory: 'revolveres' } },
-      // Carteles de marcas de la pared del fondo y de la pared derecha.
-      logo(32.5, 27.5, 'Ruger', 'Ruger', 6, 5), logo(36.5, 28, 'CZ', 'CZ', 5, 5), logo(32.5, 35.5, 'Glock', 'GLOCK', 6, 4.5),
-      logo(36.3, 35, 'Heckler & Koch', 'Heckler & Koch', 6, 5), logo(59.5, 28, 'FN Herstal', 'FN Herstal', 8, 5),
-      logo(59.5, 34.5, 'Beretta', 'Beretta', 8, 3.5),
-      logo(76, 19, 'Sig Sauer', 'SIG SAUER', 9, 5), logo(76, 24.5, 'Remington', 'Remington', 9, 4),
-      logo(77, 44.5, 'Browning', 'Browning', 10, 4),
-      logo(94, 23.5, 'Colt', 'Colt', 9, 6), logo(94, 35.5, 'Mossberg', 'Mossberg', 10, 4), logo(94, 46, 'Taurus', 'Taurus', 10, 4),
+      { x: 10, y: 46, label: 'Armas largas', note: 'Escopetas, carabinas y fusiles', action: { category: ARMAS, subcategory: 'armas-largas' } },
+      { x: 16, y: 80, label: 'Arma corta', note: 'Pistolas y revólveres', action: { category: ARMAS, subcategory: 'armas-cortas' } },
+      { x: 44, y: 45, label: 'Municiones, accesorios y recarga', note: 'Entrar a este sector', action: { view: 'accesorios' } },
+      { x: 88, y: 30, label: 'Fusiles', action: { category: ARMAS, subcategory: 'fusiles' } },
+      { x: 85, y: 80, label: 'Revólveres', action: { category: ARMAS, subcategory: 'revolveres' } },
+      // Carteles de marcas de la pared del fondo (columna izquierda y derecha de la puerta).
+      logo(35.1, 26.5, 'Ruger', 'Ruger', 5.5, 5), logo(35.1, 30.2, 'Beretta', 'Beretta', 5.5, 2.6),
+      logo(35.2, 33.4, 'Glock', 'GLOCK', 4, 3.5), logo(35.1, 36.8, 'CZ', 'CZ', 4.5, 3.2),
+      logo(48, 27, 'Taurus', 'Taurus', 5.5, 5), logo(48, 30.4, 'Remington', 'Remington', 6, 2.4),
+      logo(48, 33.6, 'Sig Sauer', 'SIG SAUER', 3.5, 3.5), logo(48, 36.8, 'Bersa', 'Bersa', 5, 3),
     ],
   },
   {
@@ -96,6 +94,7 @@ export function initShowroom({ applyFilter, countFor }) {
   const progress = $('#sceneProgress');
   const tourButton = $('#tourToggle');
   const touch = window.matchMedia?.('(hover: none)').matches;
+  const compact = () => Boolean(window.matchMedia?.('(max-width: 720px)').matches);
   const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const visited = new Map(showroomViews.map(view => [view.id, new Set()]));
   let current = 0;
@@ -145,6 +144,21 @@ export function initShowroom({ applyFilter, countFor }) {
       : `<b>${seen}/${total}</b> puntos explorados`;
   }
 
+  // En celular las etiquetas se pisan sobre la foto: se muestran en una tarjeta fija debajo.
+  const info = document.createElement('div');
+  info.className = 'scene-info';
+  info.setAttribute('aria-live', 'polite');
+  frame.append(info);
+  function showHint() {
+    info.classList.remove('has-spot');
+    info.innerHTML = '<p>Tocá un punto de la foto para ver ese sector</p>';
+  }
+  function showInfo(spot) {
+    info.classList.add('has-spot');
+    info.innerHTML = `<b>${esc(spot.logo ? `Productos ${spot.label}` : spot.label)}</b><small>${esc(describe(spot))}</small><button type="button">${spot.action.view ? 'Entrar a este sector →' : 'Ver en el catálogo →'}</button>`;
+    info.querySelector('button').addEventListener('click', event => { event.stopPropagation(); runAction(spot.action); });
+  }
+
   function closeSpots(except) {
     spotsBox.querySelectorAll('.spot.is-open').forEach(spot => { if (spot !== except) spot.classList.remove('is-open'); });
   }
@@ -164,6 +178,7 @@ export function initShowroom({ applyFilter, countFor }) {
 
   function renderSpots(view) {
     const seen = visited.get(view.id);
+    showHint();
     spotsBox.innerHTML = view.spots.map((spot, index) => {
       const sideClass = spot.side ? ` spot-${spot.side}` : spot.x > 62 ? ' spot-left' : spot.x < 30 ? ' spot-right' : '';
       const vertical = spot.y < 22 ? ' spot-below' : '';
@@ -182,10 +197,11 @@ export function initShowroom({ applyFilter, countFor }) {
         event.stopPropagation();
         markVisited(index, button);
         // En pantallas táctiles el primer toque muestra la información y el segundo ejecuta.
-        if (touch && !button.classList.contains('is-open')) {
+        if ((touch || compact()) && !button.classList.contains('is-open')) {
           stopTour();
           closeSpots(button);
           button.classList.add('is-open');
+          showInfo(view.spots[index]);
           return;
         }
         runAction(view.spots[index].action);
@@ -193,7 +209,7 @@ export function initShowroom({ applyFilter, countFor }) {
     });
     updateProgress();
   }
-  frame.addEventListener('click', () => closeSpots());
+  frame.addEventListener('click', () => { closeSpots(); showHint(); });
 
   function replayAnimation(className) {
     frame.classList.remove(className);
