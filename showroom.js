@@ -60,7 +60,6 @@ export const showroomViews = [
       { x: 52, y: 33, label: 'Miras y red dots', note: 'Holosun', side: 'right', action: { category: 'accesorios', subcategory: 'optica' } },
       { x: 70, y: 45, label: 'Recarga', note: 'Lyman', side: 'right', action: { category: 'recarga' } },
       { x: 91, y: 30, label: 'Fundas y portacargadores', note: 'Ghost', action: { category: 'accesorios', subcategory: 'fundas-transporte' } },
-      { x: 47, y: 78, label: 'Municiones', note: 'Ver todo en el catálogo', action: { category: 'municiones' } },
     ],
   },
   {
@@ -73,6 +72,7 @@ export const showroomViews = [
       { x: 72, y: 58, label: 'Kits de limpieza', action: { category: 'accesorios', subcategory: 'limpieza' } },
       { x: 88, y: 44, label: 'Extensiones y otros', action: { category: 'accesorios', subcategory: 'otros' } },
       { x: 65, y: 87, label: 'Estuches y valijas', action: { category: 'accesorios', subcategory: 'fundas-transporte' } },
+      { x: 85, y: 80, label: 'Municiones', note: 'Ver todo en el catálogo', action: { category: 'municiones' } },
     ],
   },
 ];

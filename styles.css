@@ -1267,3 +1267,17 @@ a.trust-item:hover{background:#ffffff08}
 @media(max-width:720px){
   .showroom-frame{height:calc(196px + (100vw - 16px) * var(--photo-h,.75))}
 }
+
+/* El escudo vive dentro de <main>: queda centrado sobre la unión de las dos secciones (también en celular) */
+.gate{position:relative}
+.gate-shield{top:50%;left:50%;transform:translate(-50%,-50%)}
+@media(hover:hover) and (min-width:761px){
+  .gate-page:has(.gate-panel:hover) .gate-shield,.gate-page:has(.gate-shield:hover) .gate-shield{transform:translate(-50%,-50%) scale(1.12)}
+}
+@media(max-width:760px){
+  .gate-welcome{padding:26px 16px 22px}
+  .gate-shield{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:88px;margin:0;padding:0;background:none;z-index:4}
+  .gate-panel{padding:44px 0 30px}
+  .gate-armeria .gate-content{padding-bottom:6px}
+  .gate-camping .gate-content{padding-top:34px}
+}
