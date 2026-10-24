@@ -733,5 +733,5 @@ if ($('#showroomViewer')) {
   const countFor = action => action.brand
     ? sectorProducts.filter(product => product.brand.toLowerCase() === action.brand.toLowerCase()).length
     : sectorProducts.filter(product => (!action.category || product.category === action.category) && matchesSub(product, sectorId, action.category, action.subcategory)).length;
-  import('./showroom.js?v=20261024d').then(module => module.initShowroom({ applyFilter, countFor }));
+  import('./showroom.js?v=20261024e').then(module => module.initShowroom({ applyFilter, countFor }));
 }

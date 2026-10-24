@@ -52,14 +52,18 @@ export const showroomViews = [
     ],
   },
   {
-    id: 'accesorios', title: 'Accesorios', image: 'assets/showroom/accesorios-marcas.jpg', thumb: 'assets/showroom/accesorios-marcas-mini.jpg',
-    alt: 'Pared de accesorios con protección auditiva, anteojos, miras, recarga y fundas', filter: { category: 'accesorios' }, focus: { x: 46, y: 58 },
+    id: 'accesorios', title: 'Equipo y Munición', image: 'assets/new/equipo-municion.jpg', thumb: 'assets/new/equipo-municion-mini.jpg',
+    alt: 'Pared de protección auditiva, anteojos, miras, recarga y fundas, con vitrina de municiones por calibre', filter: { category: 'accesorios' }, focus: { x: 46, y: 58 },
     spots: [
-      { x: 14, y: 30, label: 'Auriculares de tiro', note: 'EARMOR', action: { category: 'accesorios', subcategory: 'auriculares' } },
-      { x: 34, y: 22, label: 'Anteojos de protección', note: 'Shilba', action: { category: 'accesorios', subcategory: 'proteccion' } },
-      { x: 52, y: 33, label: 'Miras y red dots', note: 'Holosun', side: 'right', action: { category: 'accesorios', subcategory: 'optica' } },
-      { x: 70, y: 45, label: 'Recarga', note: 'Lyman', side: 'right', action: { category: 'recarga' } },
-      { x: 91, y: 30, label: 'Fundas y portacargadores', note: 'Ghost', action: { category: 'accesorios', subcategory: 'fundas-transporte' } },
+      { x: 15, y: 25, label: 'Auriculares de tiro', note: 'EARMOR', action: { category: 'accesorios', subcategory: 'auriculares' } },
+      { x: 38, y: 29, label: 'Anteojos de protección', note: 'Shilba', side: 'left', action: { category: 'accesorios', subcategory: 'proteccion' } },
+      { x: 54, y: 29, label: 'Miras y red dots', note: 'Holosun', action: { category: 'accesorios', subcategory: 'optica' } },
+      { x: 69, y: 34, label: 'Recarga', note: 'Lyman', action: { category: 'recarga' } },
+      { x: 91, y: 31, label: 'Fundas y portacargadores', note: 'Ghost', action: { category: 'accesorios', subcategory: 'fundas-transporte' } },
+      { x: 9, y: 77, label: 'Munición pistola 9mm', note: 'Arma corta', action: { category: 'municiones', subcategory: 'arma-corta' } },
+      { x: 45, y: 75, label: 'Munición escopeta', side: 'left', action: { category: 'municiones' } },
+      { x: 63, y: 74, label: 'Munición carabina', note: 'Arma larga', action: { category: 'municiones', subcategory: 'arma-larga' } },
+      { x: 82, y: 70, label: 'Varios calibres', action: { category: 'municiones' } },
     ],
   },
   {
@@ -72,7 +76,6 @@ export const showroomViews = [
       { x: 72, y: 58, label: 'Kits de limpieza', action: { category: 'accesorios', subcategory: 'limpieza' } },
       { x: 88, y: 44, label: 'Extensiones y otros', action: { category: 'accesorios', subcategory: 'otros' } },
       { x: 65, y: 87, label: 'Estuches y valijas', action: { category: 'accesorios', subcategory: 'fundas-transporte' } },
-      { x: 85, y: 80, label: 'Municiones', note: 'Ver todo en el catálogo', action: { category: 'municiones' } },
     ],
   },
 ];
