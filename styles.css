@@ -1251,3 +1251,19 @@ a.trust-item:hover{background:#ffffff08}
   .scene-info small{color:#bdbcb3;font-size:11px;letter-spacing:.03em}
   .scene-info button{justify-self:start;margin-top:6px;padding:9px 14px;border:1px solid var(--gold);background:var(--gold);color:#161510;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
 }
+
+/* ═════════════════ Landing: logo sin chapa e interacción del escudo ═════════════════ */
+.gate-logo{-webkit-mask-image:none;mask-image:none;width:min(440px,84%);filter:drop-shadow(0 4px 18px #000d)}
+.gate-shield{pointer-events:auto;cursor:pointer;transition:transform .35s cubic-bezier(.2,.8,.2,1),filter .35s}
+/* escudo y secciones reaccionan juntos: tocar cualquiera enciende a los tres */
+@media(hover:hover) and (min-width:761px){
+  .gate-page:has(.gate-panel:hover) .gate-shield,.gate-page:has(.gate-shield:hover) .gate-shield{transform:translate(-50%,-46%) scale(1.12);filter:drop-shadow(0 0 22px #d5a75bcc) drop-shadow(0 14px 22px #000d)}
+  .gate-page:has(.gate-shield:hover) .gate-bg{transform:scale(1.035);filter:brightness(1.12)}
+  .gate-page:has(.gate-shield:hover) .gate-button{transform:translateY(-2px)}
+  .gate-page:has(.gate-shield:hover) .gate-armeria .gate-button{background:#d5a75b;color:#141410;box-shadow:0 14px 40px #d5a75b55}
+  .gate-page:has(.gate-shield:hover) .gate-camping .gate-button{background:#2f7a43;color:#fff;box-shadow:0 14px 40px #4f9b6255}
+  .gate-panel:hover{flex-grow:1}
+}
+@media(max-width:720px){
+  .showroom-frame{height:calc(196px + (100vw - 16px) * var(--photo-h,.75))}
+}

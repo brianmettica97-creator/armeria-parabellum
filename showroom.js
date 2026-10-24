@@ -43,12 +43,12 @@ export const showroomViews = [
     ],
   },
   {
-    id: 'fusiles', title: 'Fusiles y revólveres', image: 'assets/showroom/fusiles-revolveres.jpg', thumb: 'assets/showroom/fusiles-revolveres-mini.jpg',
+    id: 'fusiles', title: 'Fusiles y revólveres', image: 'assets/new/fusiles-revolveres.jpg', thumb: 'assets/new/fusiles-revolveres-mini.jpg',
     alt: 'Pared de fusiles y vitrina con revólveres', filter: { category: ARMAS, subcategory: 'fusiles' }, focus: { x: 85, y: 45 },
     spots: [
-      { x: 70, y: 22, label: 'Fusiles', action: { category: ARMAS, subcategory: 'fusiles' } },
-      { x: 30, y: 30, label: 'Carabinas', action: { category: ARMAS, subcategory: 'carabinas' } },
-      { x: 57, y: 71, label: 'Revólveres', action: { category: ARMAS, subcategory: 'revolveres' } },
+      { x: 66, y: 25, label: 'Fusiles', action: { category: ARMAS, subcategory: 'fusiles' } },
+      { x: 28, y: 31, label: 'Carabinas', action: { category: ARMAS, subcategory: 'carabinas' } },
+      { x: 52, y: 70, label: 'Revólveres', action: { category: ARMAS, subcategory: 'revolveres' } },
     ],
   },
   {
@@ -120,6 +120,7 @@ export function initShowroom({ applyFilter, countFor }) {
     let figureWidth = width;
     let figureHeight = width / ratio;
     if (figureHeight > height) { figureHeight = height; figureWidth = height * ratio; }
+    frame.style.setProperty('--photo-h', Math.min(1.34, 1 / ratio).toFixed(3)); // alto de la foto en celular
     figure.style.width = `${Math.round(figureWidth)}px`;
     figure.style.height = `${Math.round(figureHeight)}px`;
   }
