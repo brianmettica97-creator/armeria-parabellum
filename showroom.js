@@ -22,7 +22,7 @@ export const showroomViews = [
     spots: [
       { x: 10, y: 46, label: 'Armas largas', note: 'Escopetas, carabinas y fusiles', action: { category: ARMAS, subcategory: 'armas-largas' } },
       { x: 16, y: 80, label: 'Arma corta', note: 'Pistolas y revólveres', action: { category: ARMAS, subcategory: 'armas-cortas' } },
-      { x: 44, y: 45, label: 'Municiones, accesorios y recarga', note: 'Entrar a este sector', action: { view: 'accesorios' } },
+      { x: 44, y: 45, label: 'Equipo y Munición', note: 'Accesorios, recarga y municiones', action: { view: 'accesorios' } },
       { x: 88, y: 30, label: 'Fusiles', action: { category: ARMAS, subcategory: 'fusiles' } },
       { x: 85, y: 80, label: 'Revólveres', action: { category: ARMAS, subcategory: 'revolveres' } },
       // Carteles de marcas de la pared del fondo (columna izquierda y derecha de la puerta).
@@ -39,7 +39,6 @@ export const showroomViews = [
       { x: 28, y: 24, label: 'Escopetas', action: { category: ARMAS, subcategory: 'escopetas' } },
       { x: 30, y: 82, label: 'Pistolas', action: { category: ARMAS, subcategory: 'pistolas' } },
       { x: 53, y: 77, label: 'Valijas y estuches', action: { category: 'accesorios', subcategory: 'fundas-transporte' } },
-      { x: 74, y: 69, label: 'Municiones', action: { category: 'municiones' } },
     ],
   },
   {
