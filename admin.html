@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#0b0c0c">
   <title>Panel · Armería Parabellum</title>
   <link rel="icon" href="assets/iconos/favicon-armeria.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin.css?v=20261026a">
 </head>
 <body>
   <header class="adm-top">
@@ -62,20 +62,30 @@
     <div class="adm-toolbar">
       <button class="btn primary" type="button" id="newBtn">+ Nuevo producto</button>
       <input type="search" id="search" placeholder="Buscar por nombre, marca o código" aria-label="Buscar">
-      <select id="sectorFilter" aria-label="Sector">
-        <option value="">Todos los sectores</option>
-        <option value="armeria">Armería</option>
-        <option value="camping">Camping &amp; Outdoor</option>
-      </select>
-      <select id="stateFilter" aria-label="Estado">
-        <option value="">Todos</option>
-        <option value="publicados">Publicados</option>
-        <option value="ocultos">Ocultos</option>
-        <option value="sinfoto">Sin foto propia</option>
-        <option value="sinprecio">Sin precio</option>
-        <option value="ofertas">En oferta</option>
-        <option value="usados">Usados</option>
-      </select>
+      <div class="adm-filters">
+        <select id="sectorFilter" aria-label="Sector">
+          <option value="">Todos los sectores</option>
+          <option value="armeria">Armería</option>
+          <option value="camping">Camping &amp; Outdoor</option>
+        </select>
+        <select id="stateFilter" aria-label="Estado">
+          <option value="">Todos</option>
+          <option value="publicados">Publicados</option>
+          <option value="ocultos">Ocultos</option>
+          <option value="sinfoto">Sin foto propia</option>
+          <option value="sinprecio">Sin precio</option>
+          <option value="ofertas">En oferta</option>
+          <option value="usados">Usados</option>
+        </select>
+        <select id="brandFilter" aria-label="Marca"><option value="">Todas las marcas</option></select>
+        <select id="caliberFilter" aria-label="Calibre"><option value="">Todos los calibres</option></select>
+        <select id="sortList" aria-label="Ordenar">
+          <option value="recientes">Más recientes</option>
+          <option value="marca">Ordenar por marca</option>
+          <option value="calibre">Ordenar por calibre</option>
+          <option value="nombre">Ordenar por nombre</option>
+        </select>
+      </div>
     </div>
     <p class="muted" id="listCount"></p>
     <div class="adm-list" id="list"></div>
@@ -119,11 +129,6 @@
         <h3>2 · Datos</h3>
         <label>Nombre del producto *<input id="f_name" required maxlength="120" placeholder="Ej.: Glock 19 Gen5"></label>
         <div class="row">
-          <label>Marca<input id="f_brand" list="brandList" maxlength="60"></label>
-          <label>Código interno<input id="f_code" maxlength="30" placeholder="Opcional"></label>
-        </div>
-        <datalist id="brandList"></datalist>
-        <div class="row">
           <label>Sector *<select id="f_sector" required>
             <option value="armeria">Armería</option>
             <option value="camping">Camping &amp; Outdoor</option>
@@ -133,7 +138,18 @@
         </div>
         <label class="check"><input type="checkbox" id="f_regulated"> Material controlado (solo consulta por WhatsApp, sin carrito)</label>
         <p class="hint" id="regulatedHint" hidden>Esta categoría es siempre <strong>material controlado</strong>: en el sitio no se agrega al pedido, se consulta por WhatsApp.</p>
-        <label id="caliberWrap">Calibre<input id="f_caliber" maxlength="60" placeholder="Ej.: 9×19 mm"></label>
+        <div class="row">
+          <label>Marca
+            <select id="f_brandPick" aria-label="Marca"></select>
+            <input id="f_brand" list="brandList" maxlength="60" placeholder="Escribí la marca" aria-label="Marca">
+          </label>
+          <label id="caliberWrap">Calibre
+            <select id="f_caliberPick" aria-label="Calibre"></select>
+            <input id="f_caliber" maxlength="60" placeholder="Escribí el calibre" aria-label="Calibre">
+          </label>
+          <label>Código interno<input id="f_code" maxlength="30" placeholder="Opcional"></label>
+        </div>
+        <datalist id="brandList"></datalist>
         <label>Descripción corta (aparece en la tarjeta)<input id="f_short" maxlength="120"></label>
         <label>Descripción completa<textarea id="f_description" rows="5" maxlength="3000"></textarea></label>
       </section>
@@ -188,6 +204,6 @@
   </dialog>
 
   <div class="toast" id="toast" role="status" hidden></div>
-  <script type="module" src="admin.js"></script>
+  <script type="module" src="admin.js?v=20261026a"></script>
 </body>
 </html>

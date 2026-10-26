@@ -3,11 +3,12 @@
 // fotos `productos`. Los permisos reales los controla la base (RLS): aunque
 // alguien abra esta página, sin estar en la lista de admins no puede escribir.
 import { getSupabase, supabaseConfigured } from './supabase-client.js';
-import { sectors, findCategory, findSubcategory, brands } from './taxonomy.js';
+import { sectors, findCategory, findSubcategory, brands, gunBrands, calibers } from './taxonomy.js?v=20261026a';
 
 const BUCKET = 'productos';
 const MAX_SIDE = 1600;       // px del lado mayor después de achicar
 const JPEG_QUALITY = 0.82;
+const WEBP_QUALITY = 0.8;
 
 const $ = selector => document.querySelector(selector);
 const views = ['loginView', 'recoveryView', 'deniedView', 'listView', 'contactsView'];
@@ -103,12 +104,43 @@ async function loadList() {
 }
 
 const ownPhoto = row => Boolean(row.photo?.own);
+const same = (a, b) => String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+// Posición del calibre en la lista del comercio; los que no figuran van al final.
+const caliberRank = value => {
+  const index = calibers.findIndex(c => same(c, value));
+  return index >= 0 ? index : value ? calibers.length : calibers.length + 1;
+};
+const byText = (a, b) => (a ? (b ? a.localeCompare(b, 'es', { sensitivity: 'base' }) : -1) : (b ? 1 : 0));
+const sorters = {
+  marca: (a, b) => byText(a.brand, b.brand) || byText(a.name, b.name),
+  calibre: (a, b) => caliberRank(a.caliber) - caliberRank(b.caliber) || byText(a.caliber, b.caliber) || byText(a.brand, b.brand) || byText(a.name, b.name),
+  nombre: (a, b) => byText(a.name, b.name),
+};
+
+// Desplegables de marca y calibre del listado, armados con lo que hay cargado.
+function fillListFilters() {
+  const unique = values => values.filter(Boolean).map(v => v.trim()).filter((v, i, list) => list.findIndex(o => same(o, v)) === i);
+  const options = (select, first, values) => {
+    const current = select.value;
+    select.innerHTML = `<option value="">${first}</option>${values.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('')}`;
+    select.value = values.find(v => same(v, current)) || '';
+  };
+  options($('#brandFilter'), 'Todas las marcas', unique(all.map(row => row.brand)).sort(byText));
+  options($('#caliberFilter'), 'Todos los calibres', unique(all.map(row => row.caliber)).sort((a, b) => caliberRank(a) - caliberRank(b) || byText(a, b)));
+}
+
 function renderList() {
+  fillListFilters();
   const q = $('#search').value.trim().toLowerCase();
   const sector = $('#sectorFilter').value;
   const state = $('#stateFilter').value;
+  const brand = $('#brandFilter').value;
+  const caliber = $('#caliberFilter').value;
+  const sort = $('#sortList').value;
   const rows = all.filter(row => {
     if (sector && row.sector !== sector) return false;
+    if (brand && !same(row.brand, brand)) return false;
+    if (caliber && !same(row.caliber, caliber)) return false;
     if (state === 'publicados' && !row.published) return false;
     if (state === 'ocultos' && row.published) return false;
     if (state === 'sinfoto' && ownPhoto(row)) return false;
@@ -118,8 +150,16 @@ function renderList() {
     if (q && ![row.name, row.brand, row.code].some(v => String(v || '').toLowerCase().includes(q))) return false;
     return true;
   });
+  if (sorters[sort]) rows.sort(sorters[sort]);
   $('#listCount').textContent = `${rows.length} de ${all.length} productos`;
-  $('#list').innerHTML = rows.length ? rows.map(row => {
+  // Al ordenar por marca o calibre, el listado se agrupa con un título por grupo.
+  const groupOf = { marca: row => row.brand?.trim() || 'Sin marca', calibre: row => row.caliber?.trim() || 'Sin calibre' }[sort];
+  const counts = new Map();
+  if (groupOf) rows.forEach(row => { const key = groupOf(row).toLowerCase(); counts.set(key, (counts.get(key) || 0) + 1); });
+  $('#list').innerHTML = rows.length ? rows.map((row, index) => {
+    const group = groupOf?.(row);
+    const header = group && (index === 0 || !same(groupOf(rows[index - 1]), group))
+      ? `<h3 class="group">${esc(group)} <span>${counts.get(group.toLowerCase())}</span></h3>` : '';
     const category = findCategory(row.sector, row.category);
     const sub = findSubcategory(row.sector, row.category, row.subcategory);
     const tags = [
@@ -130,14 +170,14 @@ function renderList() {
       row.availability === 'agotado' && '<span class="tag off">Agotado</span>',
       !ownPhoto(row) && '<span class="tag">Foto de referencia</span>',
     ].filter(Boolean).join('');
-    return `<button type="button" class="item" data-id="${esc(row.id)}">
+    return `${header}<button type="button" class="item" data-id="${esc(row.id)}">
       <img src="${esc(row.photo?.src || 'assets/placeholder-producto.svg')}" alt="" loading="lazy" onerror="this.src='assets/placeholder-producto.svg'">
-      <div><h4>${esc(row.name)}</h4><p>${esc([row.brand, category?.label, sub?.label].filter(Boolean).join(' · '))}</p><div class="tags">${tags}</div></div>
+      <div><h4>${esc(row.name)}</h4><p>${esc([row.brand, sub?.label || category?.label, row.caliber].filter(Boolean).join(' · '))}</p><div class="tags">${tags}</div></div>
       <span class="price">${row.price == null ? 'Consultar' : money(row.price)}</span>
     </button>`;
   }).join('') : '<p class="empty">No hay productos con ese filtro.</p>';
 }
-['#search', '#sectorFilter', '#stateFilter'].forEach(sel => $(sel).addEventListener('input', renderList));
+['#search', '#sectorFilter', '#stateFilter', '#brandFilter', '#caliberFilter', '#sortList'].forEach(sel => $(sel).addEventListener('input', renderList));
 $('#list').addEventListener('click', event => {
   const item = event.target.closest('.item');
   if (item) openEditor(all.find(row => row.id === item.dataset.id));
@@ -174,7 +214,35 @@ function updateRegulated() {
   f('regulated').disabled = forced;
   if (forced) f('regulated').checked = true;
   $('#caliberWrap').hidden = f('sector').value !== 'armeria';
+  updatePicks();
 }
+
+// Marca y calibre: desplegable con la lista del comercio + "Otra…" para
+// escribir a mano. El valor que se guarda es siempre el del campo de texto.
+const OTHER = '__otra';
+function setPick(name, options, otherLabel) {
+  const select = f(`${name}Pick`);
+  const input = f(name);
+  const value = input.value.trim();
+  select.hidden = !options;
+  if (!options) { input.hidden = false; return; }
+  const match = options.find(option => same(option, value));
+  select.innerHTML = `<option value="">— Elegir —</option>${options.map(option => `<option value="${esc(option)}">${esc(option)}</option>`).join('')}<option value="${OTHER}">${otherLabel}</option>`;
+  select.value = match || (value ? OTHER : '');
+  input.value = match || value;
+  input.hidden = select.value !== OTHER;
+}
+function updatePicks() {
+  const armas = f('sector').value === 'armeria' && f('category').value === 'armas';
+  setPick('brand', armas ? gunBrands : null, 'Otra marca…');
+  setPick('caliber', calibers, 'Otro calibre…');
+}
+['brand', 'caliber'].forEach(name => f(`${name}Pick`).addEventListener('change', () => {
+  const other = f(`${name}Pick`).value === OTHER;
+  f(name).value = other ? '' : f(`${name}Pick`).value;
+  f(name).hidden = !other;
+  if (other) f(name).focus();
+}));
 function updateConditional() {
   const used = f('condition').value === 'usado';
   $('#gradeWrap').hidden = !used; $('#notesWrap').hidden = !used;
@@ -195,10 +263,10 @@ function openEditor(row) {
   f('name').value = row?.name || '';
   f('brand').value = row?.brand || '';
   f('code').value = row?.code || '';
+  f('caliber').value = row?.caliber || '';
   f('sector').value = row?.sector || $('#sectorFilter').value || 'armeria';
   fillCategories(row?.category);
   fillSubcategories(row?.subcategory);
-  f('caliber').value = row?.caliber || '';
   f('short').value = row?.short_description || '';
   f('description').value = row?.description || '';
   f('price').value = row?.price ?? '';
@@ -254,7 +322,14 @@ async function shrink(file) {
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('No se pudo procesar la foto.')), 'image/jpeg', JPEG_QUALITY));
+  const encode = (type, quality) => new Promise(resolve => canvas.toBlob(resolve, type, quality));
+  // WebP pesa ~30% menos que JPG con la misma calidad; los navegadores que no
+  // saben generarlo (Safari) devuelven otro formato y se usa JPG.
+  const webp = await encode('image/webp', WEBP_QUALITY);
+  if (webp?.type === 'image/webp') return webp;
+  const jpeg = await encode('image/jpeg', JPEG_QUALITY);
+  if (!jpeg) throw new Error('No se pudo procesar la foto.');
+  return jpeg;
 }
 
 const slug = text => String(text || 'producto').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) || 'producto';
@@ -267,8 +342,8 @@ $('#photoInput').addEventListener('change', async event => {
   for (const file of files) {
     try {
       const blob = await shrink(file);
-      const path = `${folderFor()}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.jpg`;
-      const { error } = await sb.storage.from(BUCKET).upload(path, blob, { contentType: 'image/jpeg', cacheControl: '31536000' });
+      const path = `${folderFor()}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${blob.type === 'image/webp' ? 'webp' : 'jpg'}`;
+      const { error } = await sb.storage.from(BUCKET).upload(path, blob, { contentType: blob.type, cacheControl: '31536000' });
       if (error) throw error;
       const { data } = sb.storage.from(BUCKET).getPublicUrl(path);
       photos.push({ src: data.publicUrl, own: true, path });

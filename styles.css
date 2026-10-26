@@ -439,7 +439,7 @@ section[id],footer[id]{scroll-margin-top:130px}
 .gallery-thumbs{display:flex;gap:6px;padding:8px;background:#0c0e0e;overflow-x:auto}
 .gallery-thumbs button{flex:none;width:64px;height:52px;padding:3px;border:1px solid var(--line);background:#141716}
 .gallery-thumbs button.active{border-color:var(--gold)}
-.gallery-thumbs img{width:100%;height:100%;object-fit:contain}
+.gallery-thumbs img{display:block;width:100%;height:100%;object-fit:contain}
 .scene-sector-link{margin-top:4px;color:#f0cf84;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;text-decoration:underline;text-underline-offset:4px}
 .scene-sector-link[hidden]{display:none}
 
@@ -1280,4 +1280,18 @@ a.trust-item:hover{background:#ffffff08}
   .gate-panel{padding:44px 0 30px}
   .gate-armeria .gate-content{padding-bottom:6px}
   .gate-camping .gate-content{padding-top:34px}
+}
+
+/* Ficha de producto: la foto se ubica de forma absoluta dentro del marco para
+   que en el celular (Safari) no se corte ni quede debajo de la leyenda o de
+   los botones Volver / cerrar. */
+.product-photo-stage img{position:absolute;inset:0;max-height:none;padding:40px 34px 58px}
+.product-photo-stage>span.product-photo-caption{left:50%;right:auto;bottom:26px;transform:translateX(-50%);width:max-content;max-width:calc(100% - 60px);padding:6px 12px}
+@media(max-width:700px){
+  .dialog-art,.product-photo-stage{min-height:0}
+  .dialog-art{height:auto}
+  .dialog-art .product-photo-stage{height:min(360px,62vh);flex:none}
+  .product-photo-stage:before{inset:12px}
+  .product-photo-stage img{padding:58px 22px 50px}
+  .product-photo-stage>span.product-photo-caption{bottom:20px;font-size:8px}
 }

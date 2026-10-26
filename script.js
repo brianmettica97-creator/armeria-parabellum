@@ -248,7 +248,8 @@ function renderProducts() {
   const grid = $('#productGrid');
   if (!grid) return;
   const inScope = sectorProducts.filter(product => (!state.category || product.category === state.category) && matchesSub(product, sectorId, state.category, state.subcategory));
-  const brandOptions = [...new Set(inScope.map(product => product.brand))].sort((a, b) => a.localeCompare(b, 'es'));
+  // Sin distinguir mayúsculas: "Bersa" y "BERSA" son una sola opción.
+  const brandOptions = inScope.map(product => product.brand).filter((brand, index, list) => brand && list.findIndex(other => other?.toLowerCase() === brand.toLowerCase()) === index).sort((a, b) => a.localeCompare(b, 'es'));
   if (state.brand && !brandOptions.some(brand => brand.toLowerCase() === state.brand.toLowerCase())) brandOptions.push(state.brand);
   const brandFilter = $('#brandFilter');
   brandFilter.innerHTML = '<option value="">Todas las marcas</option>' + brandOptions.map(brand => `<option value="${escapeHtml(brand)}">${escapeHtml(brand)}</option>`).join('');
@@ -360,7 +361,7 @@ function showProduct(product, { push = true } = {}) {
     $('#dialogArt').querySelectorAll('[data-photo]').forEach(other => other.classList.toggle('active', other === button));
   }));
 
-  $('#dialogCategory').textContent = `${product.categoryLabel}${product.subcategoryLabel ? ` · ${product.subcategoryLabel}` : ''} · ${product.code}`;
+  $('#dialogCategory').textContent = [product.categoryLabel, product.subcategoryLabel, product.code].filter(Boolean).join(' · ');
   $('#dialogBadges').innerHTML = productBadges(product);
   $('#dialogTitle').textContent = product.name;
   $('#dialogLead').textContent = product.shortDescription || product.description;

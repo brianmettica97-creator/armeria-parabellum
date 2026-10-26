@@ -192,6 +192,22 @@ export const brands = [
 ];
 
 // ───────────────────────────────────────────────────────────────────────────
+// MARCAS Y CALIBRES DEL PANEL (admin.html)
+// ───────────────────────────────────────────────────────────────────────────
+// Opciones de los desplegables al cargar armas y municiones. El panel ofrece
+// además "Otra…" para escribir una que no esté. Los calibres van en el orden
+// que pidió el comercio (de arma corta a larga y escopeta).
+export const gunBrands = [
+  'Bersa', 'Canik', 'CZ', 'Glock', 'Kral Arms', 'Marlin', 'Maverick', 'Mossberg',
+  'Remington', 'Retay', 'Rossi', 'Ruger', 'Savage', 'Tanfoglio', 'Taurus', 'Uzkon',
+];
+
+export const calibers = [
+  '22LR', '.380ACP', '9MM', '.40S&W', '.45ACP', '38 SPECIAL', '.357 MAGNUM', '.44 MAGNUM',
+  '308 WINCHESTER', '30-06 SPRINGFIELD', '22WMR', '12 UAB', '16 UAB', '20 UAB',
+];
+
+// ───────────────────────────────────────────────────────────────────────────
 // GESTORÍA
 // ───────────────────────────────────────────────────────────────────────────
 // Trámites que el comercio CONFIRME que ofrece. No publicar requisitos,
