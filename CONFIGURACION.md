@@ -43,6 +43,15 @@ Después, dar de alta el sitio en Google Search Console y cargar el `sitemap.xml
 - `supabase-config.js`: URL del proyecto y clave **publicable** (nunca la `service_role`).
 - `admin.html`: panel donde el local carga, edita, oculta y borra productos y sube fotos.
   Dirección: `https://brianmettica97-creator.github.io/armeria-parabellum/admin.html`.
+  - **Importar planilla** (`admin-planilla.js`): carga o actualiza muchos productos desde
+    Excel o CSV. Los nuevos entran ocultos; si el código coincide, actualiza ese producto
+    (celdas vacías no borran nada). Lee Excel con SheetJS (jsDelivr, se carga al usarlo).
+  - **Fotos**: lista de productos sin foto propia para cargarlas desde el celular y publicar.
+  - Cada foto se sube en WebP en dos tamaños: 1600px (ficha) y 640px (`-mini`, tarjetas).
+    En iPhone se codifica con libwebp en WebAssembly (`@jsquash/webp`, jsDelivr); si no
+    carga, se sube en JPG.
+  - Las listas de marcas y calibres de los desplegables están en `taxonomy.js`
+    (`gunBrands`, `calibers`).
 - `supabase/migrations/`: estructura de la tabla `productos` y reglas de seguridad.
   `20261022000000_admin_y_fotos.sql` crea la lista de administradores (`admins`),
   limita la escritura a esos emails y crea el depósito público de fotos `productos`.

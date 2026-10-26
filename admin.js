@@ -3,7 +3,8 @@
 // fotos `productos`. Los permisos reales los controla la base (RLS): aunque
 // alguien abra esta página, sin estar en la lista de admins no puede escribir.
 import { getSupabase, supabaseConfigured } from './supabase-client.js';
-import { sectors, findCategory, findSubcategory, brands, gunBrands, calibers } from './taxonomy.js?v=20261026a';
+import { sectors, findCategory, findSubcategory, brands, gunBrands, calibers } from './taxonomy.js?v=20261026c';
+import { COLUMNS, TEMPLATE_ROWS, analyze, decodeText, parseCsv, parseMoney } from './admin-planilla.js?v=20261026c';
 
 const BUCKET = 'productos';
 const MAX_SIDE = 1600;       // px del lado mayor después de achicar
@@ -13,7 +14,8 @@ const THUMB_SIDE = 640;      // px de la versión chica para tarjetas
 const THUMB_QUALITY = 0.75;
 
 const $ = selector => document.querySelector(selector);
-const views = ['loginView', 'recoveryView', 'deniedView', 'listView', 'contactsView'];
+const views = ['loginView', 'recoveryView', 'deniedView', 'listView', 'photosView', 'contactsView'];
+const tabViews = ['listView', 'photosView', 'contactsView'];
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const money = value => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 2 }).format(value);
 
@@ -28,8 +30,12 @@ const isRecovery = location.hash.includes('type=recovery');
 
 function show(id) {
   views.forEach(view => { $(`#${view}`).hidden = view !== id; });
-  $('#admTabs').hidden = !['listView', 'contactsView'].includes(id);
+  $('#admTabs').hidden = !tabViews.includes(id);
   document.querySelectorAll('#admTabs [data-tab]').forEach(tab => tab.classList.toggle('active', tab.dataset.tab === id));
+  if (id === 'photosView') {
+    renderPending(true);
+    if (!nativeWebp) loadWasmWebp().catch(() => {});
+  }
 }
 function toast(text, error = false) {
   const node = $('#toast');
@@ -133,6 +139,7 @@ function fillListFilters() {
 
 function renderList() {
   fillListFilters();
+  updatePendingCount();
   const q = $('#search').value.trim().toLowerCase();
   const sector = $('#sectorFilter').value;
   const state = $('#stateFilter').value;
@@ -256,19 +263,21 @@ f('subcategory').addEventListener('change', updateRegulated);
 f('condition').addEventListener('change', updateConditional);
 f('offer').addEventListener('change', updateConditional);
 
-function openEditor(row) {
+// preset: datos que se mantienen al usar "Guardar y cargar otro".
+function openEditor(row, preset = null) {
   editing = row;
+  const base = row || preset;
   draftId = row ? '' : `producto-${Date.now().toString(36)}`;
   $('#edTitle').textContent = row ? 'Editar producto' : 'Nuevo producto';
   setMsg($('#edMsg'), '');
   $('#confirmBox').hidden = true;
   f('name').value = row?.name || '';
-  f('brand').value = row?.brand || '';
+  f('brand').value = base?.brand || '';
   f('code').value = row?.code || '';
-  f('caliber').value = row?.caliber || '';
-  f('sector').value = row?.sector || $('#sectorFilter').value || 'armeria';
-  fillCategories(row?.category);
-  fillSubcategories(row?.subcategory);
+  f('caliber').value = base?.caliber || '';
+  f('sector').value = base?.sector || $('#sectorFilter').value || 'armeria';
+  fillCategories(base?.category);
+  fillSubcategories(base?.subcategory);
   f('short').value = row?.short_description || '';
   f('description').value = row?.description || '';
   f('price').value = row?.price ?? '';
@@ -276,7 +285,7 @@ function openEditor(row) {
   f('stock').value = row?.stock ?? '';
   f('offer').checked = Boolean(row?.offer_active);
   f('prev').value = row?.previous_price ?? '';
-  f('condition').value = row?.condition || 'nuevo';
+  f('condition').value = base?.condition || 'nuevo';
   f('grade').value = row?.condition_grade || '';
   f('notes').value = row?.condition_notes || '';
   f('new').checked = row ? Boolean(row.is_new) : true;
@@ -289,6 +298,7 @@ function openEditor(row) {
   updateConditional();
   $('#deleteBtn').hidden = !row;
   $('#viewLink').hidden = !row;
+  $('#saveNextBtn').hidden = Boolean(row);
   if (row) $('#viewLink').href = `${row.sector === 'camping' ? 'camping' : 'armeria'}.html?producto=${encodeURIComponent(row.id)}`;
   $('#editor').showModal();
   $('#editor').scrollTop = 0;
@@ -377,22 +387,27 @@ async function shrink(file) {
 const slug = text => String(text || 'producto').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) || 'producto';
 const folderFor = () => editing?.id || draftId;
 
+// Achica la foto y sube sus dos versiones a la carpeta del producto.
+async function uploadPhoto(file, folder) {
+  const { full, thumb } = await shrink(file);
+  const base = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  const upload = async (blob, suffix) => {
+    const path = `${base}${suffix}.${blob.type === 'image/webp' ? 'webp' : 'jpg'}`;
+    const { error } = await sb.storage.from(BUCKET).upload(path, blob, { contentType: blob.type, cacheControl: '31536000' });
+    if (error) throw error;
+    return sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+  };
+  const [src, thumbSrc] = await Promise.all([upload(full, ''), upload(thumb, '-mini')]);
+  return { src, thumb: thumbSrc, own: true };
+}
+
 $('#photoInput').addEventListener('change', async event => {
   const files = [...event.target.files];
   event.target.value = '';
   pendingUploads += files.length; renderPhotos();
   for (const file of files) {
     try {
-      const { full, thumb } = await shrink(file);
-      const base = `${folderFor()}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-      const upload = async (blob, suffix) => {
-        const path = `${base}${suffix}.${blob.type === 'image/webp' ? 'webp' : 'jpg'}`;
-        const { error } = await sb.storage.from(BUCKET).upload(path, blob, { contentType: blob.type, cacheControl: '31536000' });
-        if (error) throw error;
-        return sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
-      };
-      const [src, thumbSrc] = await Promise.all([upload(full, ''), upload(thumb, '-mini')]);
-      photos.push({ src, thumb: thumbSrc, own: true });
+      photos.push(await uploadPhoto(file, folderFor()));
     } catch (error) {
       toast(`Foto no subida: ${error.message}`, true);
     } finally {
@@ -402,14 +417,7 @@ $('#photoInput').addEventListener('change', async event => {
 });
 
 // ─────────────────────────── Guardar y borrar ───────────────────────────
-const parseMoney = text => {
-  const clean = String(text).trim().replace(/\$|\s/g, '');
-  if (!clean) return null;
-  // Acepta 150000 · 150.000 · 150.000,50 · 150000.50
-  const normal = /,\d{3}(,|$)/.test(clean) && !/\./.test(clean) ? clean.replace(/,/g, '') : /,\d{1,2}$/.test(clean) ? clean.replace(/\./g, '').replace(',', '.') : /\.\d{3}(\.|$)/.test(clean) ? clean.replace(/\./g, '') : clean.replace(',', '.');
-  const value = Number(normal);
-  return Number.isFinite(value) && value > 0 ? Math.round(value * 100) / 100 : NaN;
-};
+const today = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' });
 
 function collect() {
   const name = f('name').value.trim();
@@ -447,7 +455,7 @@ function collect() {
     condition_grade: used ? (f('grade').value || null) : null,
     condition_notes: used ? (f('notes').value.trim() || null) : null,
     is_new: isNew,
-    date_added: isNew ? (editing?.is_new && editing?.date_added ? editing.date_added : new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' })) : (editing?.date_added || null),
+    date_added: isNew ? (editing?.is_new && editing?.date_added ? editing.date_added : today()) : (editing?.date_added || null),
     published: f('published').checked,
     photo: main || null,
     photos: extra.length ? extra : null,
@@ -460,12 +468,13 @@ $('#editForm').addEventListener('submit', async event => {
   if (pendingUploads) { setMsg(msg, 'Esperá a que terminen de subir las fotos.', 'err'); return; }
   let values;
   try { values = collect(); } catch (error) { setMsg(msg, error.message, 'err'); return; }
-  $('#saveBtn').disabled = true; setMsg(msg, 'Guardando…');
+  const next = event.submitter?.id === 'saveNextBtn' && !editing;
+  $('#saveBtn').disabled = $('#saveNextBtn').disabled = true; setMsg(msg, 'Guardando…');
   const query = editing
     ? sb.from('productos').update(values).eq('id', editing.id).select().single()
     : sb.from('productos').insert({ ...values, id: draftId }).select().single();
   const { data, error } = await query;
-  $('#saveBtn').disabled = false;
+  $('#saveBtn').disabled = $('#saveNextBtn').disabled = false;
   if (error) { setMsg(msg, `No se pudo guardar: ${error.message}`, 'err'); return; }
   // Borra del depósito las fotos propias que se quitaron del producto.
   const kept = new Set([data.photo?.src, ...(data.photos || []).map(p => p.src)]);
@@ -480,6 +489,13 @@ $('#editForm').addEventListener('submit', async event => {
   all.unshift(data);
   renderList();
   $('#editor').close();
+  if (next) {
+    const { sector, category, subcategory, brand, caliber, condition } = data;
+    openEditor(null, { sector, category, subcategory, brand, caliber, condition });
+    f('name').focus();
+    toast(`“${data.name}” guardado. Cargá el siguiente.`);
+    return;
+  }
   toast(editing ? 'Cambios guardados. En el sitio se ven al recargar la página.' : 'Producto creado.');
 });
 
@@ -497,6 +513,267 @@ $('#confirmYes').addEventListener('click', async () => {
   $('#editor').close();
   toast('Producto borrado.');
 });
+
+// ─────────────────────────── Importar planilla ───────────────────────────
+// SheetJS (lector de Excel) se carga solo cuando hace falta.
+const SHEETJS = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+let sheetjs = null;
+const loadSheetJS = () => sheetjs ||= new Promise((resolve, reject) => {
+  const script = document.createElement('script');
+  script.src = SHEETJS;
+  script.onload = () => resolve(window.XLSX);
+  script.onerror = () => { sheetjs = null; reject(new Error('No se pudo cargar el lector de Excel. Revisá la conexión o subí la planilla en CSV.')); };
+  document.head.append(script);
+});
+let importRows = [];
+
+$('#importBtn').addEventListener('click', () => {
+  importRows = [];
+  $('#impPreview').hidden = true; $('#impFoot').hidden = true;
+  setMsg($('#impMsg'), '');
+  $('#importer').showModal();
+  $('#importer').scrollTop = 0;
+});
+$('#importer').addEventListener('click', event => { if (event.target.closest('[data-close-import]')) $('#importer').close(); });
+
+$('#templateBtn').addEventListener('click', async () => {
+  try {
+    const XLSX = await loadSheetJS();
+    const sheet = XLSX.utils.aoa_to_sheet([COLUMNS.filter(col => !col.optional).map(col => col.label), ...TEMPLATE_ROWS]);
+    sheet['!cols'] = [10, 26, 14, 14, 16, 12, 8, 11, 30, 40].map(wch => ({ wch }));
+    const types = [...new Set(Object.values(sectors).flatMap(s => s.categories.flatMap(c => c.subcategories.length ? c.subcategories.map(x => x.label) : [c.label])))];
+    const help = XLSX.utils.aoa_to_sheet([
+      ['Cómo completar la planilla'], [],
+      ['Nombre y Tipo son obligatorios. El resto es opcional.'],
+      ['Precio: solo números (ej.: 1250000). Vacío = "Consultar precio".'],
+      ['Condición: Nuevo o Usado. Vacío = Nuevo.'],
+      ['Código: si coincide con uno ya cargado, se actualiza ese producto.'],
+      ['Borrá las filas de ejemplo antes de subirla.'], [],
+      ['Marcas sugeridas', 'Calibres', 'Tipos'],
+      ...Array.from({ length: Math.max(gunBrands.length, calibers.length, types.length) }, (_, i) => [gunBrands[i] || '', calibers[i] || '', types[i] || '']),
+    ]);
+    help['!cols'] = [{ wch: 30 }, { wch: 22 }, { wch: 32 }];
+    const book = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(book, sheet, 'Productos');
+    XLSX.utils.book_append_sheet(book, help, 'Ayuda');
+    XLSX.writeFile(book, 'modelo-productos-parabellum.xlsx');
+  } catch (error) {
+    // Sin el lector de Excel, el modelo se descarga en CSV.
+    const cell = value => `"${String(value).replace(/"/g, '""')}"`;
+    const lines = [COLUMNS.filter(col => !col.optional).map(col => col.label), ...TEMPLATE_ROWS].map(row => row.map(cell).join(';'));
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([`﻿${lines.join('\r\n')}`], { type: 'text/csv;charset=utf-8' }));
+    link.download = 'modelo-productos-parabellum.csv';
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  }
+});
+
+$('#sheetInput').addEventListener('change', async event => {
+  const file = event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+  const msg = $('#impMsg');
+  setMsg(msg, 'Leyendo la planilla…');
+  $('#impPreview').hidden = true; $('#impFoot').hidden = true;
+  try {
+    const buffer = await file.arrayBuffer();
+    let grid;
+    if (/\.numbers$/i.test(file.name)) throw new Error('Los archivos de Numbers no se pueden leer directo. En Numbers: Compartir → Exportar → Excel, y subí ese archivo.');
+    if (/\.(csv|txt)$/i.test(file.name) || file.type === 'text/csv') grid = parseCsv(decodeText(buffer));
+    else {
+      const XLSX = await loadSheetJS();
+      const book = XLSX.read(buffer, { type: 'array' });
+      const sheet = book.Sheets[book.SheetNames[0]];
+      // raw: los números llegan como número (sin el formato de moneda de la celda).
+      grid = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, defval: '' });
+    }
+    const result = analyze(grid, { existing: all, today: today() });
+    if (!result.headerFound || result.missing.length) throw new Error('No encontré las columnas Nombre y Tipo. Usá el modelo descargado (la primera fila tiene que tener los títulos).');
+    if (!result.results.length) throw new Error('La planilla no tiene productos cargados.');
+    importRows = result.results;
+    renderImport();
+    setMsg(msg, '');
+  } catch (error) {
+    setMsg(msg, error.message, 'err');
+  }
+});
+
+function renderImport() {
+  const counts = { nuevo: 0, actualiza: 0, error: 0, igual: 0 };
+  importRows.forEach(row => { counts[row.status] += 1; });
+  const ready = counts.nuevo + counts.actualiza;
+  $('#impSummary').innerHTML = [
+    counts.nuevo && `<span class="tag gold">${counts.nuevo} nuevo${counts.nuevo > 1 ? 's' : ''}</span>`,
+    counts.actualiza && `<span class="tag ok">${counts.actualiza} se actualiza${counts.actualiza > 1 ? 'n' : ''}</span>`,
+    counts.igual && `<span class="tag">${counts.igual} sin cambios</span>`,
+    counts.error && `<span class="tag off">${counts.error} con errores (no se importa${counts.error > 1 ? 'n' : ''})</span>`,
+  ].filter(Boolean).join(' ');
+  const label = { nuevo: 'Nuevo', actualiza: 'Actualiza', error: 'Error', igual: 'Sin cambios' };
+  $('#impList').innerHTML = importRows.map(row => {
+    const d = row.data || {};
+    const changes = row.status === 'actualiza' ? Object.keys(d).filter(k => !['availability', 'regulated', 'sector', 'category', 'condition_grade', 'condition_notes'].includes(k))
+      .map(k => ({ name: 'nombre', subcategory: 'tipo', brand: 'marca', caliber: 'calibre', price: 'precio', stock: 'stock', condition: 'condición', short_description: 'desc. corta', description: 'descripción' }[k])).filter(Boolean) : [];
+    const detail = row.status === 'nuevo'
+      ? [row.typeLabel, d.brand, d.caliber, d.price == null ? 'Consultar precio' : money(d.price), d.stock != null && `stock ${d.stock}`].filter(Boolean).join(' · ')
+      : row.status === 'actualiza' ? `Cambia: ${changes.join(', ')}${d.price != null ? ` · ${money(d.price)}` : ''}` : '';
+    return `<div class="imp-row is-${row.status}">
+      <span class="tag ${row.status === 'error' ? 'off' : row.status === 'nuevo' ? 'gold' : row.status === 'actualiza' ? 'ok' : ''}">${label[row.status]}</span>
+      <div><strong>${esc(row.name || '(sin nombre)')}</strong> <small class="muted">fila ${row.line}</small>
+        ${detail ? `<p>${esc(detail)}</p>` : ''}
+        ${row.errors.map(e => `<p class="err">${esc(e)}</p>`).join('')}
+        ${row.notes.map(n => `<p class="note">${esc(n)}</p>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+  $('#impPreview').hidden = false;
+  $('#impFoot').hidden = false;
+  $('#impConfirm').disabled = !ready;
+  $('#impConfirm').textContent = ready ? `Importar ${ready} producto${ready > 1 ? 's' : ''}` : 'Nada para importar';
+  $('#impPreview').scrollIntoView({ block: 'start' });
+}
+
+$('#impConfirm').addEventListener('click', async () => {
+  const msg = $('#impMsg');
+  const fresh = importRows.filter(row => row.status === 'nuevo');
+  const updates = importRows.filter(row => row.status === 'actualiza');
+  $('#impConfirm').disabled = true;
+  setMsg(msg, 'Importando…');
+  const stamp = Date.now().toString(36);
+  const failures = [];
+  let created = [];
+  if (fresh.length) {
+    const { data, error } = await sb.from('productos').insert(fresh.map((row, i) => ({ ...row.data, id: `producto-${stamp}-${i}` }))).select();
+    if (error) failures.push(`No se pudieron crear los productos nuevos: ${error.message}`);
+    else created = data;
+  }
+  let updated = 0;
+  for (const row of updates) {
+    setMsg(msg, `Actualizando ${updated + 1} de ${updates.length}…`);
+    const { data, error } = await sb.from('productos').update(row.data).eq('id', row.target.id).select().single();
+    if (error) { failures.push(`Fila ${row.line} (${row.name}): ${error.message}`); continue; }
+    const index = all.findIndex(p => p.id === data.id);
+    if (index >= 0) all[index] = data;
+    updated += 1;
+  }
+  all.unshift(...created);
+  renderList();
+  if (failures.length) {
+    setMsg(msg, failures.join(' · '), 'err');
+    $('#impConfirm').disabled = false;
+    return;
+  }
+  $('#importer').close();
+  toast(`${created.length ? `${created.length} producto${created.length > 1 ? 's' : ''} creado${created.length > 1 ? 's' : ''} (ocultos)` : ''}${created.length && updated ? ' · ' : ''}${updated ? `${updated} actualizado${updated > 1 ? 's' : ''}` : ''}.`);
+  if (created.length) { $('#pendingFilter').value = 'ocultos'; show('photosView'); }
+});
+
+// ─────────────────────────── Fotos pendientes ───────────────────────────
+// Lista para cargar fotos desde el celular, producto por producto. Los que se
+// completan en esta pasada quedan a la vista (con ✓) hasta salir de la pestaña.
+let pendingIds = [];
+const uploading = new Map();   // id → texto de avance ("Subiendo 1 de 3…")
+const needsPhoto = row => !ownPhoto(row);
+function updatePendingCount() {
+  const hidden = all.filter(row => needsPhoto(row) && !row.published).length;
+  $('#pendingCount').textContent = hidden ? `(${hidden})` : '';
+}
+function renderPending(reset = false) {
+  const mode = $('#pendingFilter').value;
+  if (reset) {
+    pendingIds = all.filter(row => needsPhoto(row) && (mode === 'todos' || !row.published))
+      .sort((a, b) => Number(a.published) - Number(b.published))
+      .map(row => row.id);
+  }
+  const rows = pendingIds.map(id => all.find(row => row.id === id)).filter(Boolean);
+  const left = rows.filter(row => needsPhoto(row) || !row.published).length;
+  $('#pendingInfo').textContent = rows.length
+    ? `${left} por completar${rows.length - left ? ` · ${rows.length - left} listo${rows.length - left > 1 ? 's' : ''}` : ''}`
+    : '';
+  $('#pendingList').innerHTML = rows.length ? rows.map(row => {
+    const own = [row.photo, ...(row.photos || [])].filter(p => p?.own);
+    const done = own.length && row.published;
+    const category = findCategory(row.sector, row.category);
+    const sub = findSubcategory(row.sector, row.category, row.subcategory);
+    const busy = uploading.get(row.id);
+    return `<article class="pending${done ? ' done' : ''}${busy ? ' busy' : ''}" data-id="${esc(row.id)}">
+      <div class="pending-head">
+        <div><h4>${done ? '✓ ' : ''}${esc(row.name)}</h4>
+          <p>${esc([row.brand, sub?.label || category?.label, row.caliber, row.code].filter(Boolean).join(' · '))}</p></div>
+        <span class="tag ${row.published ? 'ok' : 'off'}">${row.published ? 'Publicado' : 'Oculto'}</span>
+      </div>
+      <div class="pending-photos">
+        ${own.map(p => `<img src="${esc(p.thumb || p.src)}" alt="">`).join('')}
+        ${!own.length && row.photo?.src ? `<img class="ref" src="${esc(row.photo.thumb || row.photo.src)}" alt="" title="Foto de referencia">` : ''}
+        ${busy ? `<span class="pending-status">${esc(busy)}</span>` : ''}
+      </div>
+      <div class="pending-actions">
+        <label class="btn${own.length ? '' : ' primary'}">
+          <input type="file" accept="image/*" multiple hidden data-upload>
+          ${own.length ? '+ Más fotos' : '📷 Agregar fotos'}
+        </label>
+        ${!row.published ? `<button type="button" class="btn${own.length ? ' primary' : ''}" data-publish${own.length ? '' : ' disabled title="Primero cargale una foto"'}>Publicar</button>` : ''}
+        <button type="button" class="btn ghost" data-edit>Editar</button>
+      </div>
+    </article>`;
+  }).join('') : `<p class="empty">${mode === 'ocultos' ? 'No hay productos ocultos esperando fotos. 👌' : 'Todos los productos tienen foto propia. 👌'}</p>`;
+}
+$('#pendingFilter').addEventListener('input', () => renderPending(true));
+
+async function savePhotos(row, uploaded) {
+  // Las fotos propias nuevas reemplazan a la foto de referencia.
+  const own = [row.photo, ...(row.photos || [])].filter(p => p?.own);
+  const [main, ...extra] = [...own, ...uploaded];
+  const { data, error } = await sb.from('productos').update({ photo: main, photos: extra.length ? extra : null }).eq('id', row.id).select().single();
+  if (error) throw error;
+  all[all.findIndex(p => p.id === row.id)] = data;
+  return data;
+}
+
+$('#pendingList').addEventListener('change', async event => {
+  const input = event.target.closest('[data-upload]');
+  if (!input) return;
+  const id = input.closest('.pending').dataset.id;
+  const files = [...input.files];
+  input.value = '';
+  if (!files.length || uploading.has(id)) return;
+  const uploaded = [];
+  for (const [i, file] of files.entries()) {
+    uploading.set(id, `Subiendo ${i + 1} de ${files.length}…`); renderPending();
+    try { uploaded.push(await uploadPhoto(file, id)); }
+    catch (error) { toast(`Foto no subida: ${error.message}`, true); }
+  }
+  if (uploaded.length) {
+    uploading.set(id, 'Guardando…'); renderPending();
+    // Se toma la fila actual: pudo cambiar mientras subían las fotos.
+    try { await savePhotos(all.find(p => p.id === id), uploaded); toast(`${uploaded.length} foto${uploaded.length > 1 ? 's' : ''} cargada${uploaded.length > 1 ? 's' : ''}.`); }
+    catch (error) { toast(`No se pudieron guardar las fotos: ${error.message}`, true); }
+  }
+  uploading.delete(id);
+  renderPending();
+  renderList();
+});
+
+$('#pendingList').addEventListener('click', async event => {
+  const card = event.target.closest('.pending');
+  if (!card) return;
+  const row = all.find(p => p.id === card.dataset.id);
+  if (event.target.closest('[data-edit]')) { openEditor(row); return; }
+  const publish = event.target.closest('[data-publish]');
+  if (!publish || publish.disabled) return;
+  publish.disabled = true; publish.textContent = 'Publicando…';
+  const { data, error } = await sb.from('productos').update({ published: true }).eq('id', row.id).select().single();
+  if (error) { toast(`No se pudo publicar: ${error.message}`, true); renderPending(); return; }
+  all[all.findIndex(p => p.id === row.id)] = data;
+  renderPending();
+  renderList();
+  toast(`“${data.name}” ya está en el sitio.`);
+  // Pasa al siguiente que falte completar.
+  const next = [...$('#pendingList').querySelectorAll('.pending:not(.done)')][0];
+  next?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+// Al guardar desde el editor estando en esta pestaña, se refresca la lista.
+$('#editor').addEventListener('close', () => { if (!$('#photosView').hidden) renderPending(); });
 
 start();
 

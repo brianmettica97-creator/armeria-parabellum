@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#0b0c0c">
   <title>Panel · Armería Parabellum</title>
   <link rel="icon" href="assets/iconos/favicon-armeria.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="admin.css?v=20261026b">
+  <link rel="stylesheet" href="admin.css?v=20261026c">
 </head>
 <body>
   <header class="adm-top">
@@ -55,12 +55,16 @@
   <!-- Listado -->
   <nav class="adm-tabs" id="admTabs" hidden aria-label="Secciones del panel">
     <button type="button" class="active" data-tab="listView">Productos</button>
+    <button type="button" data-tab="photosView">Fotos <span id="pendingCount"></span></button>
     <button type="button" data-tab="contactsView">Contactos <span id="contactsCount"></span></button>
   </nav>
 
   <main id="listView" class="adm-main" hidden>
     <div class="adm-toolbar">
-      <button class="btn primary" type="button" id="newBtn">+ Nuevo producto</button>
+      <div class="adm-actions">
+        <button class="btn primary" type="button" id="newBtn">+ Nuevo producto</button>
+        <button class="btn" type="button" id="importBtn">Importar planilla</button>
+      </div>
       <input type="search" id="search" placeholder="Buscar por nombre, marca o código" aria-label="Buscar">
       <div class="adm-filters">
         <select id="sectorFilter" aria-label="Sector">
@@ -89,6 +93,22 @@
     </div>
     <p class="muted" id="listCount"></p>
     <div class="adm-list" id="list"></div>
+  </main>
+
+  <!-- Fotos pendientes: productos sin foto propia, para cargarlas desde el celular -->
+  <main id="photosView" class="adm-main" hidden>
+    <div class="adm-card intro">
+      <strong>Fotos pendientes</strong>
+      <p class="muted">Productos que todavía no tienen foto propia. Tocá <b>Agregar fotos</b> en cada uno: podés sacarlas en el momento o elegirlas de la galería. Cuando tenga fotos, tocá <b>Publicar</b> y pasa al siguiente.</p>
+    </div>
+    <div class="adm-toolbar pending-toolbar">
+      <select id="pendingFilter" aria-label="Mostrar">
+        <option value="ocultos">Ocultos sin foto (recién cargados)</option>
+        <option value="todos">Todos los que no tienen foto propia</option>
+      </select>
+    </div>
+    <p class="muted" id="pendingInfo"></p>
+    <div class="pending-list" id="pendingList"></div>
   </main>
 
   <!-- Contactos del formulario de novedades -->
@@ -193,6 +213,7 @@
       <footer class="ed-foot">
         <button type="button" class="btn danger" id="deleteBtn">Borrar</button>
         <a class="btn ghost" id="viewLink" target="_blank" rel="noopener">Ver en el sitio</a>
+        <button type="submit" class="btn" id="saveNextBtn" title="Guarda y abre otro con la misma marca, tipo y calibre">Guardar y cargar otro</button>
         <button type="submit" class="btn primary" id="saveBtn">Guardar</button>
       </footer>
       <div class="confirm" id="confirmBox" hidden>
@@ -203,7 +224,41 @@
     </form>
   </dialog>
 
+  <!-- Importar planilla -->
+  <dialog id="importer" class="adm-editor">
+    <div class="imp-body">
+      <header class="ed-head">
+        <h2>Importar planilla</h2>
+        <button type="button" class="btn ghost" data-close-import>Cerrar</button>
+      </header>
+      <section class="ed-section">
+        <ol class="steps">
+          <li>Descargá el modelo y completalo en Excel, Numbers o Google Sheets: una fila por producto.</li>
+          <li>Subilo acá. Antes de guardar vas a ver cómo queda cada fila.</li>
+          <li>Los productos nuevos quedan <b>ocultos</b> hasta que les cargues las fotos en la pestaña <b>Fotos</b>.</li>
+        </ol>
+        <div class="imp-actions">
+          <button type="button" class="btn" id="templateBtn">Descargar modelo</button>
+          <label class="btn primary upload">
+            <input type="file" id="sheetInput" accept=".xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" hidden>
+            Subir planilla
+          </label>
+        </div>
+        <p class="hint">Si una fila tiene el mismo <b>código</b> que un producto ya cargado, se actualiza ese producto (sirve para cambiar precios y stock de muchos a la vez). Las celdas vacías no borran nada.</p>
+      </section>
+      <section class="ed-section" id="impPreview" hidden>
+        <p class="imp-summary" id="impSummary"></p>
+        <div class="imp-list" id="impList"></div>
+      </section>
+      <p class="msg" id="impMsg" role="status"></p>
+      <footer class="ed-foot" id="impFoot" hidden>
+        <button type="button" class="btn ghost" data-close-import>Cancelar</button>
+        <button type="button" class="btn primary" id="impConfirm">Importar</button>
+      </footer>
+    </div>
+  </dialog>
+
   <div class="toast" id="toast" role="status" hidden></div>
-  <script type="module" src="admin.js?v=20261026b"></script>
+  <script type="module" src="admin.js?v=20261026c"></script>
 </body>
 </html>
