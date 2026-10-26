@@ -18,8 +18,9 @@ export function safeUrl(value) {
 
 export const PLACEHOLDER_IMG = 'assets/placeholder-producto.svg';
 
+// Tarjetas y miniaturas usan la versión chica de la foto cuando existe.
 export function productImage(product, className = '', alt = '') {
-  const src = safeUrl(product.photo?.src || PLACEHOLDER_IMG);
+  const src = safeUrl(product.photo?.thumb || product.photo?.src || PLACEHOLDER_IMG);
   return `<img class="${className}" src="${src}" alt="${escapeHtml(alt)}" loading="lazy" onerror="this.onerror=null;this.src='${PLACEHOLDER_IMG}'">`;
 }
 

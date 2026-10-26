@@ -9,6 +9,8 @@ const BUCKET = 'productos';
 const MAX_SIDE = 1600;       // px del lado mayor después de achicar
 const JPEG_QUALITY = 0.82;
 const WEBP_QUALITY = 0.8;
+const THUMB_SIDE = 640;      // px de la versión chica para tarjetas
+const THUMB_QUALITY = 0.75;
 
 const $ = selector => document.querySelector(selector);
 const views = ['loginView', 'recoveryView', 'deniedView', 'listView', 'contactsView'];
@@ -171,7 +173,7 @@ function renderList() {
       !ownPhoto(row) && '<span class="tag">Foto de referencia</span>',
     ].filter(Boolean).join('');
     return `${header}<button type="button" class="item" data-id="${esc(row.id)}">
-      <img src="${esc(row.photo?.src || 'assets/placeholder-producto.svg')}" alt="" loading="lazy" onerror="this.src='assets/placeholder-producto.svg'">
+      <img src="${esc(row.photo?.thumb || row.photo?.src || 'assets/placeholder-producto.svg')}" alt="" loading="lazy" onerror="this.src='assets/placeholder-producto.svg'">
       <div><h4>${esc(row.name)}</h4><p>${esc([row.brand, sub?.label || category?.label, row.caliber].filter(Boolean).join(' · '))}</p><div class="tags">${tags}</div></div>
       <span class="price">${row.price == null ? 'Consultar' : money(row.price)}</span>
     </button>`;
@@ -298,7 +300,7 @@ function renderPhotos() {
   $('#photoList').innerHTML = photos.map((photo, index) => `
     <div class="photo${index === 0 ? ' main' : ''}">
       ${index === 0 ? '<span class="badge">Principal</span>' : ''}
-      <img src="${esc(photo.src)}" alt="Foto ${index + 1}">
+      <img src="${esc(photo.thumb || photo.src)}" alt="Foto ${index + 1}">
       <div class="acts">
         ${index > 0 ? `<button type="button" data-main="${index}">★ Principal</button>` : ''}
         <button type="button" data-remove="${index}">Quitar</button>
@@ -313,23 +315,63 @@ $('#photoList').addEventListener('click', event => {
   if (remove) { photos.splice(Number(remove.dataset.remove), 1); renderPhotos(); }
 });
 
+// WebP pesa ~30% menos que JPG con la misma calidad. Safari (el iPhone) no
+// sabe generarlo desde un canvas, así que ahí se usa el codificador oficial
+// de libwebp compilado a WebAssembly; si no carga, se sube en JPG.
+const nativeWebp = (() => { const c = document.createElement('canvas'); c.width = c.height = 1; return c.toDataURL('image/webp').startsWith('data:image/webp'); })();
+const WEBP_WASM = 'https://cdn.jsdelivr.net/npm/@jsquash/webp@1.5.0/';
+let wasmWebp = null;
+function loadWasmWebp() {
+  wasmWebp ||= (async () => {
+    const { defaultOptions } = await import(`${WEBP_WASM}meta.js`);
+    for (const file of ['webp_enc_simd.js', 'webp_enc.js']) {
+      try {
+        const { default: factory } = await import(`${WEBP_WASM}codec/enc/${file}`);
+        return { module: await factory({ noInitialRun: true }), defaultOptions };
+      } catch { /* sin SIMD: se prueba la versión común */ }
+    }
+    throw new Error('codificador WebP no disponible');
+  })().catch(error => { wasmWebp = null; throw error; });
+  return wasmWebp;
+}
+// Se precarga al abrir el editor en el iPhone para que la primera foto no espere.
+if (!nativeWebp) $('#editor').addEventListener('toggle', () => { if ($('#editor').open) loadWasmWebp().catch(() => {}); });
+
+async function encodeCanvas(canvas, quality) {
+  if (nativeWebp) {
+    const webp = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', quality));
+    if (webp?.type === 'image/webp') return webp;
+  } else {
+    try {
+      const { module, defaultOptions } = await loadWasmWebp();
+      const pixels = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+      const bytes = module.encode(pixels.data, canvas.width, canvas.height, { ...defaultOptions, quality: Math.round(quality * 100) });
+      if (bytes) return new Blob([bytes], { type: 'image/webp' });
+    } catch { /* se sube en JPG */ }
+  }
+  const jpeg = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', JPEG_QUALITY));
+  if (!jpeg) throw new Error('No se pudo procesar la foto.');
+  return jpeg;
+}
+
+// Devuelve la foto grande (ficha) y una chica (tarjetas y miniaturas).
 async function shrink(file) {
   const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' }).catch(() => null);
   if (!bitmap) throw new Error(`No se pudo leer ${file.name}. Probá con una foto JPG o PNG.`);
-  const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement('canvas');
-  canvas.width = Math.round(bitmap.width * scale); canvas.height = Math.round(bitmap.height * scale);
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  const encode = (type, quality) => new Promise(resolve => canvas.toBlob(resolve, type, quality));
-  // WebP pesa ~30% menos que JPG con la misma calidad; los navegadores que no
-  // saben generarlo (Safari) devuelven otro formato y se usa JPG.
-  const webp = await encode('image/webp', WEBP_QUALITY);
-  if (webp?.type === 'image/webp') return webp;
-  const jpeg = await encode('image/jpeg', JPEG_QUALITY);
-  if (!jpeg) throw new Error('No se pudo procesar la foto.');
-  return jpeg;
+  const draw = maxSide => {
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bitmap.width * scale); canvas.height = Math.round(bitmap.height * scale);
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    return canvas;
+  };
+  const full = await encodeCanvas(draw(MAX_SIDE), WEBP_QUALITY);
+  const thumb = await encodeCanvas(draw(THUMB_SIDE), THUMB_QUALITY);
+  bitmap.close?.();
+  return { full, thumb };
 }
 
 const slug = text => String(text || 'producto').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) || 'producto';
@@ -341,12 +383,16 @@ $('#photoInput').addEventListener('change', async event => {
   pendingUploads += files.length; renderPhotos();
   for (const file of files) {
     try {
-      const blob = await shrink(file);
-      const path = `${folderFor()}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${blob.type === 'image/webp' ? 'webp' : 'jpg'}`;
-      const { error } = await sb.storage.from(BUCKET).upload(path, blob, { contentType: blob.type, cacheControl: '31536000' });
-      if (error) throw error;
-      const { data } = sb.storage.from(BUCKET).getPublicUrl(path);
-      photos.push({ src: data.publicUrl, own: true, path });
+      const { full, thumb } = await shrink(file);
+      const base = `${folderFor()}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const upload = async (blob, suffix) => {
+        const path = `${base}${suffix}.${blob.type === 'image/webp' ? 'webp' : 'jpg'}`;
+        const { error } = await sb.storage.from(BUCKET).upload(path, blob, { contentType: blob.type, cacheControl: '31536000' });
+        if (error) throw error;
+        return sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+      };
+      const [src, thumbSrc] = await Promise.all([upload(full, ''), upload(thumb, '-mini')]);
+      photos.push({ src, thumb: thumbSrc, own: true });
     } catch (error) {
       toast(`Foto no subida: ${error.message}`, true);
     } finally {
@@ -426,7 +472,8 @@ $('#editForm').addEventListener('submit', async event => {
   const marker = `/object/public/${BUCKET}/`;
   const removed = [editing?.photo, ...(editing?.photos || [])]
     .filter(p => p?.own && p.src.includes(marker) && !kept.has(p.src))
-    .map(p => decodeURIComponent(p.src.split(marker)[1].split('?')[0]));
+    .flatMap(p => [p.src, p.thumb].filter(url => url?.includes(marker)))
+    .map(url => decodeURIComponent(url.split(marker)[1].split('?')[0]));
   if (removed.length) sb.storage.from(BUCKET).remove(removed);
   const index = all.findIndex(row => row.id === data.id);
   if (index >= 0) all.splice(index, 1);

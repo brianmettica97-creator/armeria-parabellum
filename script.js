@@ -355,7 +355,7 @@ function showProduct(product, { push = true } = {}) {
       <img id="dialogMainPhoto" src="${safeUrl(gallery[0]?.src || PLACEHOLDER_IMG)}" alt="${escapeHtml(photoNote)}: ${escapeHtml(product.name)}" onerror="this.onerror=null;this.src='${PLACEHOLDER_IMG}'">
       <span class="product-photo-caption">${escapeHtml(photoNote)}</span>
     </div>
-    ${gallery.length > 1 ? `<div class="gallery-thumbs">${gallery.map((photo, index) => `<button type="button" class="${index === 0 ? 'active' : ''}" data-photo="${safeUrl(photo.src)}" aria-label="Ver foto ${index + 1}"><img src="${safeUrl(photo.src)}" alt="" loading="lazy"></button>`).join('')}</div>` : ''}`;
+    ${gallery.length > 1 ? `<div class="gallery-thumbs">${gallery.map((photo, index) => `<button type="button" class="${index === 0 ? 'active' : ''}" data-photo="${safeUrl(photo.src)}" aria-label="Ver foto ${index + 1}"><img src="${safeUrl(photo.thumb || photo.src)}" alt="" loading="lazy"></button>`).join('')}</div>` : ''}`;
   $('#dialogArt').querySelectorAll('[data-photo]').forEach(button => button.addEventListener('click', () => {
     $('#dialogMainPhoto').src = button.dataset.photo;
     $('#dialogArt').querySelectorAll('[data-photo]').forEach(other => other.classList.toggle('active', other === button));
