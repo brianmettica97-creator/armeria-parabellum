@@ -24,7 +24,7 @@ export const showroomViews = [
     alt: 'Pasillo central del local con vitrinas, paredes de armas y carteles de marcas', filter: { category: '' },
     spots: [
       // Los sectores con foto propia entran a esa vista con zoom (como Equipo y Munición).
-      { x: 10, y: 46, label: 'Armas largas', note: 'Pared de escopetas', action: { view: 'pistolas' } },
+      { x: 10, y: 46, label: 'Armas largas', note: 'Fusiles, carabinas y escopetas', action: { view: 'armas-largas' } },
       { x: 16, y: 80, label: 'Arma corta', note: 'Vitrina de pistolas', action: { view: 'pistolas' } },
       { x: 44, y: 45, label: 'Equipo y Munición', note: 'Accesorios, recarga y municiones', action: { view: 'accesorios' } },
       { x: 88, y: 30, label: 'Fusiles', note: 'Fusiles y carabinas', action: { view: 'fusiles' } },
@@ -34,6 +34,18 @@ export const showroomViews = [
       logo(35.2, 33.4, 'Glock', 'GLOCK', 4, 3.5), logo(35.1, 36.8, 'CZ', 'CZ', 4.5, 3.2),
       logo(48, 27, 'Taurus', 'Taurus', 5.5, 5), logo(48, 30.4, 'Remington', 'Remington', 6, 2.4),
       logo(48, 33.6, 'Sig Sauer', 'SIG SAUER', 3.5, 3.5), logo(48, 36.8, 'Bersa', 'Bersa', 5, 3),
+    ],
+  },
+  {
+    id: 'armas-largas', title: 'Armas largas', image: 'assets/new/armas-largas.jpg', thumb: 'assets/new/armas-largas-mini.jpg',
+    alt: 'Pared de armas largas: rifles con mira, fusiles de precisión, racks de carabinas y escopetas, y estante de munición', filter: { category: ARMAS, subcategory: 'armas-largas' }, focus: { x: 10, y: 46 },
+    spots: [
+      { x: 38, y: 24, label: 'Tiro de precisión', note: 'Fusiles con chasis y bípode', action: { category: ARMAS, subcategory: 'fusiles' } },
+      { x: 14, y: 64, label: 'Carabinas', action: { category: ARMAS, subcategory: 'carabinas' } },
+      { x: 37, y: 64, label: 'Escopetas', action: { category: ARMAS, subcategory: 'escopetas' } },
+      { x: 64, y: 40, label: 'Fusiles de caza', note: 'Cerrojo, madera y camuflados', action: { category: ARMAS, subcategory: 'fusiles' } },
+      { x: 87, y: 13, label: 'Miras telescópicas', note: 'Ópticas para arma larga', action: { category: 'accesorios', subcategory: 'optica' } },
+      { x: 76, y: 86, label: 'Munición arma larga', action: { category: 'municiones', subcategory: 'arma-larga' } },
     ],
   },
   {
