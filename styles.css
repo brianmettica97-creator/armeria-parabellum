@@ -1372,3 +1372,13 @@ a.trust-item:hover{background:#ffffff08}
   .shelf-photo{height:78px}
   .showroom-frame.has-shelf .scene-info{visibility:hidden}
 }
+
+/* Registro liviano antes de consultar o pedir */
+#registroOverlay{z-index:20}
+.registro-dialog h2{margin-bottom:8px}
+.registro-intro{margin:0 0 18px;color:var(--muted);font-size:13px;line-height:1.6}
+.registro-form label small{color:var(--muted);letter-spacing:0}
+.registro-form input,.registro-form select{font-size:16px} /* Safari no hace zoom al enfocar */
+.registro-form .registro-clu[hidden]{display:none}
+@media(min-width:561px){.registro-dialog .registro-form{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.registro-dialog{padding:24px 18px}.registro-dialog .eyebrow{padding-right:48px}}

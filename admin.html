@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#0b0c0c">
   <title>Panel · Armería Parabellum</title>
   <link rel="icon" href="assets/iconos/favicon-armeria.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="admin.css?v=20261026c">
+  <link rel="stylesheet" href="admin.css?v=20261027c">
 </head>
 <body>
   <header class="adm-top">
@@ -114,12 +114,19 @@
   <!-- Contactos del formulario de novedades -->
   <main id="contactsView" class="adm-main" hidden>
     <div class="adm-toolbar contacts-toolbar">
-      <input type="search" id="contactSearch" placeholder="Buscar por nombre, teléfono o email" aria-label="Buscar contactos">
+      <input type="search" id="contactSearch" placeholder="Buscar por nombre, teléfono, email o producto" aria-label="Buscar contactos">
       <select id="cluFilter" aria-label="CLU">
         <option value="">CLU: todos</option>
         <option value="si">Con CLU</option>
         <option value="tramite">CLU en trámite</option>
         <option value="no">Sin CLU</option>
+      </select>
+      <select id="originFilter" aria-label="Origen">
+        <option value="">Origen: todos</option>
+        <option value="consulta">Se registró al consultar</option>
+        <option value="pedido">Se registró al hacer un pedido</option>
+        <option value="novedades">Formulario de novedades</option>
+        <option value="acepta">Aceptan recibir novedades</option>
       </select>
       <button type="button" class="btn" id="exportCsv">Descargar planilla (CSV)</button>
     </div>
@@ -259,6 +266,6 @@
   </dialog>
 
   <div class="toast" id="toast" role="status" hidden></div>
-  <script type="module" src="admin.js?v=20261026c"></script>
+  <script type="module" src="admin.js?v=20261027c"></script>
 </body>
 </html>

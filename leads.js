@@ -2,6 +2,7 @@
 // Guarda en la tabla `contactos` de Supabase: el público solo puede enviar;
 // leer y borrar queda reservado a los administradores (ver supabase/migrations).
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-config.js';
+import { newId, rememberVisitor } from './registro.js';
 
 export function initLeads(root, { sector }) {
   if (!root || !SUPABASE_URL || !SUPABASE_ANON_KEY) { if (root) root.hidden = true; return; }
@@ -51,12 +52,15 @@ export function initLeads(root, { sector }) {
     const button = form.querySelector('button');
     button.disabled = true; say('Enviando…');
     try {
+      const id = newId();
       const response = await fetch(`${SUPABASE_URL}/rest/v1/contactos`, {
         method: 'POST',
         headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-        body: JSON.stringify({ nombre, telefono, email, clu: askClu ? data.clu : null, sector, consentimiento: true }),
+        body: JSON.stringify({ id, nombre, telefono, email, clu: askClu ? data.clu : null, sector, consentimiento: true }),
       });
       if (!response.ok) throw new Error(String(response.status));
+      // Ya dejó sus datos: no se los volvemos a pedir antes de consultar por WhatsApp.
+      rememberVisitor({ id, nombre, telefono, email, clu: askClu ? data.clu : null, sector, origen: 'novedades', novedades: true, synced: true });
       form.reset();
       say(`¡Gracias, ${nombre.split(' ')[0]}! Te vamos a avisar de las novedades.`, 'ok');
     } catch {

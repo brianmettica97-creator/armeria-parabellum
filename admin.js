@@ -777,44 +777,63 @@ $('#editor').addEventListener('close', () => { if (!$('#photosView').hidden) ren
 
 start();
 
-// ─────────────────────────── Contactos (formulario de novedades) ───────────────────────────
+// ─────────────────────────── Contactos (novedades y registro de visitantes) ───────────────────────────
 let contacts = [];
 const cluLabel = { si: 'Sí', no: 'No', tramite: 'En trámite' };
+const origenLabel = { novedades: 'Form. novedades', consulta: 'Al consultar', pedido: 'Al hacer un pedido' };
+const tipoLabel = { consulta: 'Consulta', pedido: 'Pedido', 'compra-online': 'Compra online' };
+const fullName = c => [c.nombre, c.apellido].filter(Boolean).join(' ');
 document.querySelectorAll('#admTabs [data-tab]').forEach(tab => tab.addEventListener('click', () => show(tab.dataset.tab)));
 
 async function loadContacts() {
-  const { data, error } = await sb.from('contactos').select('*').order('created_at', { ascending: false });
+  let { data, error } = await sb.from('contactos').select('*, consultas(tipo, detalle, created_at)').order('created_at', { ascending: false });
+  let note = '';
+  if (error && !(error.code === '42P01' && /contactos/.test(error.message))) {
+    // Sin la tabla de consultas todavía: se listan los contactos solos.
+    ({ data, error } = await sb.from('contactos').select('*').order('created_at', { ascending: false }));
+    if (!error) note = 'Para ver qué consultó cada uno, correr el SQL 20261027000000_registro_visitantes.sql en Supabase.';
+  }
   if (error) {
     $('#contactsInfo').textContent = error.code === '42P01' || /does not exist|schema cache/i.test(error.message)
       ? 'Falta crear la tabla de contactos: correr el SQL 20261023000000_contactos.sql en Supabase.'
       : `No se pudieron cargar los contactos: ${error.message}`;
     contacts = [];
-  } else contacts = data;
+  } else {
+    contacts = data.map(c => ({ ...c, consultas: (c.consultas || []).sort((a, b) => b.created_at.localeCompare(a.created_at)) }));
+  }
   $('#contactsCount').textContent = contacts.length ? `(${contacts.length})` : '';
   renderContacts();
+  if (note) $('#contactsInfo').textContent += ` · ${note}`;
 }
 
 function filteredContacts() {
   const q = $('#contactSearch').value.trim().toLowerCase();
   const clu = $('#cluFilter').value;
-  return contacts.filter(c => (!clu || c.clu === clu) && (!q || [c.nombre, c.telefono, c.email].some(v => String(v || '').toLowerCase().includes(q))));
+  const origin = $('#originFilter').value;
+  return contacts.filter(c => (!clu || c.clu === clu)
+    && (!origin || (origin === 'acepta' ? c.novedades !== false : (c.origen || 'novedades') === origin))
+    && (!q || [fullName(c), c.telefono, c.email, c.clu_numero, ...c.consultas.map(x => x.detalle)].some(v => String(v || '').toLowerCase().includes(q))));
 }
+
+const date = iso => new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+const cluText = c => [cluLabel[c.clu], c.clu_numero ? `N° ${c.clu_numero}` : ''].filter(Boolean).join(' · ');
 
 function renderContacts() {
   const rows = filteredContacts();
   $('#contactsInfo').textContent = contacts.length ? `${rows.length} de ${contacts.length} contactos` : '';
-  const date = iso => new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   $('#contactsTable').innerHTML = rows.length ? `
-    <thead><tr><th>Fecha</th><th>Nombre</th><th>Teléfono</th><th>Email</th><th>CLU</th><th>Sector</th><th></th></tr></thead>
+    <thead><tr><th>Fecha</th><th>Nombre</th><th>WhatsApp</th><th>Email</th><th>CLU</th><th>Origen</th><th>Consultas</th><th></th></tr></thead>
     <tbody>${rows.map(c => `<tr>
-      <td>${date(c.created_at)}</td><td>${esc(c.nombre)}</td>
+      <td>${date(c.created_at)}</td><td>${esc(fullName(c))}</td>
       <td><a href="https://wa.me/${esc(String(c.telefono).replace(/\D/g, ''))}" target="_blank" rel="noopener">${esc(c.telefono)}</a></td>
       <td><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></td>
-      <td>${esc(cluLabel[c.clu] || '—')}</td><td>${c.sector === 'camping' ? 'Outdoor' : 'Armería'}</td>
+      <td>${esc(cluText(c) || '—')}</td>
+      <td>${c.sector === 'camping' ? 'Outdoor' : 'Armería'} · ${esc(origenLabel[c.origen] || origenLabel.novedades)}${c.novedades === false ? '<br><small class="muted">No quiere novedades</small>' : ''}</td>
+      <td class="contact-inquiries">${c.consultas.length ? `<details><summary>${c.consultas.length} consulta${c.consultas.length === 1 ? '' : 's'} · última ${date(c.consultas[0].created_at)}</summary><ul>${c.consultas.map(x => `<li><b>${date(x.created_at)} · ${esc(tipoLabel[x.tipo] || x.tipo)}</b> ${esc(x.detalle || '')}</li>`).join('')}</ul></details>` : '<span class="muted">—</span>'}</td>
       <td><button type="button" class="link danger-link" data-del-contact="${esc(c.id)}">Borrar</button></td>
     </tr>`).join('')}</tbody>` : '<tbody><tr><td class="empty">Todavía no hay contactos.</td></tr></tbody>';
 }
-['#contactSearch', '#cluFilter'].forEach(sel => $(sel).addEventListener('input', renderContacts));
+['#contactSearch', '#cluFilter', '#originFilter'].forEach(sel => $(sel).addEventListener('input', renderContacts));
 
 $('#contactsTable').addEventListener('click', async event => {
   const button = event.target.closest('[data-del-contact]');
@@ -831,8 +850,10 @@ $('#contactsTable').addEventListener('click', async event => {
 $('#exportCsv').addEventListener('click', () => {
   const rows = filteredContacts();
   const cell = value => `"${String(value ?? '').replace(/"/g, '""')}"`;
-  const lines = [['Fecha', 'Nombre', 'Teléfono', 'Email', 'CLU', 'Sector'].map(cell).join(';'),
-    ...rows.map(c => [new Date(c.created_at).toLocaleString('es-AR'), c.nombre, c.telefono, c.email, cluLabel[c.clu] || '', c.sector === 'camping' ? 'Outdoor' : 'Armería'].map(cell).join(';'))];
+  const lines = [['Fecha', 'Nombre', 'Apellido', 'WhatsApp', 'Email', 'CLU', 'N° CLU', 'Sector', 'Origen', 'Acepta novedades', 'Consultas'].map(cell).join(';'),
+    ...rows.map(c => [new Date(c.created_at).toLocaleString('es-AR'), c.nombre, c.apellido, c.telefono, c.email, cluLabel[c.clu] || '', c.clu_numero,
+      c.sector === 'camping' ? 'Outdoor' : 'Armería', origenLabel[c.origen] || origenLabel.novedades, c.novedades === false ? 'No' : 'Sí',
+      c.consultas.map(x => `${date(x.created_at)} ${tipoLabel[x.tipo] || x.tipo}: ${x.detalle || ''}`).join(' | ')].map(cell).join(';'))];
   const blob = new Blob([`\ufeff${lines.join('\r\n')}`], { type: 'text/csv;charset=utf-8' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);

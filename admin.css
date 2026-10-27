@@ -93,7 +93,11 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold)}
 .adm-tabs{display:flex;gap:6px;max-width:1100px;margin:14px auto 0;padding:0 16px}
 .adm-tabs button{min-height:42px;padding:0 18px;border:1px solid var(--line);border-radius:8px 8px 0 0;background:transparent;color:var(--muted);font-weight:600;cursor:pointer}
 .adm-tabs button.active{background:var(--panel);color:var(--ink);border-bottom-color:var(--panel)}
-.contacts-toolbar{grid-template-columns:1fr 190px auto}
+.contacts-toolbar{grid-template-columns:1fr 170px 230px auto}
+.adm-table td.contact-inquiries{white-space:normal;min-width:240px;max-width:420px}
+.contact-inquiries summary{cursor:pointer;color:var(--gold)}
+.contact-inquiries ul{margin:8px 0 0;padding-left:16px;display:grid;gap:6px;font-size:12px;color:#d8d7d0}
+.contact-inquiries b{color:var(--muted);font-weight:600}
 .adm-table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
 .adm-table{width:100%;border-collapse:collapse;font-size:13px}
 .adm-table th,.adm-table td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}

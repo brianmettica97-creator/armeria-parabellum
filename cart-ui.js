@@ -6,6 +6,7 @@ import {
   validateItems, availabilityLabel, buildWhatsAppMessage, whatsappUrl, loadItems, saveItems,
 } from './cart.js';
 import { escapeHtml, productImage, priceLabel } from './utils.js';
+import { requireVisitor, currentVisitor, visitorName, logInquiry } from './registro.js';
 
 const ONLINE_NOTE = 'El pago online con tarjeta se habilita al activar la pasarela de pagos del sitio. Mientras tanto, al confirmar se abre WhatsApp con tus datos y el pedido para que un asesor te envíe el link de pago o los datos de la transferencia y el costo de envío.';
 
@@ -107,7 +108,7 @@ const DIALOGS = `
     </div>
   </div>`;
 
-export function initCart({ products, findProduct, onChange = () => {} }) {
+export function initCart({ products, findProduct, sector, onChange = () => {} }) {
   document.body.insertAdjacentHTML('beforeend', DIALOGS);
   const $ = selector => document.querySelector(selector);
   const storage = (() => { try { return window.localStorage; } catch { return null; } })();
@@ -352,7 +353,10 @@ export function initCart({ products, findProduct, onChange = () => {} }) {
       return;
     }
 
-    const url = whatsappUrl(phone, buildWhatsAppMessage(lines, computeTotals(lines)));
+    const visitor = currentVisitor();
+    const message = buildWhatsAppMessage(lines, computeTotals(lines)) + (visitor ? `\n\nMis datos: ${visitorName(visitor)} · WhatsApp ${visitor.telefono} · ${visitor.email}` : '');
+    const url = whatsappUrl(phone, message);
+    logInquiry('pedido', orderSummary(lines));
     const opened = window.open(url, '_blank', 'noopener,noreferrer');
     pendingChanges = [];
     checkoutNeedsReview = false;
@@ -372,10 +376,16 @@ export function initCart({ products, findProduct, onChange = () => {} }) {
       ? '<div class="total-row"><span>Total estimado</span><strong>A confirmar</strong></div>'
       : `<div class="total-row"><span>${totals.complete ? 'Total estimado' : 'Total parcial'}</span><strong>${formatMoney(totals.estimatedTotal)}</strong></div><small>No incluye el costo de envío, que se confirma según el destino.</small>`;
     onlineStatus.textContent = '';
+    // Datos del registro: se completan solos si el campo está vacío.
+    const visitor = currentVisitor();
+    if (visitor) {
+      const fields = { nombre: visitorName(visitor), telefono: visitor.telefono, email: visitor.email };
+      Object.entries(fields).forEach(([name, value]) => { if (!onlineForm.elements[name].value) onlineForm.elements[name].value = value; });
+    }
     closeOverlay('cartOverlay');
     openOverlay('onlineOverlay');
   }
-  onlineButton.addEventListener('click', openOnline);
+  onlineButton.addEventListener('click', () => requireVisitor({ sector, origen: 'pedido', onReady: openOnline }));
   onlineForm.addEventListener('submit', event => {
     event.preventDefault();
     const phone = whatsappNumber();
@@ -400,6 +410,7 @@ export function initCart({ products, findProduct, onChange = () => {} }) {
       `Medio de pago elegido: ${data.pago}`,
     ].join('\n');
     const url = whatsappUrl(phone, message);
+    logInquiry('compra-online', `${orderSummary(lines)} · Envío a ${data.localidad.trim()}, ${data.provincia.trim()}`);
     const opened = window.open(url, '_blank', 'noopener,noreferrer');
     onlineStatus.innerHTML = `Abrimos WhatsApp con tu compra. <b>Enviá el mensaje</b> y un asesor te confirmará stock, costo de envío y cómo pagar.${opened ? '' : ` Si no se abrió, <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">tocá acá</a>.`}`;
   });
@@ -409,10 +420,15 @@ export function initCart({ products, findProduct, onChange = () => {} }) {
   document.querySelectorAll('[data-close]').forEach(button => button.addEventListener('click', () => closeOverlay(button.dataset.close)));
   document.querySelectorAll('.overlay').forEach(overlay => overlay.addEventListener('click', event => { if (event.target === overlay) overlay.classList.remove('open'); }));
   document.addEventListener('keydown', event => { if (event.key === 'Escape') document.querySelectorAll('.overlay.open').forEach(overlay => overlay.classList.remove('open')); });
-  checkoutButton.addEventListener('click', finalizeOrder);
+  checkoutButton.addEventListener('click', () => requireVisitor({ sector, origen: 'pedido', onReady: finalizeOrder }));
 
   update();
   return { addFromProductDialog, quickAdd, update, inCart, openOverlay, closeOverlay };
+}
+
+// Resumen corto del pedido para el registro de consultas del panel.
+function orderSummary(lines) {
+  return lines.map(line => `${line.qty}× ${line.product.name}`).join(', ');
 }
 
 /** Enlace de consulta simple (ficha, gestoría, contacto). Devuelve '' si no hay número. */

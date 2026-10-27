@@ -6,6 +6,7 @@ import { initSite } from './site.js';
 import { demoGestoria } from './demo-data.js';
 import { isEligible, availabilityLabel, CONTROLLED_NOTICE, CONTROLLED_SHORT } from './cart.js';
 import { initCart, inquiryUrl } from './cart-ui.js';
+import { initRegistro } from './registro.js';
 import { icons, iconFor } from './icons.js';
 import { escapeHtml, safeUrl, productImage, priceHtml, productBadges, PLACEHOLDER_IMG } from './utils.js';
 
@@ -15,7 +16,8 @@ const sectorProducts = productsForSector(sectorId);
 const findProduct = id => products.find(product => product.id === id);
 const $ = selector => document.querySelector(selector);
 
-const cart = initCart({ products, findProduct });
+const cart = initCart({ products, findProduct, sector: sectorId });
+initRegistro({ sector: sectorId });
 
 initSite({ ageCheck: sectorId === 'armeria' });
 
