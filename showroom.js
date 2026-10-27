@@ -41,8 +41,6 @@ export const showroomViews = [
     alt: 'Pared de armas largas: rifles con mira, fusiles de precisión, racks de carabinas y escopetas, y estante de munición', filter: { category: ARMAS, subcategory: 'armas-largas' }, focus: { x: 10, y: 46 },
     spots: [
       { x: 38, y: 24, label: 'Tiro de precisión', note: 'Fusiles con chasis y bípode', action: { category: ARMAS, subcategory: 'fusiles' } },
-      { x: 14, y: 64, label: 'Carabinas', action: { category: ARMAS, subcategory: 'carabinas' } },
-      { x: 37, y: 64, label: 'Escopetas', action: { category: ARMAS, subcategory: 'escopetas' } },
       { x: 64, y: 40, label: 'Fusiles de caza', note: 'Cerrojo, madera y camuflados', action: { category: ARMAS, subcategory: 'fusiles' } },
       { x: 87, y: 13, label: 'Miras telescópicas', note: 'Ópticas para arma larga', action: { category: 'accesorios', subcategory: 'optica' } },
       { x: 76, y: 86, label: 'Munición arma larga', action: { category: 'municiones', subcategory: 'arma-larga' } },

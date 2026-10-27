@@ -747,5 +747,5 @@ if ($('#showroomViewer')) {
     : sectorProducts.filter(product => (!action.category || product.category === action.category) && matchesSub(product, sectorId, action.category, action.subcategory)))
     .sort((a, b) => (a.availability === 'agotado') - (b.availability === 'agotado'));
   const openProduct = id => showProduct(findProduct(id));
-  import('./showroom.js?v=20261027a').then(module => module.initShowroom({ applyFilter, productsFor, openProduct, inquiryFor: inquiryUrl }));
+  import('./showroom.js?v=20261027b').then(module => module.initShowroom({ applyFilter, productsFor, openProduct, inquiryFor: inquiryUrl }));
 }
