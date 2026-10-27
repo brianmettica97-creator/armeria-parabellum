@@ -5,12 +5,15 @@
 //   focus:  punto de la foto principal donde está ese sector; la transición
 //           hace zoom hacia ahí al entrar y desde ahí al volver.
 //   spots:  puntos sobre la foto. x / y son porcentajes de la imagen (0–100).
-//           action: { category, subcategory } → filtra el catálogo
-//                   { brand }                  → filtra por marca
+//           action: { category, subcategory } → abre la vidriera con esos productos
+//                   { brand }                  → abre la vidriera con esa marca
 //                   { view }                   → hace zoom a otra vista del local
+//           La vidriera se muestra sobre la foto: el visitante no sale del showroom.
 //           logo: { w, h } → zona rectangular sobre un logo (en % de la foto)
 // Los puntos se ubicaron sobre lo que se identifica en cada foto (sectores y
 // carteles de marca); no representan unidades específicas en stock.
+import { escapeHtml, productImage, priceHtml } from './utils.js';
+
 const ARMAS = 'armas';
 // Zona clickeable sobre el cartel de una marca (w / h en % de la foto).
 const logo = (x, y, label, brand = label, w = 8, h = 5) => ({ x, y, label, note: 'Marca', logo: { w, h }, action: { brand } });
@@ -20,11 +23,12 @@ export const showroomViews = [
     id: 'entrada', title: 'Vista principal', image: 'assets/new/vista-principal.jpg', thumb: 'assets/new/vista-principal-mini.jpg',
     alt: 'Pasillo central del local con vitrinas, paredes de armas y carteles de marcas', filter: { category: '' },
     spots: [
-      { x: 10, y: 46, label: 'Armas largas', note: 'Escopetas, carabinas y fusiles', action: { category: ARMAS, subcategory: 'armas-largas' } },
-      { x: 16, y: 80, label: 'Arma corta', note: 'Pistolas y revólveres', action: { category: ARMAS, subcategory: 'armas-cortas' } },
+      // Los sectores con foto propia entran a esa vista con zoom (como Equipo y Munición).
+      { x: 10, y: 46, label: 'Armas largas', note: 'Pared de escopetas', action: { view: 'pistolas' } },
+      { x: 16, y: 80, label: 'Arma corta', note: 'Vitrina de pistolas', action: { view: 'pistolas' } },
       { x: 44, y: 45, label: 'Equipo y Munición', note: 'Accesorios, recarga y municiones', action: { view: 'accesorios' } },
-      { x: 88, y: 30, label: 'Fusiles', action: { category: ARMAS, subcategory: 'fusiles' } },
-      { x: 85, y: 80, label: 'Revólveres', action: { category: ARMAS, subcategory: 'revolveres' } },
+      { x: 88, y: 30, label: 'Fusiles', note: 'Fusiles y carabinas', action: { view: 'fusiles' } },
+      { x: 85, y: 80, label: 'Revólveres', note: 'Vitrina de revólveres', action: { view: 'fusiles' } },
       // Carteles de marcas de la pared del fondo (columna izquierda y derecha de la puerta).
       logo(35.1, 26.5, 'Ruger', 'Ruger', 5.5, 5), logo(35.1, 30.2, 'Beretta', 'Beretta', 5.5, 2.6),
       logo(35.2, 33.4, 'Glock', 'GLOCK', 4, 3.5), logo(35.1, 36.8, 'CZ', 'CZ', 4.5, 3.2),
@@ -79,13 +83,15 @@ export const showroomViews = [
   },
 ];
 
-const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const esc = escapeHtml;
+const SHELF_LIMIT = 24; // tarjetas en la vidriera; el resto, en el catálogo
 
 const TOUR_MS = 7000;
 // Si la pestaña está en segundo plano las animaciones se pausan: este respaldo evita que la transición quede colgada.
 const settle = (animation, ms) => Promise.race([animation.finished.catch(() => {}), new Promise(resolve => window.setTimeout(resolve, ms + 250))]);
 
-export function initShowroom({ applyFilter, countFor }) {
+export function initShowroom({ applyFilter, productsFor, openProduct, inquiryFor }) {
+  const countFor = action => productsFor(action).length;
   const $ = selector => document.querySelector(selector);
   const frame = $('#showroomViewer');
   const stage = $('#sceneStage');
@@ -158,8 +164,8 @@ export function initShowroom({ applyFilter, countFor }) {
   }
   function showInfo(spot) {
     info.classList.add('has-spot');
-    info.innerHTML = `<b>${esc(spot.logo ? `Productos ${spot.label}` : spot.label)}</b><small>${esc(describe(spot))}</small><button type="button">${spot.action.view ? 'Entrar a este sector →' : 'Ver en el catálogo →'}</button>`;
-    info.querySelector('button').addEventListener('click', event => { event.stopPropagation(); runAction(spot.action); });
+    info.innerHTML = `<b>${esc(spot.logo ? `Productos ${spot.label}` : spot.label)}</b><small>${esc(describe(spot))}</small><button type="button">${spot.action.view ? 'Entrar a este sector →' : 'Ver los artículos →'}</button>`;
+    info.querySelector('button').addEventListener('click', event => { event.stopPropagation(); runAction(spot.action, spot); });
   }
 
   function closeSpots(except) {
@@ -172,11 +178,62 @@ export function initShowroom({ applyFilter, countFor }) {
     updateProgress();
   }
 
-  function runAction(action) {
+  // ── Vidriera: los productos del sector, sobre la misma foto ──
+  const shelf = document.createElement('div');
+  shelf.className = 'scene-shelf';
+  shelf.hidden = true;
+  shelf.setAttribute('role', 'region');
+  frame.append(shelf);
+  // Lo que pasa dentro de la vidriera no cierra los puntos ni cambia de vista al deslizar.
+  ['click', 'touchstart', 'touchend', 'pointermove'].forEach(type => shelf.addEventListener(type, event => event.stopPropagation(), { passive: true }));
+
+  const catalogFilter = action => action.brand
+    ? { category: '', subcategory: '', brand: action.brand }
+    : { category: action.category || '', subcategory: action.subcategory || '', brand: '' };
+
+  function openShelf(spot) {
+    const action = spot.action;
+    const items = productsFor(action);
+    const title = spot.logo ? `Productos ${spot.label}` : spot.label;
+    const shown = items.slice(0, SHELF_LIMIT);
+    const count = `${items.length} artículo${items.length === 1 ? '' : 's'}`;
+    const consult = inquiryFor(`Hola, quiero consultar qué tienen disponible en ${title}.`);
+    shelf.setAttribute('aria-label', `Vidriera: ${title}`);
+    shelf.innerHTML = `
+      <div class="shelf-head">
+        <div class="shelf-title"><small>${spot.logo ? 'Marca' : esc(showroomViews[current].title)}</small><b>${esc(title)}</b><span>${items.length ? count : 'Sin artículos publicados'}</span></div>
+        ${items.length ? '<button type="button" class="shelf-all">Ver en el catálogo <span>↘</span></button>' : ''}
+        <button type="button" class="shelf-close" aria-label="Cerrar vidriera">×</button>
+      </div>
+      ${items.length ? `<div class="shelf-track">${shown.map(product => `
+        <button type="button" class="shelf-card${product.availability === 'agotado' ? ' is-soldout' : ''}" data-shelf-product="${esc(product.id)}" aria-label="Ver ficha de ${esc(product.name)}">
+          <span class="shelf-photo">${productImage(product)}</span>
+          <small>${esc(product.brand)}</small>
+          <strong>${esc(product.name)}</strong>
+          ${priceHtml(product)}
+        </button>`).join('')}${items.length > shown.length ? `<button type="button" class="shelf-card shelf-more"><b>+${items.length - shown.length}</b><span>Ver todos en el catálogo</span></button>` : ''}</div>`
+        : `<div class="shelf-empty"><p>Por ahora no hay artículos publicados en este sector. Consultanos disponibilidad.</p>${consult ? `<a href="${esc(consult)}" target="_blank" rel="noopener noreferrer">Consultar por WhatsApp ↗</a>` : ''}</div>`}`;
+    shelf.querySelector('.shelf-close').addEventListener('click', closeShelf);
+    shelf.querySelectorAll('.shelf-all, .shelf-more').forEach(button => button.addEventListener('click', () => { closeShelf(); applyFilter(catalogFilter(action)); }));
+    shelf.querySelectorAll('[data-shelf-product]').forEach(card => card.addEventListener('click', () => openProduct(card.dataset.shelfProduct)));
+    // El catálogo de abajo queda filtrado igual, sin mover la página.
+    applyFilter({ ...catalogFilter(action), scroll: false, push: false });
+    shelf.hidden = false;
+    frame.classList.add('has-shelf');
+    if (!reduceMotion && shelf.animate) shelf.animate([{ opacity: 0, transform: 'translateY(18px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 260, easing: 'cubic-bezier(.2,.6,.3,1)' });
+  }
+  function closeShelf() {
+    if (shelf.hidden) return;
+    shelf.hidden = true;
+    frame.classList.remove('has-shelf');
+    closeSpots();
+    showHint();
+  }
+
+  function runAction(action, spot) {
     stopTour();
     if (action.view) { setView(action.view); return; }
-    if (action.brand) applyFilter({ category: '', subcategory: '', brand: action.brand });
-    else applyFilter({ category: action.category || '', subcategory: action.subcategory || '', brand: '' });
+    openShelf(spot);
   }
 
   function renderSpots(view) {
@@ -189,7 +246,7 @@ export function initShowroom({ applyFilter, countFor }) {
       return `<button type="button" class="spot${sideClass}${vertical}${seen.has(index) ? ' is-visited' : ''}${spot.action.view ? ' spot-go' : ''}${area}" data-spot="${index}" aria-label="${esc(spot.label)}: ${esc(describe(spot))}">
         ${spot.logo ? '' : '<i class="spot-ring" aria-hidden="true"></i><i class="spot-dot" aria-hidden="true"></i>'}
         ${spot.logo ? '' : `<span class="spot-tag" aria-hidden="true">${esc(spot.label)}${spot.action.view ? ' <i>↗</i>' : ''}</span>`}
-        <span class="spot-label" aria-hidden="true"><b>${esc(spot.logo ? `Productos ${spot.label}` : spot.label)}</b><small>${esc(describe(spot))}</small><em>${spot.action.view ? 'Entrar a este sector →' : 'Ver en el catálogo →'}</em></span>
+        <span class="spot-label" aria-hidden="true"><b>${esc(spot.logo ? `Productos ${spot.label}` : spot.label)}</b><small>${esc(describe(spot))}</small><em>${spot.action.view ? 'Entrar a este sector →' : 'Ver los artículos →'}</em></span>
       </button>`;
     }).join('');
     spotsBox.querySelectorAll('.spot').forEach(button => {
@@ -199,7 +256,17 @@ export function initShowroom({ applyFilter, countFor }) {
       button.addEventListener('click', event => {
         event.stopPropagation();
         markVisited(index, button);
-        // En pantallas táctiles el primer toque muestra la información y el segundo ejecuta.
+        const spot = view.spots[index];
+        // Sectores con productos: se abre la vidriera directamente (también en celular).
+        if (!spot.action.view) {
+          stopTour();
+          closeSpots(button);
+          button.classList.add('is-open');
+          showInfo(spot);
+          openShelf(spot);
+          return;
+        }
+        // Sectores con foto propia: en pantallas táctiles el primer toque muestra la información y el segundo entra.
         if ((touch || compact()) && !button.classList.contains('is-open')) {
           stopTour();
           closeSpots(button);
@@ -207,12 +274,12 @@ export function initShowroom({ applyFilter, countFor }) {
           showInfo(view.spots[index]);
           return;
         }
-        runAction(view.spots[index].action);
+        runAction(spot.action, spot);
       });
     });
     updateProgress();
   }
-  frame.addEventListener('click', () => { closeSpots(); showHint(); });
+  frame.addEventListener('click', () => { if (!shelf.hidden) { closeShelf(); return; } closeSpots(); showHint(); });
 
   function replayAnimation(className) {
     frame.classList.remove(className);
@@ -224,6 +291,7 @@ export function initShowroom({ applyFilter, countFor }) {
     const index = showroomViews.findIndex(view => view.id === id);
     if (index < 0) return;
     if (!fromTour) stopTour();
+    closeShelf();
     const token = ++switchToken;
     const view = showroomViews[index];
     const changing = index !== current || !scene.src.endsWith(view.image);

@@ -354,12 +354,22 @@ function showProduct(product, { push = true } = {}) {
     <div class="product-photo-stage">
       <img id="dialogMainPhoto" src="${safeUrl(gallery[0]?.src || PLACEHOLDER_IMG)}" alt="${escapeHtml(photoNote)}: ${escapeHtml(product.name)}" onerror="this.onerror=null;this.src='${PLACEHOLDER_IMG}'">
       <span class="product-photo-caption">${escapeHtml(photoNote)}</span>
+      ${gallery.length ? `<button class="photo-zoom" type="button" aria-label="Ampliar foto"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5M10.5 7.5v6M7.5 10.5h6"/></svg><span>Ampliar</span></button>` : ''}
     </div>
-    ${gallery.length > 1 ? `<div class="gallery-thumbs">${gallery.map((photo, index) => `<button type="button" class="${index === 0 ? 'active' : ''}" data-photo="${safeUrl(photo.src)}" aria-label="Ver foto ${index + 1}"><img src="${safeUrl(photo.thumb || photo.src)}" alt="" loading="lazy"></button>`).join('')}</div>` : ''}`;
+    ${gallery.length > 1 ? `<div class="gallery-thumbs">${gallery.map((photo, index) => `<button type="button" class="${index === 0 ? 'active' : ''}" data-photo="${index}" aria-label="Ver foto ${index + 1}"><img src="${safeUrl(photo.thumb || photo.src)}" alt="" loading="lazy"></button>`).join('')}</div>` : ''}`;
+  let photoIndex = 0;
   $('#dialogArt').querySelectorAll('[data-photo]').forEach(button => button.addEventListener('click', () => {
-    $('#dialogMainPhoto').src = button.dataset.photo;
+    photoIndex = Number(button.dataset.photo);
+    $('#dialogMainPhoto').src = safeUrl(gallery[photoIndex].src);
     $('#dialogArt').querySelectorAll('[data-photo]').forEach(other => other.classList.toggle('active', other === button));
   }));
+  // Tocar la foto o la lupa la abre a pantalla completa, con zoom y carrete.
+  if (gallery.length) {
+    const zoom = () => import('./photo-viewer.js?v=20261027a').then(module => module.openPhotoViewer(gallery, photoIndex, { title: product.name }));
+    $('#dialogMainPhoto').classList.add('is-zoomable');
+    $('#dialogMainPhoto').addEventListener('click', zoom);
+    $('#dialogArt').querySelector('.photo-zoom').addEventListener('click', zoom);
+  }
 
   $('#dialogCategory').textContent = [product.categoryLabel, product.subcategoryLabel, product.code].filter(Boolean).join(' · ');
   $('#dialogBadges').innerHTML = productBadges(product);
@@ -731,8 +741,11 @@ bindInquiryLinks();
 if ($('[data-leads]')) import('./leads.js').then(module => module.initLeads($('[data-leads]'), { sector: sectorId }));
 
 if ($('#showroomViewer')) {
-  const countFor = action => action.brand
-    ? sectorProducts.filter(product => product.brand.toLowerCase() === action.brand.toLowerCase()).length
-    : sectorProducts.filter(product => (!action.category || product.category === action.category) && matchesSub(product, sectorId, action.category, action.subcategory)).length;
-  import('./showroom.js?v=20261024f').then(module => module.initShowroom({ applyFilter, countFor }));
+  // Productos de cada punto del showroom: primero los disponibles, como en el catálogo.
+  const productsFor = action => (action.brand
+    ? sectorProducts.filter(product => product.brand.toLowerCase() === action.brand.toLowerCase())
+    : sectorProducts.filter(product => (!action.category || product.category === action.category) && matchesSub(product, sectorId, action.category, action.subcategory)))
+    .sort((a, b) => (a.availability === 'agotado') - (b.availability === 'agotado'));
+  const openProduct = id => showProduct(findProduct(id));
+  import('./showroom.js?v=20261027a').then(module => module.initShowroom({ applyFilter, productsFor, openProduct, inquiryFor: inquiryUrl }));
 }
