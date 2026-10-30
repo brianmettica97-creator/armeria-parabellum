@@ -93,15 +93,17 @@ function renderNav() {
       <button class="nav-caret" type="button" aria-expanded="false" aria-label="Ver opciones de ${escapeHtml(label)}">▾</button>
       <div class="nav-menu">${items}</div>
     </li>`;
+  // Sin productos cargados: "pronto" en vez de 0, para que no parezca un enlace roto.
+  const count = n => n ? `<span>${n}</span>` : '<span class="nav-soon">pronto</span>';
   const groups = hasSubcategories
-    ? sector.categories.map(category => menu(category.label, categoryHref(category.id), `data-cat="${category.id}"`,
-      `<a href="${categoryHref(category.id)}" data-cat="${category.id}" class="nav-menu-all">Ver todo ${escapeHtml(category.label)} <span>${countIn(category.id)}</span></a>` +
-      (category.groups || []).map(group => `<a href="${categoryHref(category.id, group.id)}" data-cat="${category.id}" data-sub="${group.id}" class="nav-menu-group">${escapeHtml(group.label)} <span>${countIn(category.id, group.id)}</span></a>`).join('') +
-      category.subcategories.map(sub => `<a href="${categoryHref(category.id, sub.id)}" data-cat="${category.id}" data-sub="${sub.id}">${escapeHtml(sub.label)} <span>${countIn(category.id, sub.id)}</span></a>`).join('') +
+    ? sector.categories.map(category => menu(category.label, categoryHref(category.id), `data-cat="${category.id}"${countIn(category.id) ? '' : ' data-empty'}`,
+      `<a href="${categoryHref(category.id)}" data-cat="${category.id}" class="nav-menu-all">Ver todo ${escapeHtml(category.label)} ${count(countIn(category.id))}</a>` +
+      (category.groups || []).map(group => `<a href="${categoryHref(category.id, group.id)}" data-cat="${category.id}" data-sub="${group.id}" class="nav-menu-group">${escapeHtml(group.label)} ${count(countIn(category.id, group.id))}</a>`).join('') +
+      category.subcategories.map(sub => `<a href="${categoryHref(category.id, sub.id)}" data-cat="${category.id}" data-sub="${sub.id}">${escapeHtml(sub.label)} ${count(countIn(category.id, sub.id))}</a>`).join('') +
       (category.featured || []).map(item => `<a href="${categoryHref(category.id)}" data-cat="${category.id}" data-brand="${escapeHtml(item.brand)}" class="nav-menu-featured">★ ${escapeHtml(item.label)} <small>${escapeHtml(item.note)}</small></a>`).join('')))
     : [menu('Categorías', categoryHref(), 'data-cat=""',
       `<a href="${categoryHref()}" data-cat="" class="nav-menu-all">Ver todo <span>${sectorProducts.length}</span></a>` +
-      sector.categories.map(category => `<a href="${categoryHref(category.id)}" data-cat="${category.id}">${escapeHtml(category.label)} <span>${countIn(category.id)}</span></a>`).join(''))];
+      sector.categories.map(category => `<a href="${categoryHref(category.id)}" data-cat="${category.id}">${escapeHtml(category.label)} ${count(countIn(category.id))}</a>`).join(''))];
   nav.innerHTML = `<ul class="nav-list">${groups.join('')}${extraLinks.map(link => `<li class="nav-item">${link}</li>`).join('')}</ul>`;
 
   nav.querySelectorAll('[data-cat]').forEach(link => link.addEventListener('click', event => {
@@ -136,7 +138,7 @@ function renderSidebar() {
   const box = $('#filters');
   if (!box) return;
   const button = (attrs, label, count, active, icon = '') =>
-    `<button type="button" class="filter${active ? ' active' : ''}" ${attrs}>${icon ? `<i aria-hidden="true">${icon}</i>` : ''}<span>${escapeHtml(label)}</span><b>${count}</b></button>`;
+    `<button type="button" class="filter${active ? ' active' : ''}${count ? '' : ' is-empty'}" ${attrs}>${icon ? `<i aria-hidden="true">${icon}</i>` : ''}<span>${escapeHtml(label)}</span><b>${count || 'pronto'}</b></button>`;
   const usedCount = sectorProducts.filter(product => product.condition === 'usado').length;
   box.innerHTML = button('data-cat=""', `Todo ${sector.id === 'camping' ? 'Camping' : 'Armería'}`, sectorProducts.length, !state.category && !state.condition, '⌂') +
     sector.categories.map(category => {
@@ -285,7 +287,7 @@ function renderProducts() {
     const link = inquiryUrl(`Hola, ${sector.name}. Quiero consultar por ${filterLabel()}.`);
     grid.innerHTML = `<div class="no-results">${filtered
       ? '<p>No encontramos productos con esos filtros. Probá otra búsqueda o quitá la marca.</p>'
-      : `<p>Todavía no hay productos publicados en <strong>${escapeHtml(filterLabel())}</strong>.</p><p>Consultá disponibilidad directamente con la armería.</p>${link ? `<a class="secondary" href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">Consultar por WhatsApp ↗</a>` : ''}`}</div>`;
+      : `<p class="no-results-title">Próximamente: <strong>${escapeHtml(filterLabel())}</strong></p><p>Estamos cargando los productos de esta sección. Mientras tanto, consultanos qué hay disponible en el local.</p>${link ? `<a class="no-results-wa" href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">Consultar por WhatsApp ↗</a>` : ''}`}</div>`;
     return;
   }
   const key = JSON.stringify([state.category, state.subcategory, state.brand, state.condition, query, state.sort]);
@@ -749,5 +751,5 @@ if ($('#showroomViewer')) {
     : sectorProducts.filter(product => (!action.category || product.category === action.category) && matchesSub(product, sectorId, action.category, action.subcategory)))
     .sort((a, b) => (a.availability === 'agotado') - (b.availability === 'agotado'));
   const openProduct = id => showProduct(findProduct(id));
-  import('./showroom.js?v=20261027b').then(module => module.initShowroom({ applyFilter, productsFor, openProduct, inquiryFor: inquiryUrl }));
+  import('./showroom.js?v=20261030a').then(module => module.initShowroom({ applyFilter, productsFor, openProduct, inquiryFor: inquiryUrl }));
 }

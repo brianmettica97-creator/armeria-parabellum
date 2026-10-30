@@ -150,7 +150,7 @@ export function initShowroom({ applyFilter, productsFor, openProduct, inquiryFor
     if (spot.action.view) return spot.note || 'Ver esta parte del local';
     const count = countFor(spot.action);
     const base = spot.note ? `${spot.note} · ` : '';
-    return `${base}${count ? `${count} producto${count === 1 ? '' : 's'} en el catálogo` : 'Consultar disponibilidad'}`;
+    return `${base}${count ? `${count} producto${count === 1 ? '' : 's'} en el catálogo` : 'Próximamente · consultar disponibilidad'}`;
   }
 
   function updateProgress() {
@@ -211,7 +211,7 @@ export function initShowroom({ applyFilter, productsFor, openProduct, inquiryFor
     shelf.setAttribute('aria-label', `Vidriera: ${title}`);
     shelf.innerHTML = `
       <div class="shelf-head">
-        <div class="shelf-title"><small>${spot.logo ? 'Marca' : esc(showroomViews[current].title)}</small><b>${esc(title)}</b><span>${items.length ? count : 'Sin artículos publicados'}</span></div>
+        <div class="shelf-title"><small>${spot.logo ? 'Marca' : esc(showroomViews[current].title)}</small><b>${esc(title)}</b><span>${items.length ? count : 'Próximamente'}</span></div>
         ${items.length ? '<button type="button" class="shelf-all">Ver en el catálogo <span>↘</span></button>' : ''}
         <button type="button" class="shelf-close" aria-label="Cerrar vidriera">×</button>
       </div>
@@ -222,7 +222,7 @@ export function initShowroom({ applyFilter, productsFor, openProduct, inquiryFor
           <strong>${esc(product.name)}</strong>
           ${priceHtml(product)}
         </button>`).join('')}${items.length > shown.length ? `<button type="button" class="shelf-card shelf-more"><b>+${items.length - shown.length}</b><span>Ver todos en el catálogo</span></button>` : ''}</div>`
-        : `<div class="shelf-empty"><p>Por ahora no hay artículos publicados en este sector. Consultanos disponibilidad.</p>${consult ? `<a href="${esc(consult)}" target="_blank" rel="noopener noreferrer">Consultar por WhatsApp ↗</a>` : ''}</div>`}`;
+        : `<div class="shelf-empty"><p><b>Próximamente.</b> Estamos cargando los artículos de este sector. Mientras tanto, consultanos qué hay disponible en el local.</p>${consult ? `<a href="${esc(consult)}" target="_blank" rel="noopener noreferrer">Consultar por WhatsApp ↗</a>` : ''}</div>`}`;
     shelf.querySelector('.shelf-close').addEventListener('click', closeShelf);
     shelf.querySelectorAll('.shelf-all, .shelf-more').forEach(button => button.addEventListener('click', () => { closeShelf(); applyFilter(catalogFilter(action)); }));
     shelf.querySelectorAll('[data-shelf-product]').forEach(card => card.addEventListener('click', () => openProduct(card.dataset.shelfProduct)));

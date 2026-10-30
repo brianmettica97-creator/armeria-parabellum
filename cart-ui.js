@@ -69,7 +69,7 @@ const DIALOGS = `
       <div class="cart-actions">
         <button class="cart-continue" type="button" data-close="cartOverlay"><span aria-hidden="true">←</span> Seguir comprando</button>
         <button class="primary online-checkout" id="onlineCheckout" type="button" disabled><span aria-hidden="true">💳</span> Comprar Online para Envío</button>
-        <button class="primary whatsapp-checkout" id="checkout" type="button" disabled><span aria-hidden="true">🟢</span> Finalizar Pedido por WhatsApp</button>
+        <button class="primary whatsapp-checkout" id="checkout" type="button" disabled>Finalizar Pedido por WhatsApp</button>
       </div>
       <p class="checkout-status" id="checkoutStatus" role="status" aria-live="polite"></p>
       <p class="modal-note"><b>Comprar Online para Envío:</b> cargás tus datos y recibís el pedido en tu domicilio. <b>Finalizar por WhatsApp:</b> coordinás el pedido y el retiro en el local con un asesor. En ambos casos el pedido no queda confirmado hasta que la armería verifique stock, precio y condiciones.</p>
@@ -309,7 +309,7 @@ export function initCart({ products, findProduct, sector, onChange = () => {} })
     const phoneReady = Boolean(whatsappNumber());
     checkoutButton.disabled = !lines.length || !phoneReady;
     onlineButton.disabled = !lines.length || !phoneReady;
-    checkoutButton.innerHTML = checkoutNeedsReview ? 'Revisé los cambios · Abrir WhatsApp' : '<span aria-hidden="true">🟢</span> Finalizar Pedido por WhatsApp';
+    checkoutButton.innerHTML = checkoutNeedsReview ? 'Revisé los cambios · Abrir WhatsApp' : 'Finalizar Pedido por WhatsApp';
     if (!phoneReady) checkoutStatus.textContent = 'WhatsApp no disponible: falta configurar el número comercial del sitio.';
     else if (!lines.length && !pendingChanges.length) checkoutStatus.textContent = '';
     onChange();

@@ -197,7 +197,7 @@ function inquiryDetail(url) {
 export function initRegistro({ sector }) {
   document.addEventListener('click', event => {
     const link = event.target.closest?.('a[href^="https://wa.me/"]');
-    if (!link || event.button !== 0 || event.metaKey || event.ctrlKey) return;
+    if (!link || link.hasAttribute('data-no-registro') || event.button !== 0 || event.metaKey || event.ctrlKey) return;
     const visitor = currentVisitor();
     if (visitor) {
       logInquiry('consulta', inquiryDetail(link.href));

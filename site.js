@@ -1,6 +1,6 @@
 // Elementos comunes a todas las páginas: aviso de demo, contacto y horarios,
 // WhatsApp flotante, aviso de mayoría de edad y enlaces legales del pie.
-import { DEMO_MODE, SHOW_DEMO_BANNER, STORE, CONSUMER_COMPLAINTS_URL, whatsappNumber } from './config.js';
+import { DEMO_MODE, SHOW_DEMO_BANNER, MAINTENANCE_MODE, MAINTENANCE_ACCESS, STORE, CONSUMER_COMPLAINTS_URL, whatsappNumber } from './config.js';
 
 const DAY_NAMES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
@@ -181,6 +181,49 @@ function ageGate() {
   });
 }
 
+// ───────────────────────────── Sitio en construcción ─────────────────────────────
+const ACCESS_KEY = 'parabellum-acceso-equipo';
+const PREVIEW_HOST = /(^|\.)github\.io$|^localhost$|^127\.|^$/;
+
+/** Muestra la portada "en construcción" si corresponde. Devuelve true si la mostró. */
+function maintenanceGate() {
+  if (!MAINTENANCE_MODE || PREVIEW_HOST.test(window.location.hostname)) return false;
+  const params = new URLSearchParams(window.location.search);
+  const access = params.get('acceso');
+  if (access !== null) {
+    try {
+      if (access === MAINTENANCE_ACCESS) window.localStorage.setItem(ACCESS_KEY, 'si');
+      else window.localStorage.removeItem(ACCESS_KEY);
+    } catch { /* sin almacenamiento */ }
+    params.delete('acceso');
+    const query = params.toString();
+    history.replaceState(history.state, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`);
+  }
+  let team = false;
+  try { team = window.localStorage.getItem(ACCESS_KEY) === 'si'; } catch { /* sin almacenamiento */ }
+  if (team) return false;
+  const wa = waLink(`Hola, ${STORE.name}. Quiero hacer una consulta.`);
+  const gate = document.createElement('div');
+  gate.className = 'age-gate site-gate';
+  gate.setAttribute('role', 'dialog');
+  gate.setAttribute('aria-modal', 'true');
+  gate.setAttribute('aria-labelledby', 'siteGateTitle');
+  gate.innerHTML = `
+    <div class="age-card">
+      <img src="assets/cliente/logo-parabellum-banner.jpg" alt="${esc(STORE.name)}">
+      <div class="eyebrow">Muy pronto</div>
+      <h2 id="siteGateTitle">Sitio en construcción</h2>
+      <p>Estamos preparando la nueva web de Parabellum. Mientras tanto, te esperamos en <strong>${esc(STORE.street)}, ${esc(STORE.city)}</strong> o atendemos tus consultas por WhatsApp.</p>
+      <div class="age-actions">
+        ${wa ? `<a class="primary" href="${esc(wa)}" target="_blank" rel="noopener noreferrer" data-no-registro>Consultar por WhatsApp</a>` : ''}
+        <a class="secondary" href="https://www.instagram.com/${esc(STORE.instagram)}" target="_blank" rel="noopener noreferrer">Instagram</a>
+      </div>
+    </div>`;
+  document.body.append(gate);
+  document.documentElement.classList.add('age-locked', 'site-locked');
+  return true;
+}
+
 // ───────────────────────────── Pie: legales ─────────────────────────────
 function renderLegalLinks() {
   document.querySelectorAll('[data-legal-links]').forEach(box => {
@@ -192,6 +235,7 @@ function renderLegalLinks() {
 }
 
 export function initSite({ ageCheck = false } = {}) {
+  if (maintenanceGate()) return;
   renderDemoBar();
   renderContact();
   renderTrust();

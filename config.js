@@ -12,6 +12,15 @@ export const DEMO_MODE = false;
 // Barra superior que avisa "sitio de demostración" (desactivada a pedido).
 export const SHOW_DEMO_BANNER = false;
 
+// SITIO EN CONSTRUCCIÓN
+// true  → en el dominio propio, el público ve una portada "Sitio en construcción".
+//         El equipo entra con  https://DOMINIO/?acceso=parabellum  (queda recordado
+//         en ese navegador; para volver a ver la portada:  ?acceso=salir).
+//         En github.io y en la computadora el sitio se ve normal, para seguir revisándolo.
+// false → sitio abierto al público. Es un freno visual, no una protección real.
+export const MAINTENANCE_MODE = true;
+export const MAINTENANCE_ACCESS = 'parabellum';
+
 // WhatsApp oficial de Armería Parabellum (+54 9 221 226-9598), solo dígitos
 // y en formato internacional: 54 + 9 + código de área sin 0 + número sin 15.
 // Todos los botones de consulta, pedidos y contacto usan este número.
