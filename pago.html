@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101214">
+  <meta name="robots" content="noindex">
+  <title>Tu pago · Armería Parabellum</title>
+  <link rel="icon" href="assets/iconos/favicon-armeria.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css?v=20261030a">
+</head>
+<body class="sector-armeria legal-page">
+  <header class="topbar">
+    <div class="topbar-main">
+      <a class="brand" href="index.html" aria-label="Parabellum · volver al inicio">
+        <img class="brand-logo" src="assets/cliente/logo-parabellum-banner.jpg" alt="Armería Parabellum">
+      </a>
+    </div>
+  </header>
+
+  <main class="legal-main">
+    <div class="eyebrow">Compra online</div>
+    <h1 id="titulo">Estamos revisando tu pago</h1>
+    <p id="texto">Un momento…</p>
+    <p id="referencia" class="legal-updated" hidden></p>
+    <p><a class="secondary" href="index.html">Volver al inicio</a></p>
+  </main>
+
+  <script type="module">
+    // IMPORTANTE: volver de Payway NO prueba que el pago se haya cobrado. Esta página nunca dice
+    // "pago aprobado": el estado real lo confirma el servidor y lo ve la armería en su panel.
+    // Todo se escribe con textContent y solo con textos fijos (nada de la dirección se interpreta como HTML).
+    const params = new URLSearchParams(location.search);
+    const resultado = params.get('resultado');
+    const pedido = params.get('pedido') || '';
+    const $ = id => document.getElementById(id);
+    if (resultado === 'cancelado') {
+      $('titulo').textContent = 'El pago no se completó';
+      $('texto').textContent = 'No se realizó ningún cobro. Podés volver al pedido y reintentar, o escribirnos por WhatsApp y te ayudamos.';
+    } else if (resultado === 'ok') {
+      $('titulo').textContent = 'Recibimos tu compra';
+      $('texto').textContent = 'Estamos confirmando el pago con la tarjeta. En breve la armería se comunica con vos para coordinar el envío. Si en un rato no tenés novedades, escribinos por WhatsApp con el número de referencia.';
+    } else {
+      $('titulo').textContent = 'Tu pago';
+      $('texto').textContent = 'No encontramos datos de un pago en esta dirección.';
+    }
+    if (/^[a-z0-9]{8,40}$/i.test(pedido)) {
+      $('referencia').textContent = `Referencia del pedido: ${pedido}`;
+      $('referencia').hidden = false;
+    }
+  </script>
+</body>
+</html>

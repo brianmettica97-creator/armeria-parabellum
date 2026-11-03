@@ -1,6 +1,7 @@
 // Interfaz del pedido: diálogos de complementos y carrito, finalización por WhatsApp.
 // Compartida por todos los sectores: el pedido es uno solo.
-import { whatsappNumber, CART_STORAGE_KEY, LEGACY_CART_STORAGE_KEY } from './config.js';
+import { whatsappNumber, CART_STORAGE_KEY, LEGACY_CART_STORAGE_KEY, ONLINE_PAYMENT_ENABLED } from './config.js';
+import { crearPedidoOnline } from './pedido-online.js';
 import {
   formatMoney, isEligible, maxQuantity, quantityEditable, clampQuantity, buildLines, computeTotals,
   validateItems, availabilityLabel, buildWhatsAppMessage, whatsappUrl, loadItems, saveItems,
@@ -386,7 +387,7 @@ export function initCart({ products, findProduct, sector, onChange = () => {} })
     openOverlay('onlineOverlay');
   }
   onlineButton.addEventListener('click', () => requireVisitor({ sector, origen: 'pedido', onReady: openOnline }));
-  onlineForm.addEventListener('submit', event => {
+  onlineForm.addEventListener('submit', async event => {
     event.preventDefault();
     const phone = whatsappNumber();
     const data = Object.fromEntries(new FormData(onlineForm).entries());
@@ -396,8 +397,33 @@ export function initCart({ products, findProduct, sector, onChange = () => {} })
     if (!phone) { onlineStatus.textContent = 'WhatsApp no disponible: falta configurar el número comercial del sitio.'; return; }
     const lines = buildLines(cartItems, findProduct);
     if (!lines.length) { onlineStatus.textContent = 'Tu pedido está vacío.'; return; }
+    let referencia = '';
+    if (ONLINE_PAYMENT_ENABLED) {
+      // El servidor recalcula precios y stock. Si el pago no está disponible, el pedido sigue por WhatsApp.
+      const enviar = onlineForm.querySelector('button[type="submit"]');
+      enviar.disabled = true;
+      onlineStatus.textContent = 'Preparando tu pago seguro…';
+      const resultado = await crearPedidoOnline(cartItems, {
+        nombre: data.nombre, telefono: data.telefono, email: data.email,
+        direccion: data.direccion, localidad: data.localidad, cp: data.cp, provincia: data.provincia,
+      });
+      enviar.disabled = false;
+      if (resultado.ok && resultado.pagoUrl) {
+        logInquiry('compra-online', `${orderSummary(lines)} · Pedido ${resultado.pedido} · pago online`);
+        onlineStatus.textContent = 'Te llevamos al formulario de pago…';
+        window.location.assign(resultado.pagoUrl);
+        return;
+      }
+      if (!resultado.ok && resultado.mensajes.length) {
+        onlineStatus.innerHTML = `No pudimos preparar el pago:<br>${resultado.mensajes.map(escapeHtml).join('<br>')}`;
+        return;
+      }
+      referencia = resultado.ok ? `Pedido N° ${resultado.pedido} (ya registrado en el sitio)` : '';
+      onlineStatus.textContent = 'El pago online no está disponible en este momento. Seguimos por WhatsApp.';
+    }
     const message = [
       'COMPRA ONLINE CON ENVÍO A DOMICILIO',
+      ...(referencia ? [referencia] : []),
       '',
       buildWhatsAppMessage(lines, computeTotals(lines)),
       '',

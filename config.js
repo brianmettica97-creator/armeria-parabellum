@@ -28,6 +28,13 @@ export const WHATSAPP_PHONE = '5492212269598';
 
 export const STORE_NAME = 'Armería Parabellum';
 
+// PAGO ONLINE CON TARJETA (Payway)
+// false → "Comprar Online" sigue por WhatsApp, como hasta ahora.
+// true  → el pedido se registra en el servidor y el cliente paga en el formulario de Payway.
+// Activarlo SOLO cuando la función crear-pedido esté publicada y probada en modo prueba
+// (ver supabase/functions/crear-pedido/LEEME.md). Armas y municiones nunca se pagan online.
+export const ONLINE_PAYMENT_ENABLED = false;
+
 // Moneda en la que se publican los precios del catálogo.
 export const CURRENCY = 'ARS';
 export const LOCALE = 'es-AR';
