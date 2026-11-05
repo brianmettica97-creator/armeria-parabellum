@@ -31,7 +31,7 @@ export const STORE_NAME = 'Armería Parabellum';
 // PÍXEL DE META (medición de visitas, consultas y registros para Facebook/Instagram).
 // Vacío → apagado, no se carga nada de Meta. Para activarlo: pegar acá el ID del píxel
 // (solo dígitos, del Administrador de eventos de Meta) y declararlo en legales.html §5.
-export const META_PIXEL_ID = '';
+export const META_PIXEL_ID = '1135913359152662';
 
 // Moneda en la que se publican los precios del catálogo.
 export const CURRENCY = 'ARS';
