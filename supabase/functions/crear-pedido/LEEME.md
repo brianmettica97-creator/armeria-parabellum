@@ -8,6 +8,8 @@ Funciones de servidor (Supabase Edge Functions):
 Basado en el **Manual de Integración Checkout v6** de Payway (template 1, sin Cybersource).
 
 ## Estado (2026-11-05)
+- ✅ **Publicado en Supabase (modo prueba):** SQL aplicado, funciones `crear-pedido` y `confirmar-pedido` desplegadas y secretos de sandbox cargados. Verificado: rechaza orígenes ajenos, armas, carritos vacíos y referencias inválidas.
+- ⏳ Falta probar con un producto real (hoy la base no tiene ningún producto publicado, no regulado y con precio) y el pago de prueba con tarjeta, a mano.
 - ✅ Validación del carrito y los datos, con pruebas (`node --test tests/`: 20 pruebas).
 - ✅ Crear el link de pago: **probado contra el sandbox real** (201 + `payment_link`) con las credenciales de prueba. Solo hace falta el header `apikey` (la clave privada).
 - ✅ Tabla `pedidos` con seguridad (el público no puede leer ni escribir).
