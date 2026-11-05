@@ -1,6 +1,6 @@
 // Elementos comunes a todas las páginas: aviso de demo, contacto y horarios,
 // WhatsApp flotante, aviso de mayoría de edad y enlaces legales del pie.
-import { DEMO_MODE, SHOW_DEMO_BANNER, MAINTENANCE_MODE, MAINTENANCE_ACCESS, STORE, CONSUMER_COMPLAINTS_URL, whatsappNumber } from './config.js';
+import { DEMO_MODE, SHOW_DEMO_BANNER, MAINTENANCE_MODE, MAINTENANCE_ACCESS, STORE, CONSUMER_COMPLAINTS_URL, ONLINE_PAYMENT_ENABLED, whatsappNumber } from './config.js';
 import { initPixel } from './pixel.js';
 
 const DAY_NAMES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
@@ -231,12 +231,19 @@ function renderLegalLinks() {
     box.innerHTML = `
       <a href="legales.html">Términos y privacidad</a>
       <a href="legales.html#regulados">Artículos regulados</a>
+      ${ONLINE_PAYMENT_ENABLED ? '<a href="legales.html#arrepentimiento">Botón de arrepentimiento</a>' : ''}
       <a href="${esc(CONSUMER_COMPLAINTS_URL)}" target="_blank" rel="noopener noreferrer">Defensa de las y los consumidores. Para reclamos ingrese aquí</a>`;
   });
 }
 
+function renderStoreLegal() {
+  const parts = [STORE.razonSocial && `Razón social: ${esc(STORE.razonSocial)}`, STORE.cuit && `CUIT: ${esc(STORE.cuit)}`].filter(Boolean);
+  document.querySelectorAll('[data-store-legal]').forEach(el => { el.innerHTML = parts.join(' · '); el.hidden = !parts.length; });
+}
+
 export function initSite({ ageCheck = false } = {}) {
   if (maintenanceGate()) return;
+  renderStoreLegal();
   initPixel();
   renderDemoBar();
   renderContact();

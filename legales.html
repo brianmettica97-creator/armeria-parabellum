@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101214">
-  <meta name="description" content="Términos de uso, política de privacidad e información sobre artículos regulados del sitio de Armería Parabellum, La Plata.">
+  <meta name="description" content="Términos y condiciones, compra online, derecho de arrepentimiento, garantía, política de privacidad e información sobre artículos regulados del sitio de Armería Parabellum, La Plata.">
   <title>Términos, privacidad y artículos regulados · Armería Parabellum</title>
   <link rel="icon" href="assets/iconos/favicon-armeria.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/iconos/apple-touch-armeria.png">
@@ -13,11 +13,13 @@
   <meta property="og:site_name" content="Parabellum La Plata">
   <meta name="twitter:card" content="summary_large_image">
   <!-- seo:fin -->
-  <link rel="stylesheet" href="styles.css?v=20261030a">
+  <link rel="stylesheet" href="styles.css?v=20261105a">
 </head>
 <!--
   TEXTO MODELO redactado para este sitio. Antes de publicar, el titular debe
-  revisarlo con su asesor legal y completar los datos marcados en config.js.
+  revisarlo con su asesor legal y completar razón social y CUIT en config.js (STORE).
+  Los bloques marcados data-online solo se ven cuando ONLINE_PAYMENT_ENABLED = true;
+  los marcados data-offline, cuando está en false (el sitio sigue por WhatsApp).
 -->
 <body class="sector-armeria legal-page">
   <div class="demo-bar" data-demo-bar hidden></div>
@@ -36,61 +38,102 @@
   <main class="legal-main" id="inicio">
     <div class="eyebrow">Información legal</div>
     <h1>Términos, privacidad y artículos regulados</h1>
-    <p class="legal-updated">Última actualización: octubre de 2026</p>
+    <p class="legal-updated">Última actualización: noviembre de 2026</p>
 
     <nav class="legal-index" aria-label="Contenido">
-      <a href="#titular">Titular</a><a href="#uso">Uso del sitio</a><a href="#pedidos">Pedidos y precios</a><a href="#regulados">Artículos regulados</a><a href="#privacidad">Privacidad</a><a href="#marcas">Marcas e imágenes</a><a href="#consumidor">Defensa del consumidor</a>
+      <a href="#titular">Titular</a><a href="#uso">Uso del sitio</a><a href="#pedidos">Pedidos y precios</a><a href="#compra-online" data-online hidden>Compra online</a><a href="#regulados">Artículos regulados</a><a href="#privacidad">Privacidad</a><a href="#marcas">Marcas e imágenes</a><a href="#consumidor">Defensa del consumidor</a><a href="#arrepentimiento" data-online hidden>Botón de arrepentimiento</a>
     </nav>
 
     <section id="titular">
       <h2>1. Titular del sitio</h2>
-      <p>Este sitio pertenece a Armería Parabellum, con domicilio en Calle 13 Nº 27, La Plata (B1902CSA), Provincia de Buenos Aires. Teléfono: <a href="tel:+542212269598">0221 226-9598</a>. WhatsApp: <a href="https://wa.me/5492212269598" target="_blank" rel="noopener noreferrer">+54 9 221 226-9598</a>. Email: <a href="mailto:parabellumoutdoor@gmail.com">parabellumoutdoor@gmail.com</a>. Instagram: <a href="https://www.instagram.com/armeria_parabellum" target="_blank" rel="noopener noreferrer">@armeria_parabellum</a>.</p>
+      <p>Este sitio pertenece a Armería Parabellum, con domicilio en Calle 13 Nº 27, La Plata (B1902CSA), Provincia de Buenos Aires, República Argentina. Teléfono: <a href="tel:+542212269598">0221 226-9598</a>. WhatsApp: <a href="https://wa.me/5492212269598" target="_blank" rel="noopener noreferrer">+54 9 221 226-9598</a>. Email: <a href="mailto:parabellumoutdoor@gmail.com">parabellumoutdoor@gmail.com</a>. Instagram: <a href="https://www.instagram.com/armeria_parabellum" target="_blank" rel="noopener noreferrer">@armeria_parabellum</a>.</p>
+      <p data-store-legal hidden></p>
     </section>
 
     <section id="uso">
       <h2>2. Uso del sitio</h2>
-      <p>El sitio es un catálogo informativo de los productos y servicios de Armería Parabellum y de su sector Camping &amp; Outdoor. Al navegarlo aceptás estos términos. El sector de armería está destinado exclusivamente a personas mayores de 18 años.</p>
-      <p>Las fotografías, descripciones y especificaciones son referenciales y pueden no coincidir exactamente con la unidad disponible en el local.</p>
+      <p>El sitio es un catálogo de los productos y servicios de Armería Parabellum y de su sector Camping &amp; Outdoor. Al navegarlo aceptás estos términos. El sector de armería está destinado exclusivamente a personas mayores de 18 años.</p>
+      <p>Las fotografías, descripciones y especificaciones son referenciales y pueden no coincidir exactamente con la unidad disponible. Las fotografías propias de la armería llevan su sello de agua y no pueden copiarse ni reutilizarse sin autorización.</p>
     </section>
 
     <section id="pedidos">
       <h2>3. Pedidos, precios y disponibilidad</h2>
-      <p>En este sitio no se realizan ventas ni cobros en línea. La función “Finalizar pedido por WhatsApp” solo prepara un mensaje con los productos elegidos para que lo revises y lo envíes por tu cuenta. Ese mensaje es una <strong>consulta</strong>: no constituye una compra, una reserva ni una aceptación de oferta.</p>
-      <p>Los precios publicados son orientativos y pueden cambiar sin aviso. El stock, el precio final y las condiciones de cada operación los confirma la armería al responder tu consulta. Los productos sin precio publicado figuran como “Consultar precio”.</p>
+      <div data-offline>
+        <p>En este sitio no se realizan ventas ni cobros en línea. La función “Finalizar pedido por WhatsApp” solo prepara un mensaje con los productos elegidos para que lo revises y lo envíes por tu cuenta. Ese mensaje es una <strong>consulta</strong>: no constituye una compra, una reserva ni una aceptación de oferta.</p>
+      </div>
+      <div data-online hidden>
+        <p>El sitio ofrece dos caminos: la <strong>consulta por WhatsApp</strong>, que solo prepara un mensaje para que lo revises y lo envíes por tu cuenta (no constituye una compra, una reserva ni una aceptación de oferta), y la <strong>compra online con tarjeta</strong> de los productos que lo permiten, que se rige por la sección 4.</p>
+      </div>
+      <p>Los precios publicados pueden cambiar sin aviso previo; el precio que rige para una compra online es el que figura al momento de confirmarla. En las consultas por WhatsApp, el stock, el precio final y las condiciones de cada operación los confirma la armería al responder. Los productos sin precio publicado figuran como “Consultar precio”.</p>
+    </section>
+
+    <section id="compra-online" data-online hidden>
+      <h2>4. Compra online con tarjeta y envío a domicilio</h2>
+      <p>Estas condiciones se aplican a las compras realizadas a distancia a través de este sitio. Complementan —sin reemplazarlos— los derechos que te reconoce la Ley Nº 24.240 de Defensa del Consumidor, el Código Civil y Comercial de la Nación y demás normas de orden público.</p>
+      <ul>
+        <li><strong>Qué se puede comprar online:</strong> únicamente productos de la línea Outdoor, miras y accesorios. Las armas de fuego, municiones, componentes de recarga y demás materiales controlados <strong>no se venden online</strong> (ver sección 5) y el sitio rechaza cualquier pedido que los incluya.</li>
+        <li><strong>Precio:</strong> se expresa en pesos argentinos (ARS) y es el precio final por unidad, con los impuestos que correspondan. El costo de envío, si lo hubiera, se informa y se acuerda con vos antes del despacho.</li>
+        <li><strong>Cómo se concreta la compra:</strong> completás tus datos de envío, aceptás estos términos y pagás en el formulario seguro de Payway. La compra queda perfeccionada cuando el pago es <strong>aprobado</strong>; en ese momento la armería la registra y se comunica con vos. Si el pago es rechazado o no se completa, no se genera ninguna obligación ni cobro.</li>
+        <li><strong>Pago con tarjeta:</strong> el pago se procesa a través de Payway. Los datos de tu tarjeta se ingresan únicamente en el formulario de Payway: la armería <strong>nunca los recibe ni los guarda</strong>. La aprobación depende del emisor de tu tarjeta. El pago es en una cuota, salvo que se informe otra cosa. Cualquier otro medio (por ejemplo, transferencia) se coordina por WhatsApp y no forma parte de la compra automática.</li>
+        <li><strong>Datos correctos:</strong> sos responsable de que tus datos de contacto y de entrega sean verdaderos y estén completos. La armería puede no concretar o cancelar —reintegrando lo pagado— operaciones con datos inconsistentes o que presenten indicios de fraude.</li>
+        <li><strong>Stock:</strong> si después de pagar, un producto resultara no disponible, la armería te lo comunica de inmediato y podés elegir entre un producto equivalente o la <strong>devolución total</strong> de lo pagado por el mismo medio de pago.</li>
+        <li><strong>Envío y entrega:</strong> el envío es a domicilio, por el medio que la armería coordine con vos. El plazo y el costo se te informan antes del despacho y, si no estás de acuerdo, podés cancelar la compra y se te reintegra lo pagado. El riesgo del producto pasa a tu cargo desde que lo recibís; revisalo al recibirlo y avisanos de inmediato por cualquier daño o diferencia.</li>
+        <li><strong>Derecho de revocación (arrepentimiento):</strong> tenés derecho a revocar la compra dentro de los <strong>diez (10) días corridos</strong> contados desde que recibís el producto o desde que se celebró el contrato, lo último que ocurra (art. 34 de la Ley Nº 24.240 y arts. 1110 a 1116 del Código Civil y Comercial), sin necesidad de dar motivos y sin costo para vos. Los gastos de la devolución corren por cuenta de la armería. El producto debe devolverse en las condiciones en que se recibió, con su embalaje y accesorios. Para ejercerlo, usá el <a href="#arrepentimiento">botón de arrepentimiento</a> (sección 9). Quedan excluidos los casos que la ley exceptúa (por ejemplo, productos confeccionados según tus especificaciones).</li>
+        <li><strong>Reintegro:</strong> revocada la compra o cancelada la operación, el importe se devuelve por el mismo medio de pago utilizado, sin demora. La acreditación en tu resumen depende del emisor de tu tarjeta.</li>
+        <li><strong>Garantía legal:</strong> los productos tienen la garantía legal de los arts. 11 a 18 de la Ley Nº 24.240: seis (6) meses para productos nuevos y tres (3) meses para usados, contados desde la entrega. Si el producto tiene fallas, podés pedir su reparación, su sustitución, la devolución de lo pagado o una quita proporcional, según corresponda. Para hacer valer la garantía, escribinos con el número de pedido y una descripción del problema. Si el fabricante ofrece una garantía adicional, se suma a la legal.</li>
+        <li><strong>Comprobante:</strong> al finalizar el pago, Payway te muestra y te permite descargar el comprobante de la operación. Guardá también el número de referencia de tu pedido.</li>
+        <li><strong>Jurisdicción:</strong> ante cualquier controversia será competente la justicia ordinaria del domicilio real de la persona consumidora (art. 36 de la Ley Nº 24.240).</li>
+      </ul>
     </section>
 
     <section id="regulados">
-      <h2>4. Armas, municiones y artículos regulados</h2>
-      <p>Las armas de fuego, municiones, componentes de recarga y demás materiales controlados se comercializan únicamente en el local, conforme a la Ley Nacional de Armas y Explosivos Nº 20.429, su reglamentación y la normativa vigente de la autoridad de aplicación.</p>
+      <h2><span data-offline>4.</span><span data-online hidden>5.</span> Armas, municiones y artículos regulados</h2>
+      <p>Las armas de fuego, municiones, componentes de recarga y demás materiales controlados se comercializan únicamente en el local, conforme a la Ley Nacional de Armas y Explosivos Nº 20.429, su reglamentación y la normativa vigente de la autoridad de aplicación. <strong>No se pagan ni se envían a través de este sitio.</strong></p>
       <p>Antes de cualquier operación la armería verifica la identidad, la mayoría de edad y las credenciales, autorizaciones y documentación que correspondan a cada caso. La armería puede no concretar una operación si no se acreditan los requisitos.</p>
       <p>La información de la sección Gestoría es orientativa: los trámites, requisitos y plazos aplicables deben confirmarse con la armería y con el organismo competente.</p>
     </section>
 
     <section id="privacidad">
-      <h2>5. Privacidad y datos personales</h2>
-      <p>El sitio no tiene cuentas con contraseña. Te pedimos datos en dos casos: el formulario de <strong>novedades y ofertas</strong>, que es voluntario, y un <strong>registro breve</strong> antes de tu primera consulta por WhatsApp o pedido.</p>
+      <h2><span data-offline>5.</span><span data-online hidden>6.</span> Privacidad y datos personales</h2>
+      <p>El sitio no tiene cuentas con contraseña. Te pedimos datos en estos casos: el formulario de <strong>novedades y ofertas</strong>, que es voluntario; un <strong>registro breve</strong> antes de tu primera consulta por WhatsApp o pedido<span data-online hidden>; y los <strong>datos de envío</strong> cuando hacés una compra online</span>. El responsable del tratamiento es Armería Parabellum (datos de contacto en la sección 1).</p>
       <ul>
         <li><strong>Formulario de novedades y ofertas:</strong> si lo completás, guardamos tu nombre, teléfono, email, si tenés Credencial de Legítimo Usuario (CLU) —solo sí / no / en trámite— y la fecha. Los usamos únicamente para enviarte novedades, ofertas y avisos de la armería.</li>
         <li><strong>Registro antes de consultar o pedir:</strong> guardamos tu nombre, apellido, WhatsApp, email y, en la armería, si tenés CLU y —solo si decidís informarlo— su número. También registramos qué productos consultaste o pediste y la fecha, para poder atenderte. El número de CLU es opcional y no reemplaza la verificación de tu documentación, que se hace en el local. Solo te enviamos novedades y ofertas si marcaste esa opción. Tus datos quedan además guardados en tu navegador para no volver a pedírtelos.</li>
-        <li><strong>En ambos casos</strong>, los datos no se venden ni se ceden a terceros, y se almacenan en un servicio de base de datos (Supabase) con acceso restringido al personal de la armería. Podés pedir que los modifiquemos o los borremos, o que te demos de baja, en cualquier momento.</li>
-        <li><strong>Tu pedido</strong> se guarda solamente en tu navegador (almacenamiento local) para que no lo pierdas al navegar. Podés borrarlo quitando los productos o limpiando los datos del sitio en tu navegador.</li>
+        <li data-online hidden><strong>Compra online:</strong> guardamos tu nombre, teléfono, email, domicilio de entrega, los productos comprados, el importe y el estado del pago, para gestionar la compra, el envío, la garantía y el derecho de revocación, y para cumplir obligaciones legales y contables. <strong>No guardamos datos de tarjeta</strong>: se ingresan solo en Payway, que los trata según sus propias políticas. Para entregarte el producto podemos compartir tu nombre, domicilio y teléfono con el servicio de transporte que se encargue del envío.</li>
+        <li data-online hidden><strong>Botón de arrepentimiento:</strong> los datos que completes en ese formulario se usan solamente para gestionar tu pedido de revocación.</li>
+        <li><strong>En todos los casos</strong>, los datos no se venden y no se ceden a terceros salvo lo indicado arriba o por requerimiento legal, y se almacenan en un servicio de base de datos (Supabase) con acceso restringido al personal de la armería. Conservamos los datos mientras sean necesarios para esas finalidades y por los plazos que exija la ley. Podés pedir que los modifiquemos o los borremos, o que te demos de baja, en cualquier momento.</li>
+        <li><span data-offline><strong>Tu pedido</strong> se guarda solamente en tu navegador (almacenamiento local) para que no lo pierdas al navegar.</span><span data-online hidden><strong>El carrito</strong> se guarda en tu navegador (almacenamiento local) para que no lo pierdas al navegar, hasta que hacés una compra.</span> Podés borrarlo quitando los productos o limpiando los datos del sitio en tu navegador.</li>
         <li><strong>WhatsApp:</strong> si decidís enviar una consulta, el mensaje se envía mediante WhatsApp y se rige por sus propias políticas. La armería usa los datos de esa conversación solo para responder tu consulta.</li>
         <li><strong>Mapa:</strong> el mapa de Google se carga únicamente si presionás “Mostrar mapa”. A partir de ese momento se aplican las políticas de privacidad de Google.</li>
-        <li><strong>Medición con el píxel de Meta:</strong> el sitio usa el píxel de Meta (Facebook e Instagram) para medir visitas y qué páginas se consultan, y para mostrar publicidad más útil. Registra eventos como “visita”, “consulta por WhatsApp” o “registro”, sin enviar tu nombre, teléfono ni email. Meta puede usar cookies y se rige por sus propias políticas; podés limitar este seguimiento desde la configuración de anuncios de tu cuenta de Facebook o Instagram, o bloqueando cookies de terceros en tu navegador.</li>
+        <li><strong>Medición con el píxel de Meta:</strong> el sitio usa el píxel de Meta (Facebook e Instagram) para medir visitas y qué páginas se consultan, y para mostrar publicidad más útil. Registra eventos como “visita”, “consulta por WhatsApp”, “registro” o “inicio de compra”, sin enviar tu nombre, teléfono ni email. Meta puede usar cookies y se rige por sus propias políticas; podés limitar este seguimiento desde la configuración de anuncios de tu cuenta de Facebook o Instagram, o bloqueando cookies de terceros en tu navegador.</li>
         <li><strong>Imágenes externas:</strong> algunas fotografías de referencia se cargan desde servidores de Wikimedia Commons.</li>
       </ul>
-      <p>Podés ejercer los derechos de acceso, rectificación y supresión previstos en la Ley Nº 25.326 de Protección de Datos Personales escribiendo a <a href="mailto:parabellumoutdoor@gmail.com">parabellumoutdoor@gmail.com</a> o por los canales indicados arriba. La Agencia de Acceso a la Información Pública es el órgano de control de esa ley.</p>
+      <p>Como titular de los datos podés ejercer los derechos de acceso, rectificación y supresión previstos en la Ley Nº 25.326 de Protección de Datos Personales escribiendo a <a href="mailto:parabellumoutdoor@gmail.com">parabellumoutdoor@gmail.com</a> o por los canales indicados arriba. La Agencia de Acceso a la Información Pública, en su carácter de órgano de control de la Ley Nº 25.326, tiene la atribución de atender las denuncias y reclamos que se interpongan con relación al incumplimiento de las normas sobre protección de datos personales.</p>
     </section>
 
     <section id="marcas">
-      <h2>6. Marcas e imágenes</h2>
-      <p>Las marcas y logotipos de fabricantes que aparecen en el sitio pertenecen a sus respectivos titulares y se muestran con fines identificatorios de los productos que trabaja la armería. Las fotografías de terceros indican su autor y licencia en la ficha correspondiente.</p>
+      <h2><span data-offline>6.</span><span data-online hidden>7.</span> Marcas e imágenes</h2>
+      <p>Las marcas y logotipos de fabricantes que aparecen en el sitio pertenecen a sus respectivos titulares y se muestran con fines identificatorios de los productos que trabaja la armería. Las fotografías de terceros indican su autor y licencia en la ficha correspondiente. Las fotografías propias de la armería son de su autoría y están protegidas por la Ley Nº 11.723 de Propiedad Intelectual.</p>
     </section>
 
     <section id="consumidor">
-      <h2>7. Defensa del consumidor</h2>
+      <h2><span data-offline>7.</span><span data-online hidden>8.</span> Defensa del consumidor</h2>
       <p>Los derechos de las personas consumidoras se rigen por la Ley Nº 24.240 de Defensa del Consumidor. Para reclamos podés comunicarte con la armería o ingresar a la Ventanilla Federal Única de Reclamos:</p>
       <p><a class="secondary" data-consumer-link href="https://www.argentina.gob.ar/produccion/defensadelconsumidor/formulario" target="_blank" rel="noopener noreferrer">Defensa de las y los consumidores. Para reclamos ingrese aquí ↗</a></p>
+    </section>
+
+    <section id="arrepentimiento" data-online hidden>
+      <h2>9. Botón de arrepentimiento</h2>
+      <p>Si compraste online y querés <strong>revocar la compra</strong> dentro de los 10 días corridos que establece la ley, completá este formulario. No hace falta que expliques el motivo. Al enviarlo recibís un <strong>número de constancia</strong>; la armería se comunica con vos por email para coordinar la devolución del producto (sin costo para vos) y el reintegro del importe.</p>
+      <form class="leads-form" id="arrepentimientoForm" novalidate>
+        <label>Nombre y apellido<input name="nombre" autocomplete="name" required minlength="2" maxlength="120"></label>
+        <label>Email<input name="email" type="email" autocomplete="email" required maxlength="160"></label>
+        <label>Teléfono<input name="telefono" type="tel" autocomplete="tel" inputmode="tel" required minlength="6" maxlength="30"></label>
+        <label>Número de pedido o producto comprado<input name="pedido" required maxlength="120" placeholder="Ej.: referencia del pedido"></label>
+        <label class="leads-hp" aria-hidden="true">Empresa<input name="empresa" tabindex="-1" autocomplete="off"></label>
+        <button class="primary" type="submit">Revocar mi compra</button>
+        <p class="leads-msg" id="arrepentimientoMsg" role="status" aria-live="polite"></p>
+      </form>
     </section>
   </main>
 
@@ -99,6 +142,46 @@
     <a href="index.html">Volver al inicio</a>
     <div class="footer-legal" data-legal-links></div>
   </footer>
-  <script type="module">import { initSite } from './site.js'; initSite();</script>
+  <script type="module">
+    import { initSite } from './site.js';
+    import { ONLINE_PAYMENT_ENABLED } from './config.js';
+    import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-config.js';
+    initSite();
+
+    // Muestra u oculta lo que depende de si la compra online está activa.
+    document.querySelectorAll('[data-online]').forEach(el => { el.hidden = !ONLINE_PAYMENT_ENABLED; });
+    document.querySelectorAll('[data-offline]').forEach(el => { el.hidden = ONLINE_PAYMENT_ENABLED; });
+    if (ONLINE_PAYMENT_ENABLED && location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView();
+
+    // Botón de arrepentimiento: guarda el pedido de revocación y muestra un número de constancia.
+    const form = document.getElementById('arrepentimientoForm');
+    const msg = document.getElementById('arrepentimientoMsg');
+    const say = (text, kind = '') => { msg.textContent = text; msg.className = `leads-msg ${kind}`; };
+    const startedAt = Date.now();
+    form?.addEventListener('submit', async event => {
+      event.preventDefault();
+      const data = Object.fromEntries(new FormData(form));
+      if (data.empresa || Date.now() - startedAt < 2000) return;
+      const nombre = String(data.nombre || '').trim(), email = String(data.email || '').trim(), telefono = String(data.telefono || '').trim(), pedido = String(data.pedido || '').trim();
+      if (nombre.length < 2) return say('Escribí tu nombre y apellido.', 'err');
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return say('Revisá el email.', 'err');
+      if (telefono.replace(/\D/g, '').length < 6) return say('Revisá el teléfono.', 'err');
+      if (!pedido) return say('Indicá el número de pedido o el producto.', 'err');
+      const button = form.querySelector('button'); button.disabled = true; say('Enviando…');
+      const id = crypto.randomUUID();
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/arrepentimientos`, {
+          method: 'POST',
+          headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+          body: JSON.stringify({ id, nombre, email, telefono, pedido }),
+        });
+        if (!response.ok) throw new Error(String(response.status));
+        form.reset();
+        say(`Recibimos tu pedido de revocación. Tu número de constancia es ${id.slice(0, 8).toUpperCase()}. Guardalo: la armería se comunica con vos por email para coordinar la devolución y el reintegro.`, 'ok');
+      } catch {
+        say('No pudimos enviarlo. Escribinos por WhatsApp o por email indicando que querés revocar tu compra.', 'err');
+      } finally { button.disabled = false; }
+    });
+  </script>
 </body>
 </html>

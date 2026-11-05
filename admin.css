@@ -152,3 +152,5 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold)}
   .pending-toolbar{grid-template-columns:minmax(0,1fr)}
   .pending-actions .btn.ghost{flex:0 0 auto}
 }
+
+.adm-subtitle{margin:28px 0 6px;font-size:16px}

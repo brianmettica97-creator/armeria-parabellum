@@ -1400,3 +1400,5 @@ a.trust-item:hover{background:#ffffff08}
 .site-gate{z-index:1000;background:#050606}
 .site-gate .eyebrow{margin-bottom:6px}
 .site-gate .age-card p strong{color:var(--ink);font-weight:600}
+
+.online-terms{display:flex;gap:10px;align-items:flex-start;font-size:12px;line-height:1.5;margin:12px 0;cursor:pointer}.online-terms input{width:20px;height:20px;flex:0 0 20px;margin:0;accent-color:var(--gold)}.online-terms a{color:var(--gold);text-decoration:underline}

@@ -943,3 +943,40 @@ $('#ordersTable').addEventListener('click', async event => {
   toast(ship ? 'Pedido marcado como despachado.' : 'Pedido marcado como pagado.');
   loadOrders();
 });
+
+// ─────────────────────────── Botón de arrepentimiento ───────────────────────────
+let revokes = [];
+async function loadRevokes() {
+  const { data, error } = await sb.from('arrepentimientos').select('*').order('created_at', { ascending: false }).limit(200);
+  if (error) {
+    $('#revokesInfo').textContent = error.code === '42P01' || /does not exist|schema cache/i.test(error.message)
+      ? 'Todavía no está activado el botón de arrepentimiento (falta crear su tabla en Supabase).'
+      : `No se pudieron cargar los pedidos de revocación: ${error.message}`;
+    revokes = [];
+  } else revokes = data;
+  const open = revokes.filter(r => !r.atendido_at).length;
+  if (open) $('#ordersCount').textContent = `(${open + orders.filter(o => o.estado === 'pagado' && !o.despachado_at).length})`;
+  renderRevokes();
+}
+function renderRevokes() {
+  $('#revokesTable').innerHTML = revokes.length ? `
+    <thead><tr><th>Fecha</th><th>Constancia</th><th>Quién</th><th>Pedido o producto</th><th>Estado</th><th></th></tr></thead>
+    <tbody>${revokes.map(r => `<tr>
+      <td>${esc(dateTime(r.created_at))}</td>
+      <td><code>${esc(String(r.id).slice(0, 8).toUpperCase())}</code></td>
+      <td><b>${esc(r.nombre)}</b><br><a href="mailto:${esc(r.email)}?subject=${encodeURIComponent('Constancia de revocación ' + String(r.id).slice(0, 8).toUpperCase())}">${esc(r.email)}</a> · <a href="https://wa.me/${esc(String(r.telefono).replace(/\D/g, ''))}" target="_blank" rel="noopener">${esc(r.telefono)}</a></td>
+      <td>${esc(r.pedido)}</td>
+      <td>${r.atendido_at ? `Atendido ${esc(dateTime(r.atendido_at))}` : '<b>Pendiente de responder</b>'}</td>
+      <td>${r.atendido_at ? '' : `<button type="button" class="btn" data-revoke-done="${esc(r.id)}">Marcar atendido</button>`}</td>
+    </tr>`).join('')}</tbody>` : '<tbody><tr><td class="empty">No hay pedidos de revocación.</td></tr></tbody>';
+}
+$('#revokesTable').addEventListener('click', async event => {
+  const button = event.target.closest('[data-revoke-done]');
+  if (!button) return;
+  const { error } = await sb.from('arrepentimientos').update({ atendido_at: new Date().toISOString() }).eq('id', button.dataset.revokeDone);
+  if (error) { toast(`No se pudo actualizar: ${error.message}`, true); return; }
+  toast('Marcado como atendido.');
+  loadRevokes();
+});
+$('#ordersReload').addEventListener('click', loadRevokes);
+document.querySelector('#admTabs [data-tab="ordersView"]').addEventListener('click', loadRevokes);

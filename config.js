@@ -68,6 +68,9 @@ export function whatsappNumber() {
 // ───────────────────────────────────────────────────────────────────────────
 export const STORE = {
   name: 'Armería Parabellum',
+  // Datos fiscales del titular (Res. SCI 316/2018): completar y se muestran solos en legales.html.
+  razonSocial: '',
+  cuit: '',
   street: 'Calle 13 Nº 27',
   city: 'La Plata',
   postalCode: 'B1902CSA',
