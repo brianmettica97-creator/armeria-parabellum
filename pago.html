@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101214">
+  <meta name="robots" content="noindex">
+  <title>Tu pago · Armería Parabellum</title>
+  <link rel="icon" href="assets/iconos/favicon-armeria.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css?v=20261030a">
+</head>
+<body class="sector-armeria legal-page">
+  <header class="topbar">
+    <div class="topbar-main">
+      <a class="brand" href="index.html" aria-label="Parabellum · volver al inicio">
+        <img class="brand-logo" src="assets/cliente/logo-parabellum-banner.jpg" alt="Armería Parabellum">
+      </a>
+    </div>
+  </header>
+
+  <main class="legal-main">
+    <div class="eyebrow">Compra online</div>
+    <h1 id="titulo">Estamos revisando tu pago</h1>
+    <p id="texto">Un momento…</p>
+    <p id="referencia" class="legal-updated" hidden></p>
+    <p><a class="secondary" href="index.html">Volver al inicio</a></p>
+  </main>
+
+  <script type="module">
+    // IMPORTANTE: volver de Payway NO prueba que el pago se haya cobrado. Esta página solo dice "aprobado"
+    // cuando el SERVIDOR lo confirma (consulta a Payway con la clave privada). Todo se escribe con
+    // textContent y con textos fijos: nada de la dirección se interpreta como HTML.
+    import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-config.js';
+    const params = new URLSearchParams(location.search);
+    const resultado = params.get('r');
+    const ref = params.get('p') || '';
+    const $ = id => document.getElementById(id);
+    const poner = (titulo, texto) => { $('titulo').textContent = titulo; $('texto').textContent = texto; };
+
+    async function estado() {
+      try {
+        const r = await fetch(`${SUPABASE_URL}/functions/v1/confirmar-pedido`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', apikey: SUPABASE_ANON_KEY, authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+          body: JSON.stringify({ ref }),
+          signal: AbortSignal.timeout(20000),
+        });
+        const datos = await r.json();
+        return r.ok && datos.ok ? datos.estado : null;
+      } catch { return null; }
+    }
+
+    const REFERENCIA_VALIDA = /^[a-f0-9]{16}$/.test(ref);
+    if (REFERENCIA_VALIDA) { $('referencia').textContent = `Referencia del pedido: ${ref}`; $('referencia').hidden = false; }
+
+    if (resultado === 'no') {
+      poner('El pago no se completó', 'No se realizó ningún cobro. Podés volver al pedido y reintentar, o escribirnos por WhatsApp y te ayudamos.');
+    } else if (resultado === 'ok' && REFERENCIA_VALIDA) {
+      poner('Estamos confirmando tu pago', 'Un momento, lo estamos verificando con la tarjeta…');
+      for (let intento = 0; intento < 8; intento++) {
+        const e = await estado();
+        if (e === 'pagado') { poner('¡Pago aprobado!', 'Recibimos tu compra. La armería se comunica con vos para coordinar el envío. Guardá la referencia por cualquier consulta.'); break; }
+        if (e === 'rechazado' || e === 'cancelado' || e === 'vencido') { poner('El pago no se aprobó', 'No se realizó el cobro. Podés reintentar o escribirnos por WhatsApp con la referencia.'); break; }
+        if (intento === 7) poner('Seguimos confirmando tu pago', 'Todavía no recibimos la confirmación de la tarjeta. Si se cobró, la armería lo ve y se comunica con vos. Ante cualquier duda, escribinos por WhatsApp con la referencia.');
+        else await new Promise(listo => setTimeout(listo, 5000));
+      }
+    } else {
+      poner('Tu pago', 'No encontramos datos de un pago en esta dirección.');
+    }
+  </script>
+</body>
+</html>

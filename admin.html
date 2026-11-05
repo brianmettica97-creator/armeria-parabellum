@@ -57,6 +57,7 @@
     <button type="button" class="active" data-tab="listView">Productos</button>
     <button type="button" data-tab="photosView">Fotos <span id="pendingCount"></span></button>
     <button type="button" data-tab="contactsView">Contactos <span id="contactsCount"></span></button>
+    <button type="button" data-tab="ordersView">Pedidos <span id="ordersCount"></span></button>
   </nav>
 
   <main id="listView" class="adm-main" hidden>
@@ -132,6 +133,20 @@
     </div>
     <p class="muted" id="contactsInfo"></p>
     <div class="adm-table-wrap"><table class="adm-table" id="contactsTable"></table></div>
+  </main>
+
+  <main id="ordersView" class="adm-main" hidden>
+    <div class="adm-toolbar contacts-toolbar">
+      <select id="orderState" aria-label="Estado del pedido">
+        <option value="pagado">Pagados (para despachar)</option>
+        <option value="despachados">Despachados</option>
+        <option value="pendiente">Pendientes de pago</option>
+        <option value="">Todos</option>
+      </select>
+      <button type="button" class="btn" id="ordersReload">Actualizar</button>
+    </div>
+    <p class="muted" id="ordersInfo"></p>
+    <div class="adm-table-wrap"><table class="adm-table" id="ordersTable"></table></div>
   </main>
 
   <!-- Editor -->
@@ -266,6 +281,6 @@
   </dialog>
 
   <div class="toast" id="toast" role="status" hidden></div>
-  <script type="module" src="admin.js?v=20261105b"></script>
+  <script type="module" src="admin.js?v=20261105c"></script>
 </body>
 </html>
