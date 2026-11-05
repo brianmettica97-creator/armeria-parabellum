@@ -72,12 +72,18 @@ test('listarPagos junta páginas y devuelve null ante un error', async () => {
 const ped = (id, t, c) => ({ id, created_at: t, total_centavos: c });
 const pago = (id, t, c, status = 'approved') => ({ id, date: t, amount: c, status });
 
+test('la hora de Payway es hora argentina aunque diga Z (caso real de sandbox)', () => {
+  // Pedido a las 05:16 UTC (02:16 en Argentina); pago informado como 02:31Z (= 02:31 en Argentina).
+  assert.equal(conciliar([ped('P', '2026-11-05T05:16:37Z', 30000)], [pago(1, '2026-11-05T02:31Z', 30000)]).length, 1);
+  assert.equal(conciliar([ped('P', '2026-11-05T05:16:37Z', 30000)], [pago(2, '2026-11-05T02:10Z', 30000)]).length, 0);
+});
+
 test('un pago aprobado, posterior y del mismo monto cierra el pedido', () => {
-  assert.deepEqual(conciliar([ped('P1', '2026-11-05T10:00:00Z', 150050)], [pago(9, '2026-11-05T10:05Z', 150050)]), [{ pedidoId: 'P1', pagoId: '9' }]);
+  assert.deepEqual(conciliar([ped('P1', '2026-11-05T13:00:00Z', 150050)], [pago(9, '2026-11-05T10:05Z', 150050)]), [{ pedidoId: 'P1', pagoId: '9' }]);
 });
 
 test('no cierra con monto distinto, pago rechazado, pago anterior al pedido o pago ya usado', () => {
-  const P = [ped('P1', '2026-11-05T10:00:00Z', 150050)];
+  const P = [ped('P1', '2026-11-05T13:00:00Z', 150050)];
   assert.deepEqual(conciliar(P, [pago(1, '2026-11-05T10:05Z', 150051)]), []);
   assert.deepEqual(conciliar(P, [pago(2, '2026-11-05T10:05Z', 150050, 'rejected')]), []);
   assert.deepEqual(conciliar(P, [pago(3, '2026-11-05T09:00Z', 150050)]), []);
@@ -85,7 +91,7 @@ test('no cierra con monto distinto, pago rechazado, pago anterior al pedido o pa
 });
 
 test('dos pedidos con el mismo monto: cada pago cierra uno solo, el más viejo con el más viejo', () => {
-  const r = conciliar([ped('B', '2026-11-05T10:10:00Z', 5000), ped('A', '2026-11-05T10:00:00Z', 5000)], [pago(2, '2026-11-05T10:20Z', 5000), pago(1, '2026-11-05T10:15Z', 5000)]);
+  const r = conciliar([ped('B', '2026-11-05T13:10:00Z', 5000), ped('A', '2026-11-05T13:00:00Z', 5000)], [pago(2, '2026-11-05T10:20Z', 5000), pago(1, '2026-11-05T10:15Z', 5000)]);
   assert.deepEqual(r, [{ pedidoId: 'A', pagoId: '1' }, { pedidoId: 'B', pagoId: '2' }]);
-  assert.equal(conciliar([ped('A', '2026-11-05T10:00:00Z', 5000), ped('B', '2026-11-05T10:10:00Z', 5000)], [pago(1, '2026-11-05T10:15Z', 5000)]).length, 1);
+  assert.equal(conciliar([ped('A', '2026-11-05T13:00:00Z', 5000), ped('B', '2026-11-05T13:10:00Z', 5000)], [pago(1, '2026-11-05T10:15Z', 5000)]).length, 1);
 });

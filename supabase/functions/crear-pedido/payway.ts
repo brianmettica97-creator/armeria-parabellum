@@ -53,7 +53,7 @@ export async function crearLinkDePago(pedido: PedidoPago, env: (n: string) => st
     origin_platform: 'Armeria Parabellum',
     payment_description: pedido.descripcion.slice(0, 40),
     currency: 'ARS',
-    total_price: Math.round(pedido.totalCentavos) / 100,   // pesos con punto decimal (ej. 1500.5)
+    total_price: '__TOTAL__',                                // se reemplaza abajo por el número con 2 decimales exactos
     site: v.PAYWAY_SITE_ID,
     success_url: exito,
     cancel_url: cancelado,
@@ -68,7 +68,7 @@ export async function crearLinkDePago(pedido: PedidoPago, env: (n: string) => st
     respuesta = await fetch(`${baseApi(env)}/api/v1/checkout-payment-button/link`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', apikey: v.PAYWAY_PRIVATE_KEY },
-      body: JSON.stringify(cuerpo),
+      body: JSON.stringify(cuerpo).replace('"__TOTAL__"', (Math.round(pedido.totalCentavos) / 100).toFixed(2)),
       signal: AbortSignal.timeout(15000),
     });
   } catch (error) {
