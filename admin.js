@@ -364,8 +364,36 @@ async function encodeCanvas(canvas, quality) {
   return jpeg;
 }
 
+// Sello de agua: el logo va siempre abajo a la derecha de cada foto que se sube.
+const WATERMARK_URL = 'assets/new/logo-sello.png';
+const WATERMARK_WIDTH = 0.24;   // ancho del sello respecto del ancho de la foto
+const WATERMARK_MARGIN = 0.035; // separación del borde, respecto del ancho de la foto
+let watermarkImage = null;
+function loadWatermark() {
+  watermarkImage ||= fetch(WATERMARK_URL)
+    .then(res => { if (!res.ok) throw new Error(); return res.blob(); })
+    .then(blob => createImageBitmap(blob))
+    .catch(() => { watermarkImage = null; throw new Error('No se pudo cargar el sello de agua. Revisá la conexión y reintentá.'); });
+  return watermarkImage;
+}
+function stamp(ctx, width, height, logo) {
+  const w = width * WATERMARK_WIDTH;
+  const h = w * logo.height / logo.width;
+  const margin = width * WATERMARK_MARGIN;
+  const x = width - w - margin, y = height - h - margin;
+  ctx.save();
+  ctx.imageSmoothingQuality = 'high';
+  // El logo es negro: un halo blanco lo hace legible también sobre fotos oscuras.
+  ctx.shadowColor = 'rgba(255,255,255,.95)';
+  ctx.shadowBlur = Math.max(3, w * 0.035);
+  ctx.drawImage(logo, x, y, w, h);
+  ctx.drawImage(logo, x, y, w, h);
+  ctx.restore();
+}
+
 // Devuelve la foto grande (ficha) y una chica (tarjetas y miniaturas).
 async function shrink(file) {
+  const logo = await loadWatermark();
   const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' }).catch(() => null);
   if (!bitmap) throw new Error(`No se pudo leer ${file.name}. Probá con una foto JPG o PNG.`);
   const draw = maxSide => {
@@ -376,6 +404,7 @@ async function shrink(file) {
     ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    stamp(ctx, canvas.width, canvas.height, logo);
     return canvas;
   };
   const full = await encodeCanvas(draw(MAX_SIDE), WEBP_QUALITY);
