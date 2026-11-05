@@ -14,8 +14,8 @@ const THUMB_SIDE = 640;      // px de la versión chica para tarjetas
 const THUMB_QUALITY = 0.75;
 
 const $ = selector => document.querySelector(selector);
-const views = ['loginView', 'recoveryView', 'deniedView', 'listView', 'photosView', 'contactsView'];
-const tabViews = ['listView', 'photosView', 'contactsView'];
+const views = ['loginView', 'recoveryView', 'deniedView', 'listView', 'photosView', 'contactsView', 'ordersView'];
+const tabViews = ['listView', 'photosView', 'contactsView', 'ordersView'];
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const money = value => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 2 }).format(value);
 
@@ -69,6 +69,7 @@ async function enter(session) {
   show('listView');
   await loadList();
   loadContacts();
+  loadOrders();
 }
 
 $('#loginForm').addEventListener('submit', async event => {
@@ -889,4 +890,56 @@ $('#exportCsv').addEventListener('click', () => {
   link.download = `contactos-parabellum-${new Date().toISOString().slice(0, 10)}.csv`;
   link.click();
   URL.revokeObjectURL(link.href);
+});
+
+// ─────────────────────────── Pedidos (compra online con tarjeta) ───────────────────────────
+// Los pedidos los crea el servidor y los confirma Payway; acá el local ve qué despachar.
+let orders = [];
+const orderStateLabel = { pendiente: 'Pendiente de pago', pagado: 'Pagado', rechazado: 'Rechazado', cancelado: 'Cancelado', vencido: 'Vencido' };
+const dateTime = value => value ? new Date(value).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }) : '';
+
+async function loadOrders() {
+  const { data, error } = await sb.from('pedidos').select('*').order('created_at', { ascending: false }).limit(300);
+  if (error) {
+    $('#ordersInfo').textContent = error.code === '42P01' || /does not exist|schema cache/i.test(error.message)
+      ? 'Todavía no está activada la compra online (falta crear la tabla de pedidos en Supabase).'
+      : `No se pudieron cargar los pedidos: ${error.message}`;
+    orders = [];
+  } else { orders = data; $('#ordersInfo').textContent = ''; }
+  const toShip = orders.filter(o => o.estado === 'pagado' && !o.despachado_at).length;
+  $('#ordersCount').textContent = toShip ? `(${toShip})` : '';
+  renderOrders();
+}
+
+function renderOrders() {
+  const filter = $('#orderState').value;
+  const rows = orders.filter(o => !filter || (filter === 'despachados' ? o.despachado_at : filter === 'pagado' ? o.estado === 'pagado' && !o.despachado_at : o.estado === filter));
+  if (orders.length) $('#ordersInfo').textContent = `${rows.length} de ${orders.length} pedidos`;
+  $('#ordersTable').innerHTML = rows.length ? `
+    <thead><tr><th>Fecha</th><th>Pedido</th><th>Comprador y envío</th><th>Productos</th><th>Total</th><th>Estado</th><th></th></tr></thead>
+    <tbody>${rows.map(o => `<tr>
+      <td>${esc(dateTime(o.created_at))}</td>
+      <td><code>${esc(String(o.ref || '').slice(0, 8))}</code>${o.ambiente === 'prueba' ? '<br><small class="muted">De prueba</small>' : ''}</td>
+      <td><b>${esc(o.nombre)}</b><br><a href="https://wa.me/${esc(String(o.telefono).replace(/\D/g, ''))}" target="_blank" rel="noopener">${esc(o.telefono)}</a> · <a href="mailto:${esc(o.email)}">${esc(o.email)}</a><br>${esc(o.direccion)}, ${esc(o.localidad)} (${esc(o.cp)}), ${esc(o.provincia)}</td>
+      <td><ul class="order-items">${(o.items || []).map(i => `<li>${esc(i.qty)} × ${esc(i.nombre)}${i.codigo ? ` <small class="muted">(${esc(i.codigo)})</small>` : ''}</li>`).join('')}</ul></td>
+      <td>${money(o.total_centavos / 100)}</td>
+      <td>${esc(orderStateLabel[o.estado] || o.estado)}${o.pagado_at ? `<br><small class="muted">Cobrado ${esc(dateTime(o.pagado_at))}</small>` : ''}${o.despachado_at ? `<br><small class="muted">Despachado ${esc(dateTime(o.despachado_at))}</small>` : ''}</td>
+      <td>${o.estado === 'pagado' && !o.despachado_at ? `<button type="button" class="btn" data-ship="${esc(o.id)}">Marcar despachado</button>` : ''}
+          ${o.estado === 'pendiente' ? `<button type="button" class="link" data-paid="${esc(o.id)}">Confirmar pago a mano</button>` : ''}</td>
+    </tr>`).join('')}</tbody>` : '<tbody><tr><td class="empty">No hay pedidos en esta vista.</td></tr></tbody>';
+}
+
+$('#orderState').addEventListener('input', renderOrders);
+$('#ordersReload').addEventListener('click', loadOrders);
+$('#ordersTable').addEventListener('click', async event => {
+  const ship = event.target.closest('[data-ship]');
+  const paid = event.target.closest('[data-paid]');
+  const button = ship || paid;
+  if (!button) return;
+  if (paid && button.dataset.confirm !== 'yes') { button.dataset.confirm = 'yes'; button.textContent = '¿Ya lo viste cobrado en Payway? Tocá de nuevo'; return; }
+  const change = ship ? { despachado_at: new Date().toISOString() } : { estado: 'pagado', payway_status: 'confirmado a mano', pagado_at: new Date().toISOString() };
+  const { error } = await sb.from('pedidos').update(change).eq('id', ship ? ship.dataset.ship : paid.dataset.paid);
+  if (error) { toast(`No se pudo actualizar: ${error.message}`, true); return; }
+  toast(ship ? 'Pedido marcado como despachado.' : 'Pedido marcado como pagado.');
+  loadOrders();
 });

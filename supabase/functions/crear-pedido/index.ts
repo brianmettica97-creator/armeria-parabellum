@@ -9,7 +9,7 @@
 // secretos de Supabase (ver LEEME.md), jamás en el código ni en GitHub.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { validarCarrito, validarComprador } from './validar.js';
-import { iniciarPago } from './payway.ts';
+import { crearLinkDePago } from './payway.ts';
 
 const ORIGENES = (Deno.env.get('ORIGENES_PERMITIDOS') ?? 'https://brianmettica97-creator.github.io')
   .split(',').map(s => s.trim()).filter(Boolean);
@@ -71,19 +71,19 @@ Deno.serve(async (req: Request) => {
     subtotal_centavos: carrito.totalCentavos,
     envio_centavos: envioCentavos,
     total_centavos: totalCentavos,
-  }).select('id, site_transaction_id').single();
+  }).select('id, ref').single();
   if (errorPedido || !pedido) return responder(500, { ok: false, error: 'no_se_pudo_guardar' });
 
-  const pago = await iniciarPago(
-    { siteTransactionId: pedido.site_transaction_id, totalCentavos, email: comprador.datos.email, moneda: 'ARS' },
+  const pago = await crearLinkDePago(
+    { ref: pedido.ref, totalCentavos, descripcion: `Pedido ${pedido.ref.slice(0, 8)}` },
     nombre => Deno.env.get(nombre),
   );
 
   if (pago.ok) {
     await supabase.from('pedidos').update({ payway_hash: pago.hash }).eq('id', pedido.id);
-    return responder(200, { ok: true, pedido: pedido.site_transaction_id, totalCentavos, pagoUrl: pago.url });
+    return responder(200, { ok: true, pedido: pedido.ref, totalCentavos, pagoUrl: pago.url });
   }
   // Payway no está activado o falló: el pedido queda registrado y el sitio sigue por WhatsApp.
   if (pago.motivo !== 'no_configurado') console.error('Payway:', pago.motivo, pago.detalle);
-  return responder(200, { ok: true, pedido: pedido.site_transaction_id, totalCentavos, pagoUrl: null, motivo: pago.motivo });
+  return responder(200, { ok: true, pedido: pedido.ref, totalCentavos, pagoUrl: null, motivo: pago.motivo });
 });

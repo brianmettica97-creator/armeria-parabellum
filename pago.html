@@ -27,26 +27,45 @@
   </main>
 
   <script type="module">
-    // IMPORTANTE: volver de Payway NO prueba que el pago se haya cobrado. Esta página nunca dice
-    // "pago aprobado": el estado real lo confirma el servidor y lo ve la armería en su panel.
-    // Todo se escribe con textContent y solo con textos fijos (nada de la dirección se interpreta como HTML).
+    // IMPORTANTE: volver de Payway NO prueba que el pago se haya cobrado. Esta página solo dice "aprobado"
+    // cuando el SERVIDOR lo confirma (consulta a Payway con la clave privada). Todo se escribe con
+    // textContent y con textos fijos: nada de la dirección se interpreta como HTML.
+    import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-config.js';
     const params = new URLSearchParams(location.search);
-    const resultado = params.get('resultado');
-    const pedido = params.get('pedido') || '';
+    const resultado = params.get('r');
+    const ref = params.get('p') || '';
     const $ = id => document.getElementById(id);
-    if (resultado === 'cancelado') {
-      $('titulo').textContent = 'El pago no se completó';
-      $('texto').textContent = 'No se realizó ningún cobro. Podés volver al pedido y reintentar, o escribirnos por WhatsApp y te ayudamos.';
-    } else if (resultado === 'ok') {
-      $('titulo').textContent = 'Recibimos tu compra';
-      $('texto').textContent = 'Estamos confirmando el pago con la tarjeta. En breve la armería se comunica con vos para coordinar el envío. Si en un rato no tenés novedades, escribinos por WhatsApp con el número de referencia.';
-    } else {
-      $('titulo').textContent = 'Tu pago';
-      $('texto').textContent = 'No encontramos datos de un pago en esta dirección.';
+    const poner = (titulo, texto) => { $('titulo').textContent = titulo; $('texto').textContent = texto; };
+
+    async function estado() {
+      try {
+        const r = await fetch(`${SUPABASE_URL}/functions/v1/confirmar-pedido`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', apikey: SUPABASE_ANON_KEY, authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+          body: JSON.stringify({ ref }),
+          signal: AbortSignal.timeout(20000),
+        });
+        const datos = await r.json();
+        return r.ok && datos.ok ? datos.estado : null;
+      } catch { return null; }
     }
-    if (/^[a-z0-9]{8,40}$/i.test(pedido)) {
-      $('referencia').textContent = `Referencia del pedido: ${pedido}`;
-      $('referencia').hidden = false;
+
+    const REFERENCIA_VALIDA = /^[a-f0-9]{16}$/.test(ref);
+    if (REFERENCIA_VALIDA) { $('referencia').textContent = `Referencia del pedido: ${ref}`; $('referencia').hidden = false; }
+
+    if (resultado === 'no') {
+      poner('El pago no se completó', 'No se realizó ningún cobro. Podés volver al pedido y reintentar, o escribirnos por WhatsApp y te ayudamos.');
+    } else if (resultado === 'ok' && REFERENCIA_VALIDA) {
+      poner('Estamos confirmando tu pago', 'Un momento, lo estamos verificando con la tarjeta…');
+      for (let intento = 0; intento < 8; intento++) {
+        const e = await estado();
+        if (e === 'pagado') { poner('¡Pago aprobado!', 'Recibimos tu compra. La armería se comunica con vos para coordinar el envío. Guardá la referencia por cualquier consulta.'); break; }
+        if (e === 'rechazado' || e === 'cancelado' || e === 'vencido') { poner('El pago no se aprobó', 'No se realizó el cobro. Podés reintentar o escribirnos por WhatsApp con la referencia.'); break; }
+        if (intento === 7) poner('Seguimos confirmando tu pago', 'Todavía no recibimos la confirmación de la tarjeta. Si se cobró, la armería lo ve y se comunica con vos. Ante cualquier duda, escribinos por WhatsApp con la referencia.');
+        else await new Promise(listo => setTimeout(listo, 5000));
+      }
+    } else {
+      poner('Tu pago', 'No encontramos datos de un pago en esta dirección.');
     }
   </script>
 </body>

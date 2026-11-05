@@ -1,40 +1,49 @@
-# Pago online · crear-pedido
+# Pago online con Payway · cómo funciona y cómo publicarlo
 
-Función de servidor (Supabase Edge Function) que recibe el carrito, **recalcula todo con la base** y registra el pedido.
-El navegador solo manda *qué* productos y *cuántos*. Armas y municiones (`regulated = true`) se rechazan siempre.
+Funciones de servidor (Supabase Edge Functions):
+- `crear-pedido`: recibe el carrito, **recalcula todo con la base** (el navegador nunca decide un precio), rechaza armas y municiones, guarda el pedido como `pendiente` y pide a Payway un link de pago.
+- `confirmar-pedido`: la página `pago.html` la llama al volver de Payway. Consulta a Payway (clave privada, desde el servidor) y pasa el pedido a `pagado` **solo** si hay un pago aprobado por el monto exacto, posterior al pedido y no usado antes (`conciliar.js`).
+- Panel (`admin.html` → pestaña **Pedidos**): el local ve lo pagado, marca "despachado" y, si hiciera falta, confirma un pago a mano.
 
-## Estado
-- ✅ Validación del carrito y de los datos (`validar.js`, con pruebas: `node --test tests/validar-pedido.test.mjs`).
-- ✅ Tabla `pedidos` con seguridad (`supabase/migrations/20261103000000_pedidos.sql`). Probada: el público no puede leer, crear ni modificar pedidos.
-- ✅ Botón "Comprar Online" conectado, **apagado** (`ONLINE_PAYMENT_ENABLED = false` en `config.js`).
-- ⏳ Paso de Payway (`payway.ts`): **sin verificar**. Falta confirmar con Payway (ver abajo). Hasta entonces la función registra el pedido y el sitio sigue por WhatsApp.
-- ❌ Falta la **confirmación del pago en el servidor** (consultar a Payway si el pago se aprobó y pasar el pedido a `pagado`). Sin eso, un pedido nunca debe darse por cobrado.
-- ❌ Falta decidir el **costo de envío** (hoy `envio_centavos = 0`: se coordina por WhatsApp).
+Basado en el **Manual de Integración Checkout v6** de Payway (template 1, sin Cybersource).
 
-## A confirmar con Payway (integraciones-ventasonline@payway.com.ar)
-1. Documentación del **formulario de pago** (`/validate` + `/form`): la pública solo describe la Transacción Simple.
-2. Direcciones base de **sandbox y producción** de `/validate` y del formulario.
-3. Qué **apikey** va en el header de `/validate` (¿la privada o una "PCI"/validación aparte?).
-4. Si `amount` va en **centavos o en pesos**.
-5. **Cómo consultar el estado** de un pago después de volver y qué estados existen.
-6. Si el sitio necesita el bloque `fraud_detection`.
+## Estado (2026-11-05)
+- ✅ Validación del carrito y los datos, con pruebas (`node --test tests/`: 20 pruebas).
+- ✅ Crear el link de pago: **probado contra el sandbox real** (201 + `payment_link`) con las credenciales de prueba. Solo hace falta el header `apikey` (la clave privada).
+- ✅ Tabla `pedidos` con seguridad (el público no puede leer ni escribir).
+- ✅ Panel de pedidos y página de vuelta.
+- ⏳ **Sin probar:** el pago con tarjeta de prueba de punta a punta. El formulario de Payway bloquea navegadores automatizados, así que se prueba a mano (ver abajo).
+- ⏳ **Sin probar:** que el listado `GET /api/v2/payments` traiga el pago aprobado con `amount` en centavos, `status: "approved"` y `date` (se vio vacío y el ejemplo del manual). Si el formato difiere, se ajusta `conciliar.js`.
+- ❌ Costo de envío: hoy `envio_centavos = 0` (se coordina por WhatsApp).
+- ❌ Descuento de stock al cobrar: hoy no se descuenta solo.
+- ❌ `legales.html` §3 dice que no se cobra en línea: hay que actualizarlo con asesor legal (pagos, envíos, botón de arrepentimiento, devoluciones, datos personales).
 
-## Publicar (cuando Payway responda)
-1. Supabase → SQL Editor → pegar y correr `20261103000000_pedidos.sql`.
-2. Publicar la función **sin verificación de JWT** (la clave nueva `sb_publishable_…` no es un JWT): 
-   `supabase functions deploy crear-pedido --no-verify-jwt`
-3. Cargar los secretos (**nunca** en el código ni en GitHub; el repositorio es público):
+## Por qué se concilia por monto y hora
+El link de Payway **no deja mandar nuestro número de pedido** y el pago trae un número propio. Por eso un pago aprobado se asocia al pedido pendiente del mismo monto (en centavos) creado antes del pago; con dos pedidos del mismo monto se asignan en orden, y un pago nunca cierra dos pedidos (índice único). Si Payway ofrece aviso automático (webhook) o un campo propio, conviene usarlo: es más sólido. Mientras tanto el botón "Confirmar pago a mano" del panel sirve de respaldo.
+
+## Publicar
+1. Supabase → SQL Editor: correr `20261103000000_pedidos.sql` y después `20261105000000_pedidos_conciliacion.sql`.
+2. Publicar las dos funciones **sin verificación de JWT** (la clave `sb_publishable_…` no es un JWT):
+   ```
+   supabase functions deploy crear-pedido --no-verify-jwt
+   supabase functions deploy confirmar-pedido --no-verify-jwt
+   ```
+3. Cargar los secretos (**nunca** en el código ni en GitHub: el repositorio es público):
    ```
    supabase secrets set PAYWAY_AMBIENTE=prueba \
-     PAYWAY_API_BASE=...  PAYWAY_FORM_BASE=...  PAYWAY_VALIDATE_APIKEY=... \
-     PAYWAY_PUBLIC_KEY=... PAYWAY_SITE_ID=93146892 PAYWAY_TEMPLATE_ID=159940 \
+     PAYWAY_PRIVATE_KEY=... PAYWAY_PUBLIC_KEY=... PAYWAY_SITE_ID=93146892 \
      SITIO_URL=https://brianmettica97-creator.github.io/armeria-parabellum \
      ORIGENES_PERMITIDOS=https://brianmettica97-creator.github.io
    ```
-   (`SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` los pone Supabase solo.)
-4. Probar en sandbox con tarjetas de prueba. Recién ahí poner `ONLINE_PAYMENT_ENABLED = true`.
-5. Para producción: **claves nuevas** generadas en el panel de Payway (las actuales circularon por un grupo de WhatsApp), `PAYWAY_AMBIENTE=produccion` y los Site/Template ID de producción.
+   Las direcciones de vuelta no pueden pasar de 100 caracteres (límite de Payway): con la URL de github.io alcanza; con el dominio propio sobra.
+4. **Probar en sandbox a mano** con `ONLINE_PAYMENT_ENABLED = true` en una copia local: armar un carrito de accesorios, pagar con una tarjeta de prueba de Payway, volver a `pago.html` y ver "¡Pago aprobado!" y el pedido en Pedidos. Probar también un rechazo y cancelar.
+5. Recién entonces activar `ONLINE_PAYMENT_ENABLED = true` en `config.js`.
+6. Producción: **claves nuevas** generadas en el panel de Payway (las actuales circularon por chat y WhatsApp), `PAYWAY_AMBIENTE=produccion` y el Site ID de producción.
+7. Con el dominio propio: cambiar `SITIO_URL` y `ORIGENES_PERMITIDOS`.
 
-## Antes de cobrar de verdad
-- `legales.html` (sección 3) hoy dice que **no se hacen cobros en línea**: hay que actualizarlo (con asesor legal): pagos, envíos, **botón de arrepentimiento y devoluciones**, datos personales.
-- Definir con el cliente: costo de envío, qué pasa si falta stock de algo ya pagado, y cómo se entera de cada venta (mail o WhatsApp automático).
+## Preguntas abiertas para Payway (integraciones-ventasonline@payway.com.ar)
+1. ¿Qué es el "Template ID" (5-6 dígitos) del panel? El manual usa `template_id` 1, 2 o 3.
+2. ¿Hay aviso automático de pago (webhook) o un campo para mandar nuestro identificador de operación en `/link`?
+3. ¿El comercio tiene Cybersource? (con template 2 hay que pedir más datos al comprador).
+4. ¿Qué cuotas y medios de pago están habilitados? (hoy se manda 1 cuota y todos los medios).
+5. ¿Cómo se ve el listado de pagos de un pago aprobado (confirmar `amount` en centavos, `status`, `date`)?
