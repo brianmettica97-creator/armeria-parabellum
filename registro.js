@@ -4,6 +4,7 @@
 // `contactos`; cada consulta posterior se anota en `consultas`. El público solo
 // puede enviar: leer y borrar queda reservado a los administradores.
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-config.js';
+import { track } from './pixel.js';
 
 const STORAGE_KEY = 'parabellum.visitante';
 const configured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
@@ -67,6 +68,7 @@ function syncVisitor(visitor) {
 
 /** Anota una consulta del visitante registrado. No bloquea: si falla, se pierde solo ese registro. */
 export function logInquiry(tipo, detalle) {
+  track(tipo === 'compra-online' ? 'InitiateCheckout' : 'Contact', { content_category: tipo });
   const visitor = currentVisitor();
   if (!visitor || !configured) return;
   syncVisitor(visitor).then(ok => {
@@ -167,7 +169,7 @@ function buildDialog(sector) {
     form.reset();
     close();
     // Trampa para robots: con el campo oculto completo no se guarda nada.
-    if (!data.empresa) { remember(visitor); syncVisitor(visitor); }
+    if (!data.empresa) { remember(visitor); syncVisitor(visitor); track('Lead', { content_category: 'registro' }); }
     // Se continúa dentro del mismo toque para que el navegador permita abrir WhatsApp.
     onReady?.(data.empresa ? null : visitor);
   });

@@ -1,6 +1,7 @@
 // Elementos comunes a todas las páginas: aviso de demo, contacto y horarios,
 // WhatsApp flotante, aviso de mayoría de edad y enlaces legales del pie.
 import { DEMO_MODE, SHOW_DEMO_BANNER, MAINTENANCE_MODE, MAINTENANCE_ACCESS, STORE, CONSUMER_COMPLAINTS_URL, whatsappNumber } from './config.js';
+import { initPixel } from './pixel.js';
 
 const DAY_NAMES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
@@ -236,6 +237,7 @@ function renderLegalLinks() {
 
 export function initSite({ ageCheck = false } = {}) {
   if (maintenanceGate()) return;
+  initPixel();
   renderDemoBar();
   renderContact();
   renderTrust();
