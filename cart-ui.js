@@ -99,7 +99,7 @@ const DIALOGS = `
           <label><input type="radio" name="envio" value="Envío a domicilio" checked> Envío a domicilio (costo a confirmar según destino)</label>
         </fieldset>
         <div class="cart-summary" id="onlineSummary"></div>
-        ${ONLINE_PAYMENT_ENABLED ? `<label class="online-terms"><input type="checkbox" name="terminos" required> <span>Leí y acepto los <a href="legales.html#compra-online" target="_blank" rel="noopener">términos de la compra online</a>, la <a href="legales.html#privacidad" target="_blank" rel="noopener">política de privacidad</a> y sé que puedo <a href="legales.html#arrepentimiento" target="_blank" rel="noopener">revocar la compra</a> dentro de los 10 días.</span></label>` : ''}
+        ${ONLINE_PAYMENT_ENABLED ? `<label class="online-terms"><input type="checkbox" name="terminos" required> <span>Leí y acepto los <a href="legales.html#compra-online" target="_blank" rel="noopener">términos de la compra online</a>, la <a href="legales.html#privacidad" target="_blank" rel="noopener">política de privacidad</a>.</span></label>` : ''}
         <p class="checkout-status" id="onlineStatus" role="status" aria-live="polite"></p>
         <div class="cart-actions">
           <button class="cart-continue" type="button" data-close="onlineOverlay"><span aria-hidden="true">←</span> Volver al pedido</button>

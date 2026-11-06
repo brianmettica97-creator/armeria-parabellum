@@ -231,7 +231,6 @@ function renderLegalLinks() {
     box.innerHTML = `
       <a href="legales.html">Términos y privacidad</a>
       <a href="legales.html#regulados">Artículos regulados</a>
-      ${ONLINE_PAYMENT_ENABLED ? '<a href="legales.html#arrepentimiento">Botón de arrepentimiento</a>' : ''}
       <a href="${esc(CONSUMER_COMPLAINTS_URL)}" target="_blank" rel="noopener noreferrer">Defensa de las y los consumidores. Para reclamos ingrese aquí</a>`;
   });
 }

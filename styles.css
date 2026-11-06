@@ -1402,3 +1402,78 @@ a.trust-item:hover{background:#ffffff08}
 .site-gate .age-card p strong{color:var(--ink);font-weight:600}
 
 .online-terms{display:flex;gap:10px;align-items:flex-start;font-size:12px;line-height:1.5;margin:12px 0;cursor:pointer}.online-terms input{width:20px;height:20px;flex:0 0 20px;margin:0;accent-color:var(--gold)}.online-terms a{color:var(--gold);text-decoration:underline}
+
+/* ───────── Ajuste del cliente: fotos de catálogo más grandes y tipografía legible ───────── */
+.card .thumb{height:clamp(250px,24vw,330px)}
+.card .thumb .product-visual{position:absolute;inset:34px 12px 12px;width:calc(100% - 24px);height:calc(100% - 46px);max-height:none;object-fit:contain;left:12px;top:34px;transform:none}
+.card:hover .thumb .product-visual{transform:scale(1.04)}
+.card .thumb:before{inset:10px}
+.card .tag{top:12px;left:12px;font-size:10px;letter-spacing:.12em}
+.card .badge{font-size:10px;padding:5px 8px}
+.card-info{padding:18px 16px}
+.maker{font-size:11px}
+.card-info h3{font-size:22px;min-height:54px;line-height:1.2}
+.card-info p{font-size:13px;line-height:1.5;min-height:40px}
+.card-availability{font-size:11px}
+.card-bottom .price{font-size:19px}
+.price-consult{font-size:16px!important}
+.price-previous{font-size:13px}
+.view,.add-quick{font-size:11px;padding:11px 10px;min-height:42px}
+.nav{font-size:12px}
+.sidebar-title{font-size:11px}
+.catalog-sidebar .filter{font-size:11px;padding:13px 9px}
+.catalog-sidebar .filter.is-empty b,.topbar .nav .nav-menu a .nav-soon{font-size:10px}
+.notice{font-size:12px}
+.footer a{font-size:12px}
+.brand-sub{font-size:9px}
+.photo-attribution{font-size:10px}
+.dialog-facts small{font-size:10px}
+.dialog-facts strong{font-size:13px}
+.dialog-links a{font-size:12px}
+@media(max-width:1100px){.nav{font-size:11px}}
+@media(max-width:850px){.card .thumb{height:clamp(240px,52vw,320px)}}
+@media(max-width:560px){
+  .card .thumb{height:clamp(200px,58vw,250px)}
+  .card .thumb .product-visual{inset:32px 8px 8px;left:8px;top:32px;width:calc(100% - 16px);height:calc(100% - 40px)}
+  .card .tag{font-size:10px;padding:5px 6px;max-width:calc(100% - 20px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .card .badge{font-size:10px;padding:4px 6px}
+  .card-info{padding:12px 11px}
+  .maker{font-size:10px}
+  .card-info h3{font-size:18px;min-height:44px}
+  .card-info p{font-size:12px;min-height:36px}
+  .card-availability{font-size:10px}
+  .card-bottom .price{font-size:16px}
+  .price-consult{font-size:14px!important}
+  .view,.add-quick{font-size:10px;padding:10px 6px;letter-spacing:.06em}
+  .brand-sub{font-size:8px}
+  .cart-btn,.header-consult{font-size:10px}
+  .catalog-sidebar .filter{font-size:11px}
+  .tour-rail button,.map-link,.visual-note{font-size:10px}
+  .hotspot{font-size:10px}
+}
+.grid{align-items:stretch}
+.card{display:flex;flex-direction:column}
+.card .thumb{flex:none}
+.card .card-info{flex:1}
+
+/* Piso de legibilidad: ningún texto de interfaz por debajo de 10px */
+.room small,.cart-row small,.finish-note,.product-photo-stage>span,.tour-label,.tour-tip,.map-heading,.map-status,.map-link,.hotspot,.tour-rail button,.results-caption,.brand-strip-heading,.brand-tile small,.nov-copy small,.camp-brand-text small,.hours-table th span,.spot-label em,.catalog-sidebar .filter b,.subfilter b,
+.sidebar-note{font-size:10px}
+.guide-heading small,.guide-links button span,.view-mark small,.showroom-thumb span,.showroom-topline .eyebrow,.scene-hotspot,.guide-links button{font-size:.7rem}
+@media(max-width:560px){
+  .map-heading,.map-link,.map-status,.tour-label,.tour-tip,.tour-rail button,.hotspot,.tour-actions button,.finish-note,.footer,.results-caption,.camp-brand-text small,.sidebar-note{font-size:10px}
+  .tour-rail button{min-width:112px;height:48px}
+  .wall-brand,.visual-note{font-size:9px}
+  .scene-hotspot,.guide-links button,.showroom-topline .eyebrow{font-size:.7rem}
+  .filter-tools select{font-size:13px}
+  .brand-sub{font-size:8px}
+  .footer{font-size:11px}
+}
+.badge,.filter-heading-link,.catalog-sidebar .filter b,.catalog-sidebar b,.subfilter b{font-size:10px}
+.scene-progress,.view-hint,.controlled-strip,.tag{font-size:11px}
+.catalog-sidebar em,.catalog-sidebar span em{font-size:10px}
+@media(max-width:560px){.badge,.tag,.controlled-strip,.scene-progress{font-size:10px}}
+.about-visual span,.view-navigation span i{font-size:11px}
+.sector-switch{font-size:11px}
+.filter-tools select{font-size:12px}
+@media(max-width:560px){.sector-switch{font-size:10px}}
