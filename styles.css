@@ -1477,3 +1477,7 @@ a.trust-item:hover{background:#ffffff08}
 .sector-switch{font-size:11px}
 .filter-tools select{font-size:12px}
 @media(max-width:560px){.sector-switch{font-size:10px}}
+
+/* Celular: la columna del catálogo no puede ser más ancha que la pantalla (los botones de sección ensanchaban toda la página y cortaban la grilla). */
+html,body{overflow-x:clip;max-width:100%}
+@media(max-width:850px){.catalog-layout,.sector-armeria .catalog-layout{grid-template-columns:minmax(0,1fr)}.catalog-sidebar,.catalog-main,.catalog-layout>*{min-width:0;max-width:100%}.catalog-sidebar .filter{white-space:normal;max-width:100%;min-width:0}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.card,.card-info,.card-bottom{min-width:0}}
