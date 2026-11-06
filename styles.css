@@ -1481,3 +1481,10 @@ a.trust-item:hover{background:#ffffff08}
 /* Celular: la columna del catálogo no puede ser más ancha que la pantalla (los botones de sección ensanchaban toda la página y cortaban la grilla). */
 html,body{overflow-x:clip;max-width:100%}
 @media(max-width:850px){.catalog-layout,.sector-armeria .catalog-layout{grid-template-columns:minmax(0,1fr)}.catalog-sidebar,.catalog-main,.catalog-layout>*{min-width:0;max-width:100%}.catalog-sidebar .filter{white-space:normal;max-width:100%;min-width:0}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.card,.card-info,.card-bottom{min-width:0}}
+
+/* Tarjetas: la foto queda SIEMPRE dentro del marco decorativo (antes era 2-4 px más ancha y el zoom al tocar la empujaba afuera). */
+.card .thumb:before{inset:10px;z-index:2;pointer-events:none}
+.card .thumb .product-visual{inset:34px 14px 14px;left:14px;top:34px;width:calc(100% - 28px);height:calc(100% - 48px)}
+.card:hover .thumb .product-visual{transform:none;filter:drop-shadow(0 12px 12px #000a) brightness(1.06)}
+@media(max-width:560px){.card .thumb:before{inset:8px}.card .thumb .product-visual{inset:32px 12px 12px;left:12px;top:32px;width:calc(100% - 24px);height:calc(100% - 44px)}}
+@media(hover:none){.card:hover .thumb .product-visual,.card .thumb .product-visual{transform:none}}
