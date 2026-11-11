@@ -40,3 +40,11 @@ Las marcas y logotipos pertenecen a sus respectivos titulares.
 - `video-reel.js`: arma el video en un canvas a partir de la foto principal y los puntos marcados.
   En la ficha aparece solo si la mejora `video-producto` está **lanzada**.
 - Sin correr el SQL, el panel y el sitio funcionan igual que antes.
+- `asistente.js`: asistente "¿Qué me conviene?" del catálogo de Armería (mejora `asistente`). Los criterios
+  de recomendación están al principio del archivo y conviene que la armería los revise.
+- `qr.js` y la pestaña **Etiquetas** del panel (mejora `etiquetas-qr`): hoja A4 de etiquetas con QR a la ficha.
+- `supabase/migrations/20261111010000_mejoras_asistente_qr.sql`: da de alta esas dos mejoras en "solo nosotros".
+- Un desarrollador con la sesión del panel abierta ve en el sitio las mejoras en "solo nosotros".
+- `metricas.js` y la pestaña **Resultados** del panel (mejora `tablero`): el sitio anota visitas, fichas vistas,
+  consultas por WhatsApp y uso de cada mejora, sin datos personales, en la tabla `eventos`
+  (`supabase/migrations/20261111020000_tablero.sql`). Con la mejora apagada, la base rechaza los eventos.

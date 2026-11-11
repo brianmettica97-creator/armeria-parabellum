@@ -11,6 +11,11 @@ import { icons, iconFor } from './icons.js';
 import { escapeHtml, safeUrl, productImage, priceHtml, productBadges, PLACEHOLDER_IMG } from './utils.js';
 import { mejoraLanzada } from './supabase-client.js';
 
+// Mediciones para el tablero de resultados (sin datos personales). Se cargan aparte:
+// si el archivo falta o falla, el sitio sigue igual. Lo que pasa antes de que cargue queda en espera.
+const medicionesPendientes = [];
+let registrar = (...args) => { medicionesPendientes.push(args); };
+
 const sectorId = document.body.dataset.sector in sectors ? document.body.dataset.sector : 'armeria';
 const sector = sectors[sectorId];
 const sectorProducts = productsForSector(sectorId);
@@ -353,6 +358,7 @@ $('#searchFocus')?.addEventListener('click', () => {
 // ───────────────────────────── Ficha de producto ─────────────────────────────
 function showProduct(product, { push = true } = {}) {
   if (!product) return;
+  registrar('ficha', { producto: product.id });
   const gallery = [product.photo, ...product.photos].filter(photo => photo?.src);
   const photoNote = product.photo?.src?.startsWith('assets/') ? 'Imagen de referencia' : product.photo?.own ? 'Foto de Armería Parabellum' : product.photo?.exact ? 'Fotografía referencial del modelo' : 'Imagen de referencia · confirmar variante exacta';
   $('#dialogArt').innerHTML = `
@@ -379,7 +385,7 @@ function showProduct(product, { push = true } = {}) {
   if (product.video) {
     const stage = $('#dialogArt').querySelector('.product-photo-stage');
     mejoraLanzada('video-producto').then(on => {
-      if (on && stage.isConnected) import('./video-reel.js?v=20261111a').then(module => module.montarEnFicha($('#dialogArt'), product));
+      if (on && stage.isConnected) import('./video-reel.js?v=20261111c').then(module => module.montarEnFicha($('#dialogArt'), product));
     });
   }
 
@@ -731,6 +737,15 @@ if (sectorId === 'armeria' && $('#resultsCaption')) {
 }
 
 // ───────────────────────────── Inicio ─────────────────────────────
+// Asistente "¿Qué me conviene?" (mejora "asistente"): solo en Armería y solo si está activa.
+if (sectorId === 'armeria') {
+  mejoraLanzada('asistente').then(on => {
+    if (on) import('./asistente.js?v=20261111c').then(module => module.initAsistente({
+      products: sectorProducts, inquiryUrl, imageFor: product => productImage(product, '', product.name),
+      openProduct: id => showProduct(findProduct(id)),
+    }));
+  });
+}
 readUrlState();
 renderNav();
 renderSidebar();
@@ -743,10 +758,20 @@ renderUsados();
 renderGestoria();
 bindInquiryLinks();
 
-// Enlace directo a un producto: ?producto=id
+import('./metricas.js?v=20261111c').then(module => {
+  module.initMetricas({ sectorId });
+  registrar = module.registrar;
+  medicionesPendientes.splice(0).forEach(args => registrar(...args));
+}).catch(() => { registrar = () => {}; });
+
+// Enlace directo a un producto: ?producto=id (con &o=qr si viene de una etiqueta del local)
 {
-  const linked = findProduct(new URLSearchParams(window.location.search).get('producto'));
-  if (linked && linked.sector === sectorId && linked.published) showProduct(linked, { push: false });
+  const params = new URLSearchParams(window.location.search);
+  const linked = findProduct(params.get('producto'));
+  if (linked && linked.sector === sectorId && linked.published) {
+    if (params.get('o') === 'qr') registrar('qr', { producto: linked.id });
+    showProduct(linked, { push: false });
+  }
 }
 
 // Formulario de novedades y ofertas

@@ -33,14 +33,24 @@ export async function fetchProductos() {
 }
 
 /**
- * Mejoras por lanzar: dice si una mejora ya está lanzada para el público.
- * La base solo deja ver las lanzadas; se consulta una sola vez por visita y
- * recién cuando hace falta. Ante cualquier error, la mejora cuenta como apagada.
+ * Mejoras por lanzar: dice si esta visita puede ver una mejora.
+ * - Público y equipo de la armería: solo las que están lanzadas.
+ * - Desarrollador con la sesión del panel abierta en este navegador: también
+ *   las que están en "solo nosotros", para probarlas en el sitio real.
+ * La decisión la toma la base (RLS): acá solo se manda la sesión si existe.
+ * Se consulta una vez por visita. Ante cualquier error, cuenta como apagada.
  */
 let mejorasPromise = null;
+function panelToken() {
+  try {
+    const ref = new URL(SUPABASE_URL).hostname.split('.')[0];
+    const session = JSON.parse(localStorage.getItem(`sb-${ref}-auth-token`));
+    return session?.access_token && session.expires_at * 1000 > Date.now() + 10000 ? session.access_token : null;
+  } catch { return null; }
+}
 export function mejoraLanzada(id) {
   if (!supabaseConfigured) return Promise.resolve(false);
-  mejorasPromise ||= fetch(`${SUPABASE_URL}/rest/v1/mejoras?select=id&estado=eq.lanzada`, { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } })
+  mejorasPromise ||= fetch(`${SUPABASE_URL}/rest/v1/mejoras?select=id&estado=neq.apagada`, { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${panelToken() || SUPABASE_ANON_KEY}` } })
     .then(response => (response.ok ? response.json() : []))
     .then(rows => (Array.isArray(rows) ? rows.map(row => row.id) : []))
     .catch(() => []);

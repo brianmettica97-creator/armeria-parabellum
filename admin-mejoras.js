@@ -7,8 +7,13 @@
 // 2) "Video automático" dentro del editor de producto (mejora `video-producto`):
 //    aparece si la mejora está lanzada, o si está en "solo nosotros" y entró un desarrollador.
 //
+// 3) Pestaña "Etiquetas" (mejora `etiquetas-qr`): hoja imprimible con un QR por producto.
+//
+// 4) Pestaña "Resultados" (mejora `tablero`): visitas, consultas y uso de cada mejora.
+//
 // Si todavía no se corrió el SQL 20261111000000_mejoras.sql, no aparece nada.
-import { crearReel, grabarReel, tituloDe, MAX_PUNTOS } from './video-reel.js?v=20261111a';
+import { crearReel, grabarReel, tituloDe, MAX_PUNTOS } from './video-reel.js?v=20261111c';
+import { qrSvg } from './qr.js?v=20261111b';
 
 const $ = selector => document.querySelector(selector);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
@@ -28,14 +33,16 @@ export function mejoraActiva(id) {
   return estado === 'lanzada' || (estado === 'interna' && esDev);
 }
 
-export async function initMejoras(client, { notify }) {
-  sb = client; toast = notify;
+export async function initMejoras(client, { notify, getProducts, money }) {
+  sb = client; toast = notify; productos = getProducts; formatMoney = money;
   const [dev, lista] = await Promise.all([sb.rpc('es_dev'), sb.from('mejoras').select('*').order('nombre')]);
   esDev = !dev.error && dev.data === true;
   mejoras = lista.error ? [] : (lista.data || []);
   $('#devTab').hidden = !esDev;
   if (esDev) renderMejoras();
   aplicarVideo();
+  aplicarEtiquetas();
+  aplicarTablero();
 }
 
 function renderMejoras() {
@@ -65,6 +72,8 @@ $('#devList').addEventListener('click', async event => {
   Object.assign(mejora, data);
   renderMejoras();
   aplicarVideo();
+  aplicarEtiquetas();
+  aplicarTablero();
   toast(`“${mejora.nombre}”: ${ESTADOS.find(e => e[0] === estado)[1].toLowerCase()}.`);
 });
 
@@ -174,3 +183,144 @@ $('#vidDownload').addEventListener('click', async () => {
 
 // Al cerrar el editor, el video deja de reproducirse.
 $('#editor').addEventListener('close', detener);
+
+// ─────────────────────────── Etiquetas con QR ───────────────────────────
+let productos = () => [];
+let formatMoney = value => String(value);
+const marcados = new Set();
+const estadoDe = id => mejoras.find(m => m.id === id)?.estado;
+
+function aplicarEtiquetas() {
+  const activa = mejoraActiva('etiquetas-qr');
+  $('#labelsTab').hidden = !activa;
+  $('#labelsFlag').hidden = estadoDe('etiquetas-qr') !== 'interna';
+  // Si se apagó mientras se estaba mirando, se vuelve al listado.
+  if (!activa && !$('#labelsView').hidden) document.querySelector('#admTabs [data-tab="listView"]').click();
+}
+
+// &o=qr: el sitio anota que la visita llegó por una etiqueta (tablero de resultados).
+const fichaUrl = row => new URL(`${row.sector === 'camping' ? 'camping' : 'armeria'}.html?producto=${encodeURIComponent(row.id)}&o=qr`, location.href).href;
+const visibles = () => {
+  const q = $('#labelSearch').value.trim().toLowerCase();
+  const sector = $('#labelSector').value;
+  return productos().filter(row => row.published && (!sector || row.sector === sector)
+    && (!q || [row.name, row.brand, row.code].some(v => String(v || '').toLowerCase().includes(q))));
+};
+
+/** Dibuja la lista para elegir y la hoja de etiquetas. La llama el panel al abrir la pestaña. */
+export function renderLabels() {
+  if (!mejoraActiva('etiquetas-qr')) return;
+  const all = productos();
+  [...marcados].forEach(id => { if (!all.some(row => row.id === id && row.published)) marcados.delete(id); });
+  const rows = visibles();
+  $('#labelPick').innerHTML = rows.length ? rows.map(row => `
+    <label class="label-row">
+      <input type="checkbox" data-label="${esc(row.id)}"${marcados.has(row.id) ? ' checked' : ''}>
+      <img src="${esc(row.photo?.thumb || row.photo?.src || 'assets/placeholder-producto.svg')}" alt="" loading="lazy" onerror="this.src='assets/placeholder-producto.svg'">
+      <span><b>${esc(row.name)}</b><small>${esc([row.brand, row.caliber, row.code].filter(Boolean).join(' · '))}</small></span>
+      <span class="price">${row.price == null ? 'Consultar' : esc(formatMoney(row.price))}</span>
+    </label>`).join('') : '<p class="empty">No hay productos publicados con ese filtro.</p>';
+  renderSheet();
+}
+
+function renderSheet() {
+  const conPrecio = $('#labelPrice').checked;
+  const rows = productos().filter(row => marcados.has(row.id) && row.published);
+  $('#labelInfo').textContent = `${marcados.size} etiqueta${marcados.size === 1 ? '' : 's'} elegida${marcados.size === 1 ? '' : 's'}${marcados.size ? ` · ${Math.ceil(marcados.size / 21)} hoja${marcados.size > 21 ? 's' : ''} A4` : ''}`;
+  $('#labelPrint').disabled = !rows.length;
+  $('#labelPreviewTitle').hidden = !rows.length;
+  $('#labelSheet').innerHTML = rows.map(row => `
+    <div class="label">
+      <div class="label-qr">${qrSvg(fichaUrl(row))}</div>
+      <div class="label-text">
+        <img src="assets/new/logo-sello.png" alt="Armería Parabellum">
+        <b>${esc(row.name)}</b>
+        <small>${esc([row.brand, row.caliber].filter(Boolean).join(' · '))}</small>
+        ${conPrecio ? `<strong>${row.price == null ? 'Consultar precio' : esc(formatMoney(row.price))}</strong>` : ''}
+        <em>Escaneá y mirá la ficha</em>
+      </div>
+    </div>`).join('');
+}
+
+$('#labelPick').addEventListener('change', event => {
+  const box = event.target.closest('[data-label]');
+  if (!box) return;
+  if (box.checked) marcados.add(box.dataset.label); else marcados.delete(box.dataset.label);
+  renderSheet();
+});
+['#labelSearch', '#labelSector'].forEach(sel => $(sel).addEventListener('input', renderLabels));
+$('#labelPrice').addEventListener('change', renderSheet);
+$('#labelAll').addEventListener('click', () => { visibles().forEach(row => marcados.add(row.id)); renderLabels(); });
+$('#labelNone').addEventListener('click', () => { marcados.clear(); renderLabels(); });
+$('#labelPrint').addEventListener('click', () => window.print());
+
+// ─────────────────────────── Tablero de resultados ───────────────────────────
+function aplicarTablero() {
+  const activa = mejoraActiva('tablero');
+  $('#statsTab').hidden = !activa;
+  $('#statsFlag').hidden = estadoDe('tablero') !== 'interna';
+  if (!activa && !$('#statsView').hidden) document.querySelector('#admTabs [data-tab="listView"]').click();
+}
+
+const num = value => new Intl.NumberFormat('es-AR').format(value || 0);
+const kpi = (label, value, note = '') => `<div class="stats-kpi"><span>${esc(label)}</span><b>${esc(value)}</b>${note ? `<small>${esc(note)}</small>` : ''}</div>`;
+
+// Barras por día (visitas, fichas y consultas), dibujadas en SVG sin librerías.
+function chartSvg(days) {
+  const W = 960, H = 220, left = 34, bottom = 22, top = 8;
+  const max = Math.max(1, ...days.map(d => Math.max(d.visita, d.ficha, d.whatsapp)));
+  const step = (W - left) / days.length;
+  const bar = Math.max(1.5, Math.min(12, (step - 3) / 3));
+  const y = value => top + (H - top - bottom) * (1 - value / max);
+  const every = Math.ceil(days.length / 10);
+  const grid = [0, 0.5, 1].map(f => `<line x1="${left}" x2="${W}" y1="${y(max * f)}" y2="${y(max * f)}" class="g"/><text x="${left - 6}" y="${y(max * f) + 4}" text-anchor="end">${Math.round(max * f)}</text>`).join('');
+  const bars = days.map((d, i) => {
+    const x = left + i * step + (step - bar * 3) / 2;
+    const label = i % every === 0 ? `<text x="${left + i * step + step / 2}" y="${H - 6}" text-anchor="middle">${d.dia.slice(8, 10)}/${d.dia.slice(5, 7)}</text>` : '';
+    return ['visita', 'ficha', 'whatsapp'].map((key, k) => `<rect class="k-${key}" x="${(x + k * bar).toFixed(1)}" y="${y(d[key]).toFixed(1)}" width="${Math.max(1, bar - 0.6).toFixed(1)}" height="${(H - bottom - y(d[key])).toFixed(1)}"><title>${d.dia.slice(8, 10)}/${d.dia.slice(5, 7)} · ${key === 'visita' ? 'Visitas' : key === 'ficha' ? 'Fichas vistas' : 'Consultas'}: ${d[key]}</title></rect>`).join('') + label;
+  }).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Visitas, fichas vistas y consultas por día">${grid}${bars}</svg>`;
+}
+
+const ranking = rows => (rows.length ? `<ol class="stats-rank">${rows.map(row => `<li><span>${esc(row.nombre)}</span><b>${num(row.n)}</b><i style="width:${Math.round(row.n / rows[0].n * 100)}%"></i></li>`).join('')}</ol>` : '<p class="empty">Todavía no hay datos en este período.</p>');
+
+let statsBusy = false;
+/** Carga y dibuja el tablero. La llama el panel al abrir la pestaña. */
+export async function renderStats() {
+  if (!mejoraActiva('tablero') || statsBusy) return;
+  statsBusy = true;
+  const dias = Number($('#statsDays').value) || 30;
+  $('#statsInfo').textContent = 'Cargando…';
+  const { data, error } = await sb.rpc('tablero_resumen', { dias });
+  statsBusy = false;
+  if (error || !data) {
+    $('#statsInfo').textContent = /tablero_resumen|does not exist|schema cache/i.test(error?.message || '')
+      ? 'Falta correr el SQL 20261111020000_tablero.sql en Supabase.'
+      : `No se pudieron cargar los resultados: ${error?.message || 'sin datos'}`;
+    return;
+  }
+  const t = { visita: 0, ficha: 0, whatsapp: 0, asistente: 0, video: 0, qr: 0, ...data.totales };
+  // Se completan con cero los días sin movimiento, para que el gráfico no tenga huecos.
+  const byDay = new Map((data.por_dia || []).map(d => [d.dia, d]));
+  const days = Array.from({ length: dias }, (_, i) => {
+    const dia = new Date(Date.now() - (dias - 1 - i) * 86400000).toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' });
+    return { dia, visita: 0, ficha: 0, whatsapp: 0, ...byDay.get(dia) };
+  });
+  $('#statsInfo').textContent = t.visita ? `Últimos ${dias} días · actualizado ${new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}` : 'Todavía no hay visitas registradas en este período.';
+  $('#statsKpis').innerHTML = [
+    kpi('Visitas al catálogo', num(t.visita), `${num(data.visitantes)} visitas distintas`),
+    kpi('Fichas vistas', num(t.ficha), t.visita ? `${(t.ficha / t.visita).toFixed(1)} por visita` : ''),
+    kpi('Consultas por WhatsApp', num(t.whatsapp)),
+    kpi('De cada 100 visitas, consultan', t.visita ? `${Math.round(t.whatsapp / t.visita * 100)}` : '—'),
+  ].join('');
+  $('#statsChart').innerHTML = chartSvg(days);
+  $('#statsAsked').innerHTML = ranking(data.top_consultados || []);
+  $('#statsSeen').innerHTML = ranking(data.top_vistos || []);
+  $('#statsMejoras').innerHTML = [
+    kpi('Video automático', num(t.video), 'reproducciones'),
+    kpi('Asistente "¿Qué me conviene?"', num(t.asistente), 'veces completado'),
+    kpi('Etiquetas con QR', num(t.qr), 'escaneos en el local'),
+  ].join('');
+}
+$('#statsDays').addEventListener('change', renderStats);
+$('#statsReload').addEventListener('click', renderStats);

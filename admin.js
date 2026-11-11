@@ -5,7 +5,7 @@
 import { getSupabase, supabaseConfigured } from './supabase-client.js';
 import { sectors, findCategory, findSubcategory, brands, gunBrands, calibers } from './taxonomy.js?v=20261026c';
 import { COLUMNS, TEMPLATE_ROWS, analyze, decodeText, parseCsv, parseMoney } from './admin-planilla.js?v=20261026c';
-import { initMejoras, initVideoEditor, videoLoad, videoPhotoChanged, videoValue } from './admin-mejoras.js?v=20261111a';
+import { initMejoras, initVideoEditor, videoLoad, videoPhotoChanged, videoValue, renderLabels, renderStats } from './admin-mejoras.js?v=20261111c';
 
 const BUCKET = 'productos';
 const MAX_SIDE = 1600;       // px del lado mayor después de achicar
@@ -15,8 +15,8 @@ const THUMB_SIDE = 640;      // px de la versión chica para tarjetas
 const THUMB_QUALITY = 0.75;
 
 const $ = selector => document.querySelector(selector);
-const views = ['loginView', 'recoveryView', 'deniedView', 'listView', 'photosView', 'contactsView', 'ordersView', 'devView'];
-const tabViews = ['listView', 'photosView', 'contactsView', 'ordersView', 'devView'];
+const views = ['loginView', 'recoveryView', 'deniedView', 'listView', 'photosView', 'contactsView', 'ordersView', 'labelsView', 'statsView', 'devView'];
+const tabViews = ['listView', 'photosView', 'contactsView', 'ordersView', 'labelsView', 'statsView', 'devView'];
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const money = value => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 2 }).format(value);
 
@@ -37,6 +37,8 @@ function show(id) {
     renderPending(true);
     if (!nativeWebp) loadWasmWebp().catch(() => {});
   }
+  if (id === 'labelsView') renderLabels();
+  if (id === 'statsView') renderStats();
 }
 function toast(text, error = false) {
   const node = $('#toast');
@@ -72,7 +74,7 @@ async function enter(session) {
   loadContacts();
   loadOrders();
   // Mejoras por lanzar: si falla (o falta el SQL), el panel sigue igual que siempre.
-  initMejoras(sb, { notify: toast }).catch(error => console.error('Mejoras:', error));
+  initMejoras(sb, { notify: toast, getProducts: () => all, money }).catch(error => console.error('Mejoras:', error));
 }
 
 $('#loginForm').addEventListener('submit', async event => {

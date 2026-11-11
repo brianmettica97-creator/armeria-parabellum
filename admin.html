@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#0b0c0c">
   <title>Panel · Armería Parabellum</title>
   <link rel="icon" href="assets/iconos/favicon-armeria.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="admin.css?v=20261111a">
+  <link rel="stylesheet" href="admin.css?v=20261111c">
 </head>
 <body>
   <header class="adm-top">
@@ -58,6 +58,10 @@
     <button type="button" data-tab="photosView">Fotos <span id="pendingCount"></span></button>
     <button type="button" data-tab="contactsView">Contactos <span id="contactsCount"></span></button>
     <button type="button" data-tab="ordersView">Pedidos <span id="ordersCount"></span></button>
+    <!-- Mejora "etiquetas-qr": oculta salvo que esté activa -->
+    <button type="button" data-tab="labelsView" id="labelsTab" hidden>Etiquetas</button>
+    <!-- Mejora "tablero": oculta salvo que esté activa -->
+    <button type="button" data-tab="statsView" id="statsTab" hidden>Resultados</button>
     <!-- Solo desarrolladores (ver admin-mejoras.js) -->
     <button type="button" data-tab="devView" id="devTab" hidden>Novedades</button>
   </nav>
@@ -149,6 +153,59 @@
     </div>
     <p class="muted" id="ordersInfo"></p>
     <div class="adm-table-wrap"><table class="adm-table" id="ordersTable"></table></div>
+  </main>
+
+  <!-- Etiquetas con QR para la vitrina (mejora "etiquetas-qr") -->
+  <main id="labelsView" class="adm-main" hidden>
+    <div class="adm-card intro no-print">
+      <strong>Etiquetas con QR <span class="tag gold" id="labelsFlag" hidden>Solo nosotros</span></strong>
+      <p class="muted">Elegí los productos y tocá <b>Imprimir</b>. Cada etiqueta lleva un QR: el cliente lo escanea en el local y ve la ficha del producto en su celular. Solo aparecen los productos publicados.</p>
+    </div>
+    <div class="adm-toolbar labels-toolbar no-print">
+      <input type="search" id="labelSearch" placeholder="Buscar por nombre, marca o código" aria-label="Buscar productos">
+      <select id="labelSector" aria-label="Sector">
+        <option value="">Todos los sectores</option>
+        <option value="armeria">Armería</option>
+        <option value="camping">Camping &amp; Outdoor</option>
+      </select>
+      <label class="check"><input type="checkbox" id="labelPrice" checked> Mostrar precio</label>
+      <button type="button" class="btn" id="labelAll">Marcar los que se ven</button>
+      <button type="button" class="btn ghost" id="labelNone">Desmarcar todos</button>
+      <button type="button" class="btn primary" id="labelPrint" disabled>Imprimir</button>
+    </div>
+    <p class="muted no-print" id="labelInfo"></p>
+    <div class="label-pick no-print" id="labelPick"></div>
+    <h3 class="label-preview-title no-print" id="labelPreviewTitle" hidden>Vista previa de la hoja</h3>
+    <div class="label-sheet" id="labelSheet"></div>
+  </main>
+
+  <!-- Tablero de resultados (mejora "tablero") -->
+  <main id="statsView" class="adm-main" hidden>
+    <div class="adm-toolbar stats-toolbar">
+      <div><strong class="stats-title">Resultados del sitio <span class="tag gold" id="statsFlag" hidden>Solo nosotros</span></strong>
+        <p class="muted" id="statsInfo"></p></div>
+      <select id="statsDays" aria-label="Período">
+        <option value="7">Últimos 7 días</option>
+        <option value="30" selected>Últimos 30 días</option>
+        <option value="90">Últimos 90 días</option>
+      </select>
+      <button type="button" class="btn" id="statsReload">Actualizar</button>
+    </div>
+    <div class="stats-kpis" id="statsKpis"></div>
+    <div class="adm-card stats-card">
+      <h3>Día por día</h3>
+      <div class="stats-legend"><span class="k-visita">Visitas</span><span class="k-ficha">Fichas vistas</span><span class="k-whatsapp">Consultas por WhatsApp</span></div>
+      <div class="stats-chart" id="statsChart"></div>
+    </div>
+    <div class="stats-cols">
+      <div class="adm-card stats-card"><h3>Productos más consultados</h3><p class="muted">Consultas por WhatsApp desde la ficha.</p><div id="statsAsked"></div></div>
+      <div class="adm-card stats-card"><h3>Productos más vistos</h3><p class="muted">Veces que se abrió la ficha.</p><div id="statsSeen"></div></div>
+    </div>
+    <div class="adm-card stats-card">
+      <h3>Qué rinde cada mejora</h3>
+      <div class="stats-kpis small" id="statsMejoras"></div>
+    </div>
+    <p class="hint">Se cuentan visitas al catálogo de Armería y de Camping. No se guardan datos personales, y las visitas hechas con la sesión del panel abierta no se cuentan.</p>
   </main>
 
   <!-- Mejoras por lanzar: solo la ven los desarrolladores -->
@@ -313,6 +370,6 @@
   </dialog>
 
   <div class="toast" id="toast" role="status" hidden></div>
-  <script type="module" src="admin.js?v=20261111a"></script>
+  <script type="module" src="admin.js?v=20261111c"></script>
 </body>
 </html>
