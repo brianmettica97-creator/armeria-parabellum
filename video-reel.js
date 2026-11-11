@@ -286,6 +286,7 @@ export function montarEnFicha(art, product) {
     canvas.setAttribute('aria-label', `Video de ${product.name}`);
     stage.classList.add('is-reel');
     stage.append(canvas);
+    document.dispatchEvent(new CustomEvent('parabellum:metrica', { detail: { tipo: 'video', producto: product.id } }));
     const mine = canvas;
     try {
       const made = await crearReel(mine, { foto, puntos: product.video.puntos, ...tituloDe(product.name, product.brand) });
