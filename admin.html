@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#0b0c0c">
   <title>Panel · Armería Parabellum</title>
   <link rel="icon" href="assets/iconos/favicon-armeria.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="admin.css?v=20261105a">
+  <link rel="stylesheet" href="admin.css?v=20261111a">
 </head>
 <body>
   <header class="adm-top">
@@ -58,6 +58,8 @@
     <button type="button" data-tab="photosView">Fotos <span id="pendingCount"></span></button>
     <button type="button" data-tab="contactsView">Contactos <span id="contactsCount"></span></button>
     <button type="button" data-tab="ordersView">Pedidos <span id="ordersCount"></span></button>
+    <!-- Solo desarrolladores (ver admin-mejoras.js) -->
+    <button type="button" data-tab="devView" id="devTab" hidden>Novedades</button>
   </nav>
 
   <main id="listView" class="adm-main" hidden>
@@ -149,6 +151,15 @@
     <div class="adm-table-wrap"><table class="adm-table" id="ordersTable"></table></div>
   </main>
 
+  <!-- Mejoras por lanzar: solo la ven los desarrolladores -->
+  <main id="devView" class="adm-main" hidden>
+    <div class="adm-card intro">
+      <strong>Novedades por lanzar</strong>
+      <p class="muted">Esta sección la ven solo los desarrolladores. Cada mejora se puede dejar <b>apagada</b>, probar en <b>solo nosotros</b> (el equipo de la armería y el público no ven nada) o <b>lanzar</b> cuando el cliente la aprueba.</p>
+    </div>
+    <div class="mejoras" id="devList"></div>
+  </main>
+
   <!-- Editor -->
   <dialog id="editor" class="adm-editor">
     <form id="editForm" method="dialog" novalidate>
@@ -165,6 +176,27 @@
           + Agregar fotos
         </label>
         <p class="hint">La primera foto es la principal. Se achican solas antes de subir. Fondo liso y buena luz.</p>
+      </section>
+
+      <!-- Mejora "video-producto": oculta salvo que esté activa -->
+      <section class="ed-section" id="videoSection" hidden>
+        <h3>Video automático <span class="tag gold" id="videoFlag" hidden>Solo nosotros</span></h3>
+        <p class="hint" id="vidEmpty">Primero cargá la foto principal del producto.</p>
+        <div id="vidBody" hidden>
+          <p class="hint">Tocá sobre la foto los detalles que querés destacar. El video hace un acercamiento a cada uno, en ese orden, y cierra con el nombre y el logo.</p>
+          <div class="vid-stage">
+            <div class="vid-photo" id="vidPhoto"><img alt="Foto principal" draggable="false"><div id="vidPts"></div></div>
+            <canvas id="vidCanvas" hidden></canvas>
+          </div>
+          <p class="hint" id="vidCount"></p>
+          <div class="vid-actions">
+            <button type="button" class="btn primary" id="vidPlay">▶ Ver video</button>
+            <button type="button" class="btn" id="vidDownload">Descargar video</button>
+            <button type="button" class="btn ghost" id="vidUndo">Deshacer último</button>
+            <button type="button" class="btn ghost" id="vidClear">Borrar todos</button>
+          </div>
+          <p class="msg" id="vidMsg" role="status"></p>
+        </div>
       </section>
 
       <section class="ed-section">
@@ -281,6 +313,6 @@
   </dialog>
 
   <div class="toast" id="toast" role="status" hidden></div>
-  <script type="module" src="admin.js?v=20261105d"></script>
+  <script type="module" src="admin.js?v=20261111a"></script>
 </body>
 </html>

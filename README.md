@@ -29,3 +29,14 @@ Ver [`CONFIGURACION.md`](CONFIGURACION.md).
 ## Créditos de imágenes
 Las fotos de productos de referencia provienen de Wikimedia Commons con licencias libres; el autor y la licencia se muestran en cada ficha.
 Las marcas y logotipos pertenecen a sus respectivos titulares.
+
+## Mejoras por lanzar (sección oculta del panel)
+- `supabase/migrations/20261111000000_mejoras.sql`: crea la lista de desarrolladores, la tabla `mejoras`
+  (apagada · solo nosotros · lanzada) y la columna `video` de los productos. Hay que correrlo una vez en
+  Supabase → SQL Editor y después sumar el email del desarrollador:
+  `insert into public.desarrolladores (email) values ('mail@ejemplo.com');`
+- `admin-mejoras.js`: pestaña **Novedades** del panel (solo la ven los desarrolladores) y el bloque
+  **Video automático** del editor de producto.
+- `video-reel.js`: arma el video en un canvas a partir de la foto principal y los puntos marcados.
+  En la ficha aparece solo si la mejora `video-producto` está **lanzada**.
+- Sin correr el SQL, el panel y el sitio funcionan igual que antes.

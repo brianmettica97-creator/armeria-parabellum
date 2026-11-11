@@ -397,6 +397,8 @@ export function fromRow(row, index = 0) {
     published: row.published,
     photo: photo ? { ...photo, exact: samePhoto ? Boolean(local.photo.exact) : Boolean(photo.exact) } : (sameModel ? local.photo : undefined),
     photos: extraPhotos.length ? extraPhotos : (sameModel && (samePhoto || !photo) ? local.photos : []),
+    // Video automático (mejora "video-producto"): solo vale para la foto con la que se marcó.
+    video: photo && row.video?.foto === photo.src && Array.isArray(row.video?.puntos) && row.video.puntos.length ? row.video : undefined,
   };
   if (sameModel) for (const key of LOCAL_ONLY_FIELDS) if (local[key] !== undefined) product[key] = local[key];
   return normalizeProduct(product, index);

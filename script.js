@@ -9,6 +9,7 @@ import { initCart, inquiryUrl } from './cart-ui.js';
 import { initRegistro } from './registro.js';
 import { icons, iconFor } from './icons.js';
 import { escapeHtml, safeUrl, productImage, priceHtml, productBadges, PLACEHOLDER_IMG } from './utils.js';
+import { mejoraLanzada } from './supabase-client.js';
 
 const sectorId = document.body.dataset.sector in sectors ? document.body.dataset.sector : 'armeria';
 const sector = sectors[sectorId];
@@ -373,6 +374,13 @@ function showProduct(product, { push = true } = {}) {
     $('#dialogMainPhoto').classList.add('is-zoomable');
     $('#dialogMainPhoto').addEventListener('click', zoom);
     $('#dialogArt').querySelector('.photo-zoom').addEventListener('click', zoom);
+  }
+  // Video automático: solo si el producto lo tiene y la mejora ya está lanzada.
+  if (product.video) {
+    const stage = $('#dialogArt').querySelector('.product-photo-stage');
+    mejoraLanzada('video-producto').then(on => {
+      if (on && stage.isConnected) import('./video-reel.js?v=20261111a').then(module => module.montarEnFicha($('#dialogArt'), product));
+    });
   }
 
   $('#dialogCategory').textContent = [product.categoryLabel, product.subcategoryLabel, product.code].filter(Boolean).join(' · ');

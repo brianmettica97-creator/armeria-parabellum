@@ -31,3 +31,18 @@ export async function fetchProductos() {
     return null;
   }
 }
+
+/**
+ * Mejoras por lanzar: dice si una mejora ya está lanzada para el público.
+ * La base solo deja ver las lanzadas; se consulta una sola vez por visita y
+ * recién cuando hace falta. Ante cualquier error, la mejora cuenta como apagada.
+ */
+let mejorasPromise = null;
+export function mejoraLanzada(id) {
+  if (!supabaseConfigured) return Promise.resolve(false);
+  mejorasPromise ||= fetch(`${SUPABASE_URL}/rest/v1/mejoras?select=id&estado=eq.lanzada`, { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } })
+    .then(response => (response.ok ? response.json() : []))
+    .then(rows => (Array.isArray(rows) ? rows.map(row => row.id) : []))
+    .catch(() => []);
+  return mejorasPromise.then(ids => ids.includes(id));
+}

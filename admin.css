@@ -154,3 +154,26 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold)}
 }
 
 .adm-subtitle{margin:28px 0 6px;font-size:16px}
+
+/* ── Mejoras por lanzar (pestaña solo para desarrolladores) ── */
+#devTab{color:var(--gold)}
+.mejoras{display:grid;gap:10px}
+.mejora{display:grid;gap:12px;padding:16px}
+.mejora-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.mejora-head h3{margin:0 0 4px;font-size:16px}
+.mejora-head p{margin:0;font-size:13px}
+.mejora-head .tag{flex:none}
+.mejora-states{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.mejora-states button{min-height:44px;padding:0 8px;border:0;background:var(--panel2);cursor:pointer;font-weight:600;font-size:13px}
+.mejora-states button+button{border-left:1px solid var(--line)}
+.mejora-states button.active{background:var(--gold);color:#16130c}
+
+/* ── Video automático (editor de producto) ── */
+#videoSection h3{display:flex;align-items:center;gap:8px}
+#vidBody{display:grid;gap:12px}
+.vid-stage{display:grid;place-items:center;background:#0b0d0e;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.vid-photo{position:relative;line-height:0;cursor:crosshair;touch-action:manipulation}
+.vid-photo img{display:block;max-width:100%;max-height:min(520px,70vh);user-select:none;-webkit-user-drag:none}
+#vidPts span{position:absolute;display:grid;place-items:center;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;background:var(--gold);color:#16130c;font-size:14px;font-weight:800;line-height:1;box-shadow:0 0 0 3px #000a;pointer-events:none}
+#vidCanvas{display:block;height:min(520px,70vh);width:auto;max-width:100%;background:#000}
+.vid-actions{display:flex;flex-wrap:wrap;gap:8px}
