@@ -43,9 +43,19 @@ El link de Payway **no deja mandar nuestro número de pedido** y el pago trae un
 6. Producción: **claves nuevas** generadas en el panel de Payway (las actuales circularon por chat y WhatsApp), `PAYWAY_AMBIENTE=produccion` y el Site ID de producción.
 7. Con el dominio propio: cambiar `SITIO_URL` y `ORIGENES_PERMITIDOS`.
 
-## Preguntas abiertas para Payway (integraciones-ventasonline@payway.com.ar)
-1. ¿Qué es el "Template ID" (5-6 dígitos) del panel? El manual usa `template_id` 1, 2 o 3.
-2. ¿Hay aviso automático de pago (webhook) o un campo para mandar nuestro identificador de operación en `/link`?
-3. ¿El comercio tiene Cybersource? (con template 2 hay que pedir más datos al comprador).
-4. ¿Qué cuotas y medios de pago están habilitados? (hoy se manda 1 cuota y todos los medios).
-5. ¿Cómo se ve el listado de pagos de un pago aprobado (confirmar `amount` en centavos, `status`, `date`)?
+## Respuesta de Payway (2026-11-12)
+- **Webhook:** sí hay aviso automático de pago. Falta pedirles la documentación (formato y firma del aviso) para sumarlo; hoy se concilia por monto y hora, que funciona y tiene el botón "Confirmar pago a mano" de respaldo.
+- **Rubro:** Outdoor, miras y accesorios permitido.
+- **Tarjetas y cuotas:** por defecto Visa y Master Payway; Cabal y Amex Payway "en veremos"; cuotas Mi PYME. Es información comercial: la define el comercio con su ejecutivo. El sitio manda 1 cuota y todos los medios habilitados.
+- **Devoluciones:** totales o parciales desde la consola de DECIDIR (a mano, las hace el local). **Contracargos:** operatoria aparte; el local debe aportar evidencia de compra y entrega (guardar comprobantes y seguimiento de envío).
+- **Cybersource (antifraude):** lo decide el comercio y se integra junto con el alta del checkout. Hoy el sitio usa template 1 (sin Cybersource); con Cybersource hay que pasar a otro template y pedir más datos del comprador.
+- **Template ID:** lo explica el técnico asignado de Payway; recién después pasan a la siguiente etapa.
+- **Acreditación y comisiones:** dependen de la modalidad y del cobro anticipado. Lo resuelve el dueño con su ejecutivo comercial.
+
+## Lo que falta para cobrar en vivo
+Del lado del sitio y del servidor ya está todo (pago probado dos veces en sandbox, descuento de stock al cobrar, textos legales). Lo que depende de Payway y del dueño:
+1. Que Payway asigne el **técnico** y apruebe el pase a producción (Template ID).
+2. Las **claves de producción** (Site ID 93086686), generadas por el dueño en el panel de Payway.
+3. Que el dueño cierre con su ejecutivo **comisiones y plazo de acreditación**, y decida **Cybersource**.
+4. Correr en Supabase `20261112000000_pedidos_stock.sql`.
+5. Cargar los secretos de producción, activar `ONLINE_PAYMENT_ENABLED = true`, hacer una compra real chica con devolución desde la consola, y recién entonces abrir el sitio (`MAINTENANCE_MODE = false`).

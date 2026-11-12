@@ -1531,3 +1531,10 @@ html,body{overflow-x:clip;max-width:100%}
 .asistente-actions .asistente-back{margin-top:0}
 .asistente-legal{display:block;margin-top:16px;color:#7e8178;font-size:9px;line-height:1.6}
 @media(max-width:560px){.asistente-body{padding:44px 18px 22px}.asistente-body h2{font-size:23px}.asistente-cta{flex-wrap:wrap}.asistente-cta-go{margin-left:52px}.asistente-card{grid-template-columns:84px minmax(0,1fr)}.asistente-thumb{height:84px}.asistente-actions .primary{width:100%}}
+
+/* ── Flechas y contador de la galería de la ficha ── */
+.product-photo-stage{touch-action:pan-y}
+.photo-nav{position:absolute;z-index:5;top:50%;transform:translateY(-50%);width:44px;height:44px;display:grid;place-items:center;border:1px solid #ffffff40;border-radius:50%;background:#0b0d0dcc;color:var(--ink);font-size:28px;line-height:1;padding:0 0 3px;cursor:pointer;transition:border-color .2s,color .2s}
+.photo-nav:hover,.photo-nav:focus-visible{border-color:var(--gold);color:#f1d69b}
+.photo-nav.prev{left:10px}.photo-nav.next{right:10px}
+.product-photo-stage>span.photo-count{position:absolute;z-index:5;top:14px;left:50%;transform:translateX(-50%);right:auto;bottom:auto;width:auto;text-align:center;padding:4px 9px;background:#080a0ccc;border:1px solid #ffffff22;color:#ddd7c9;font-size:11px;letter-spacing:.08em}

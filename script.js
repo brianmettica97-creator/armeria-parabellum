@@ -365,20 +365,44 @@ function showProduct(product, { push = true } = {}) {
     <div class="product-photo-stage">
       <img id="dialogMainPhoto" src="${safeUrl(gallery[0]?.src || PLACEHOLDER_IMG)}" alt="${escapeHtml(photoNote)}: ${escapeHtml(product.name)}" onerror="this.onerror=null;this.src='${PLACEHOLDER_IMG}'">
       <span class="product-photo-caption">${escapeHtml(photoNote)}</span>
+      ${gallery.length > 1 ? `<button class="photo-nav prev" type="button" aria-label="Foto anterior">‹</button><button class="photo-nav next" type="button" aria-label="Foto siguiente">›</button><span class="photo-count" aria-live="polite">1 / ${gallery.length}</span>` : ''}
       ${gallery.length ? `<button class="photo-zoom" type="button" aria-label="Ampliar foto"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5M10.5 7.5v6M7.5 10.5h6"/></svg><span>Ampliar</span></button>` : ''}
     </div>
     ${gallery.length > 1 ? `<div class="gallery-thumbs">${gallery.map((photo, index) => `<button type="button" class="${index === 0 ? 'active' : ''}" data-photo="${index}" aria-label="Ver foto ${index + 1}"><img src="${safeUrl(photo.thumb || photo.src)}" alt="" loading="lazy"></button>`).join('')}</div>` : ''}`;
+  let swiped = false;
   let photoIndex = 0;
-  $('#dialogArt').querySelectorAll('[data-photo]').forEach(button => button.addEventListener('click', () => {
-    photoIndex = Number(button.dataset.photo);
+  const thumbButtons = [...$('#dialogArt').querySelectorAll('[data-photo]')];
+  // Cambia de foto desde las miniaturas, las flechas o deslizando el dedo.
+  const goTo = index => {
+    photoIndex = (index + gallery.length) % gallery.length;
     $('#dialogMainPhoto').src = safeUrl(gallery[photoIndex].src);
-    $('#dialogArt').querySelectorAll('[data-photo]').forEach(other => other.classList.toggle('active', other === button));
-  }));
+    thumbButtons.forEach((other, i) => other.classList.toggle('active', i === photoIndex));
+    thumbButtons[photoIndex]?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+    const count = $('#dialogArt').querySelector('.photo-count');
+    if (count) count.textContent = `${photoIndex + 1} / ${gallery.length}`;
+  };
+  thumbButtons.forEach(button => button.addEventListener('click', () => goTo(Number(button.dataset.photo))));
+  $('#dialogArt').querySelector('.photo-nav.prev')?.addEventListener('click', () => goTo(photoIndex - 1));
+  $('#dialogArt').querySelector('.photo-nav.next')?.addEventListener('click', () => goTo(photoIndex + 1));
+  if (gallery.length > 1) {
+    const stage = $('#dialogArt').querySelector('.product-photo-stage');
+    let startX = null, startY = 0;
+    stage.addEventListener('pointerdown', event => { if (event.target.closest('button')) return; startX = event.clientX; startY = event.clientY; });
+    stage.addEventListener('pointerup', event => {
+      if (startX === null) return;
+      const dx = event.clientX - startX, dy = event.clientY - startY;
+      startX = null;
+      if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
+      swiped = true; setTimeout(() => { swiped = false; }, 350);
+      goTo(photoIndex + (dx < 0 ? 1 : -1));
+    });
+    stage.addEventListener('pointercancel', () => { startX = null; });
+  }
   // Tocar la foto o la lupa la abre a pantalla completa, con zoom y carrete.
   if (gallery.length) {
     const zoom = () => import('./photo-viewer.js?v=20261027a').then(module => module.openPhotoViewer(gallery, photoIndex, { title: product.name }));
     $('#dialogMainPhoto').classList.add('is-zoomable');
-    $('#dialogMainPhoto').addEventListener('click', zoom);
+    $('#dialogMainPhoto').addEventListener('click', () => { if (!swiped) zoom(); });
     $('#dialogArt').querySelector('.photo-zoom').addEventListener('click', zoom);
   }
   // Video automático: solo si el producto lo tiene y la mejora ya está lanzada.

@@ -1,7 +1,7 @@
 // Importación de productos desde una planilla (CSV o Excel) para el panel.
 // Este módulo solo lee y valida: no toca la pantalla ni la base, así se puede
 // probar aparte. admin.js arma la vista previa y guarda.
-import { sectors, calibers, gunBrands, brands } from './taxonomy.js?v=20261026c';
+import { sectors, calibers, gunBrands, brands } from './taxonomy.js?v=20261112a';
 
 // Columnas del modelo. `aliases`: otros encabezados que se aceptan.
 export const COLUMNS = [

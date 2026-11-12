@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#0b0c0c">
   <title>Panel · Armería Parabellum</title>
   <link rel="icon" href="assets/iconos/favicon-armeria.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="admin.css?v=20261111c">
+  <link rel="stylesheet" href="admin.css?v=20261112a">
 </head>
 <body>
   <header class="adm-top">
@@ -272,7 +272,7 @@
         <div class="row">
           <label>Marca
             <select id="f_brandPick" aria-label="Marca"></select>
-            <input id="f_brand" list="brandList" maxlength="60" placeholder="Escribí la marca" aria-label="Marca">
+            <input id="f_brand" maxlength="60" placeholder="Escribí la marca" aria-label="Marca">
           </label>
           <label id="caliberWrap">Calibre
             <select id="f_caliberPick" aria-label="Calibre"></select>
@@ -280,7 +280,6 @@
           </label>
           <label>Código interno<input id="f_code" maxlength="30" placeholder="Opcional"></label>
         </div>
-        <datalist id="brandList"></datalist>
         <label>Descripción corta (aparece en la tarjeta)<input id="f_short" maxlength="120"></label>
         <label>Descripción completa<textarea id="f_description" rows="5" maxlength="3000"></textarea></label>
       </section>
@@ -370,6 +369,6 @@
   </dialog>
 
   <div class="toast" id="toast" role="status" hidden></div>
-  <script type="module" src="admin.js?v=20261111c"></script>
+  <script type="module" src="admin.js?v=20261112a"></script>
 </body>
 </html>

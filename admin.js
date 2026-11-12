@@ -3,8 +3,8 @@
 // fotos `productos`. Los permisos reales los controla la base (RLS): aunque
 // alguien abra esta página, sin estar en la lista de admins no puede escribir.
 import { getSupabase, supabaseConfigured } from './supabase-client.js';
-import { sectors, findCategory, findSubcategory, brands, gunBrands, calibers } from './taxonomy.js?v=20261026c';
-import { COLUMNS, TEMPLATE_ROWS, analyze, decodeText, parseCsv, parseMoney } from './admin-planilla.js?v=20261026c';
+import { sectors, findCategory, findSubcategory, brands, gunBrands, calibers, canonicalBrand, brandList } from './taxonomy.js?v=20261112a';
+import { COLUMNS, TEMPLATE_ROWS, analyze, decodeText, parseCsv, parseMoney } from './admin-planilla.js?v=20261112a';
 import { initMejoras, initVideoEditor, videoLoad, videoPhotoChanged, videoValue, renderLabels, renderStats } from './admin-mejoras.js?v=20261111c';
 
 const BUCKET = 'productos';
@@ -202,7 +202,6 @@ $('#newBtn').addEventListener('click', () => openEditor(null));
 // ─────────────────────────── Editor ───────────────────────────
 const f = id => $(`#f_${id}`);
 initVideoEditor({ getTitle: () => ({ nombre: f('name').value, marca: f('brand').value }) });
-$('#brandList').innerHTML = [...new Set(brands.map(b => b.name))].map(name => `<option value="${esc(name)}">`).join('');
 
 function fillCategories(selected) {
   const cats = sectors[f('sector').value].categories;
@@ -250,7 +249,9 @@ function setPick(name, options, otherLabel) {
 }
 function updatePicks() {
   const armas = f('sector').value === 'armeria' && f('category').value === 'armas';
-  setPick('brand', armas ? gunBrands : null, 'Otra marca…');
+  // Una sola lista de marcas: las del comercio + las ya cargadas en productos, sin repetidos.
+  const usadas = all.filter(row => (row.sector === 'armeria' && row.category === 'armas') === armas).map(row => row.brand);
+  setPick('brand', brandList(armas ? gunBrands : brands.map(b => b.name), usadas), 'Otra marca…');
   setPick('caliber', calibers, 'Otro calibre…');
 }
 ['brand', 'caliber'].forEach(name => f(`${name}Pick`).addEventListener('change', () => {
@@ -478,7 +479,7 @@ function collect() {
   return {
     ...(video === undefined ? {} : { video }),
     name,
-    brand: f('brand').value.trim() || null,
+    brand: canonicalBrand(f('brand').value, all.map(row => row.brand)) || null,
     code: f('code').value.trim() || null,
     sector: f('sector').value,
     category: f('category').value,

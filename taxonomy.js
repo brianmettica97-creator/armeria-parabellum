@@ -202,6 +202,23 @@ export const gunBrands = [
   'Remington', 'Retay', 'Rossi', 'Ruger', 'Savage', 'Tanfoglio', 'Taurus', 'Uzkon',
 ];
 
+// Marca estandarizada: ignora mayúsculas, tildes y espacios de más y devuelve el
+// nombre oficial de la lista (o el primero que se cargó). Así "peltor", "PELTOR "
+// y "Peltor" son la misma marca y el filtro de marcas junta toda la línea.
+const brandKey = value => String(value || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+export const tidyBrand = value => String(value || '').replace(/\s+/g, ' ').trim();
+export function canonicalBrand(value, known = []) {
+  const clean = tidyBrand(value);
+  if (!clean) return '';
+  const key = brandKey(clean);
+  return [...brands.map(b => b.name), ...gunBrands, ...known].find(name => brandKey(name) === key) || clean;
+}
+export function brandList(...groups) {
+  const seen = new Map();
+  groups.flat().forEach(name => { const clean = tidyBrand(name); if (clean && !seen.has(brandKey(clean))) seen.set(brandKey(clean), clean); });
+  return [...seen.values()].sort((a, b) => a.localeCompare(b, 'es'));
+}
+
 export const calibers = [
   '22LR', '.380ACP', '9MM', '.40S&W', '.45ACP', '38 SPECIAL', '.357 MAGNUM', '.44 MAGNUM',
   '308 WINCHESTER', '30-06 SPRINGFIELD', '22WMR', '12 UAB', '16 UAB', '20 UAB',
