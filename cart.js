@@ -112,8 +112,10 @@ export function validateItems(items, findProduct) {
   return { items: next, changes };
 }
 
-const availabilityText = { disponible: 'Disponible', consultar: 'Disponibilidad a confirmar', agotado: 'Sin stock' };
+const availabilityText = { disponible: 'Disponible', consultar: 'Disponibilidad a confirmar', agotado: 'Agotado' };
 export function availabilityLabel(product) {
+  // Una pieza usada que se agota está vendida y no vuelve; un producto nuevo puede reingresar.
+  if (product?.availability === 'agotado' && product.condition === 'usado') return 'Vendido';
   return availabilityText[product?.availability] || 'Disponibilidad a confirmar';
 }
 

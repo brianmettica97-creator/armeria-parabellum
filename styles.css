@@ -1538,3 +1538,19 @@ html,body{overflow-x:clip;max-width:100%}
 .photo-nav:hover,.photo-nav:focus-visible{border-color:var(--gold);color:#f1d69b}
 .photo-nav.prev{left:10px}.photo-nav.next{right:10px}
 .product-photo-stage>span.photo-count{position:absolute;z-index:5;top:14px;left:50%;transform:translateX(-50%);right:auto;bottom:auto;width:auto;text-align:center;padding:4px 9px;background:#080a0ccc;border:1px solid #ffffff22;color:#ddd7c9;font-size:11px;letter-spacing:.08em}
+
+/* ── Buscador de arriba de todo (visible sin bajar hasta el catálogo) ── */
+.top-search{display:flex;gap:8px;max-width:760px;margin:0 auto;padding:12px clamp(16px,5vw,76px)}
+.top-search-box{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:10px;height:46px;padding:0 14px;border:1px solid #ffffff30;border-radius:3px;background:#0b0d0d;color:var(--ink)}
+.top-search-box:focus-within{border-color:var(--gold)}
+.top-search-box span{font-size:20px;color:#d9c486}
+.top-search-box input{flex:1;min-width:0;height:100%;border:0;outline:0;background:transparent;color:var(--ink);font:inherit;font-size:16px}
+.top-search-btn{flex:none;height:46px;padding:0 18px;border:1px solid var(--gold);border-radius:3px;background:var(--gold);color:#161510;font-weight:700;font-size:11px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+.sector-camping .top-search-box{background:#1a120c;border-color:#5a442e}
+/* ── Agotado (nuevo, puede reingresar) y Vendido (usado, pieza única): la foto queda visible ── */
+.badge-soldout{background:#2a2d2e;color:#e8e2d2;border:1px solid #ffffff55}
+.card.is-soldout .thumb{position:relative}
+.soldout-ribbon{position:absolute;z-index:4;left:50%;top:46%;transform:translate(-50%,-50%) rotate(-10deg);padding:6px 18px;background:#000000b8;border:1px solid #ffffff66;color:#f1ece0;font-size:13px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;pointer-events:none;white-space:nowrap}
+.card.is-soldout .card-info h3,.card.is-soldout .card-bottom{opacity:.7}
+
+.card .badge-soldout{display:none}

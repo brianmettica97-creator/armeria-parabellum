@@ -228,6 +228,7 @@ function cardHtml(product) {
         <span class="tag">${escapeHtml(product.subcategoryLabel || product.categoryLabel)} · ${escapeHtml(product.code)}</span>
         <span class="card-badges">${productBadges(product)}</span>
         ${productImage(product, 'product-visual', product.name)}
+        ${product.availability === 'agotado' ? `<span class="soldout-ribbon" aria-hidden="true">${product.condition === 'usado' ? 'Vendido' : 'Agotado'}</span>` : ''}
       </button>
       <div class="card-info">
         <small class="maker">${escapeHtml(product.brand)}</small>
@@ -351,8 +352,24 @@ $('#brandFilter')?.addEventListener('change', event => { state.brand = event.tar
 }
 $('#sortProducts')?.addEventListener('change', event => { state.sort = event.target.value; renderProducts(); });
 $('#searchFocus')?.addEventListener('click', () => {
+  const top = $('#topSearchInput');
+  if (top) { window.scrollTo({ top: 0, behavior: 'smooth' }); top.focus({ preventScroll: true }); return; }
   $('#catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   window.setTimeout(() => $('#productSearch')?.focus(), 350);
+});
+// Buscador de arriba de todo: busca en todo el sector (quita los filtros de sección y marca) y lleva a los resultados.
+$('#topSearch')?.addEventListener('submit', event => {
+  event.preventDefault();
+  const query = $('#topSearchInput').value.trim();
+  if (!query) return;
+  state.query = query;
+  state.condition = '';
+  const conditionSelect = $('#conditionFilter');
+  if (conditionSelect) conditionSelect.value = '';
+  const main = $('#productSearch');
+  if (main) main.value = query;
+  applyFilter({ category: '', subcategory: '', brand: '' });
+  $('#topSearchInput').blur();
 });
 
 // ───────────────────────────── Ficha de producto ─────────────────────────────
@@ -440,9 +457,11 @@ function showProduct(product, { push = true } = {}) {
   ].filter(Boolean).map(([label, value]) => `<div><small>${label}</small><strong>${escapeHtml(value)}</strong></div>`).join('');
   $('#dialogPrice').innerHTML = `${priceHtml(product)}${product.price !== null ? `<small>${product.demoPrice ? 'Precio de ejemplo' : 'Precio unitario publicado'}</small>` : ''}`;
   const availabilityNode = $('#dialogAvailability');
-  availabilityNode.textContent = availabilityLabel(product) + (product.availability !== 'agotado' ? ' · la armería confirma el stock al responder' : '');
+  const soldOut = product.availability === 'agotado';
+  const soldUsed = soldOut && product.condition === 'usado';
+  availabilityNode.textContent = availabilityLabel(product) + (!soldOut ? ' · la armería confirma el stock al responder' : soldUsed ? ' · esta pieza ya no está disponible' : ' · consultá por reingreso');
   availabilityNode.className = `availability is-${product.availability}`;
-  $('#dialogNote').textContent = product.regulated ? '' : 'Confirmá marca, precio y disponibilidad con la armería.';
+  $('#dialogNote').textContent = product.regulated ? '' : soldUsed ? 'Pieza usada vendida. Consultanos por otras piezas similares.' : soldOut ? 'Agotado por el momento. Consultanos por la fecha de reingreso.' : 'Confirmá marca, precio y disponibilidad con la armería.';
   $('#dialogNote').hidden = product.regulated;
   const links = [];
   if (product.sourceUrl) links.push(`<a href="${safeUrl(product.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(product.sourceLabel || 'Referencia del fabricante')} ↗</a>`);
@@ -452,7 +471,7 @@ function showProduct(product, { push = true } = {}) {
   const action = $('#dialogAction');
   action.hidden = product.regulated;
   action.disabled = !isEligible(product);
-  action.textContent = !isEligible(product) ? 'Sin stock' : cart.inCart(product.id) ? 'Ya está en tu pedido · ver pedido' : 'Agregar al pedido';
+  action.textContent = !isEligible(product) ? (soldUsed ? 'Vendido' : 'Agotado') : cart.inCart(product.id) ? 'Ya está en tu pedido · ver pedido' : 'Agregar al pedido';
   action.onclick = () => cart.addFromProductDialog(product);
 
   // Materiales controlados: sin carrito, consulta directa por WhatsApp.
@@ -464,7 +483,7 @@ function showProduct(product, { push = true } = {}) {
   consult.hidden = !url;
   if (url) consult.href = url;
   consult.classList.toggle('is-primary', product.regulated);
-  consult.textContent = product.regulated ? 'Consultar por WhatsApp' : 'Consultar por WhatsApp ↗';
+  consult.textContent = product.regulated ? 'Consultar por WhatsApp' : soldUsed ? 'Consultar piezas similares ↗' : soldOut ? 'Consultar reingreso ↗' : 'Consultar por WhatsApp ↗';
 
   // Enlace propio del producto: se puede copiar o compartir.
   const params = new URLSearchParams(window.location.search);

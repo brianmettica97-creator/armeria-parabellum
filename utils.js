@@ -35,6 +35,13 @@ export function priceHtml(product) {
 }
 
 export function productBadges(product) {
+  // Agotado (nuevo, puede reingresar) o Vendido (usado, pieza única): la foto se mantiene y se marca.
+  if (product.availability === 'agotado') {
+    return [
+      product.condition === 'usado' ? `<span class="badge badge-used">Usado${product.conditionGrade ? ` · ${product.conditionGrade}` : ''}</span>` : '',
+      `<span class="badge badge-soldout">${product.condition === 'usado' ? 'Vendido' : 'Agotado'}</span>`,
+    ].join('');
+  }
   return [
     product.condition === 'usado' ? `<span class="badge badge-used">Usado${product.conditionGrade ? ` · ${product.conditionGrade}` : ''}</span>` : '',
     product.isNew ? `<span class="badge badge-new">${product.condition === 'usado' ? 'Recién ingresado' : 'Nuevo'}</span>` : '',

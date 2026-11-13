@@ -182,7 +182,7 @@ function renderList() {
       row.offer_active && '<span class="tag gold">Oferta</span>',
       row.is_new && '<span class="tag gold">Ingreso</span>',
       row.condition === 'usado' && '<span class="tag">Usado</span>',
-      row.availability === 'agotado' && '<span class="tag off">Agotado</span>',
+      row.availability === 'agotado' && `<span class="tag off">${row.condition === 'usado' ? 'Vendido' : 'Agotado'}</span>`,
       !ownPhoto(row) && '<span class="tag">Foto de referencia</span>',
     ].filter(Boolean).join('');
     return `${header}<button type="button" class="item" data-id="${esc(row.id)}">
