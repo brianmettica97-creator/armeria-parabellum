@@ -1554,3 +1554,8 @@ html,body{overflow-x:clip;max-width:100%}
 .card.is-soldout .card-info h3,.card.is-soldout .card-bottom{opacity:.7}
 
 .card .badge-soldout{display:none}
+
+/* ── Precio en la otra moneda (mejora "doble-moneda"): debajo del principal, más chico ── */
+.price-alt{display:block;margin-top:2px;color:#b9b4a6;font:600 12px/1.25 var(--sans);letter-spacing:.02em}
+.dialog-price .price-alt{font-size:15px;margin-top:4px}
+.offer-bottom .price-alt{font-size:12px}

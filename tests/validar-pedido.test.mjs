@@ -22,6 +22,28 @@ test('el total sale de los precios de la base y se calcula en centavos sin error
   assert.equal(r.lineas[0].precioUnitarioCentavos, 199999);
 });
 
+test('precio en dólares: se cobra en pesos con la cotización, redondeado a pesos enteros', () => {
+  const productos = [{ id: 'mira-usd', name: 'Mira', price: 850, moneda: 'USD', stock: 2, published: true, regulated: false, availability: 'disponible' }];
+  const r = validarCarrito([{ id: 'mira-usd', qty: 2 }], productos, { dolar: 1235.5 });
+  assert.equal(r.ok, true);
+  assert.equal(r.lineas[0].precioUnitarioCentavos, Math.round(850 * 1235.5) * 100);
+  assert.equal(r.totalCentavos, Math.round(850 * 1235.5) * 100 * 2);
+});
+
+test('precio en dólares sin cotización: no se cobra (nunca se toma como pesos)', () => {
+  const productos = [{ id: 'mira-usd', name: 'Mira', price: 850, moneda: 'USD', stock: 2, published: true, regulated: false, availability: 'disponible' }];
+  for (const dolar of [null, 0, -5, undefined]) {
+    const r = validarCarrito([{ id: 'mira-usd', qty: 1 }], productos, { dolar });
+    assert.equal(r.ok, false);
+    assert.equal(r.errores[0].codigo, 'sin_precio');
+  }
+});
+
+test('precio en pesos no cambia aunque haya cotización', () => {
+  const r = validarCarrito([{ id: 'mira', qty: 1 }], catalogo, { dolar: 1200 });
+  assert.equal(r.totalCentavos, 2500000);
+});
+
 test('ignora cualquier precio que mande el navegador', () => {
   const r = validarCarrito([{ id: 'protector', qty: 1, price: 1, precio: 1, unitPrice: 1 }], catalogo);
   assert.equal(r.ok, true);

@@ -1,5 +1,6 @@
 // Página de sector (Armería o Camping). El sector se toma de <body data-sector>.
-import { products, productsForSector, novedades, ofertas, usados } from './catalog.js';
+import { products, productsForSector, novedades, ofertas, usados, cotizacion } from './catalog.js?v=20261118a';
+import { formatoPesos, fechaCorta } from './moneda.js';
 import { sectors, findCategory, findSubcategory, findGroup, matchesSub, brands, brandCategories, gestoriaServices } from './taxonomy.js';
 import { DEMO_MODE, NOVEDADES_LIMIT } from './config.js';
 import { initSite } from './site.js';
@@ -9,7 +10,7 @@ import { initCart, inquiryUrl } from './cart-ui.js';
 import { initRegistro } from './registro.js';
 import { icons, iconFor } from './icons.js';
 import { escapeHtml, safeUrl, productImage, priceHtml, productBadges, PLACEHOLDER_IMG } from './utils.js';
-import { mejoraLanzada } from './supabase-client.js';
+import { mejoraLanzada } from './supabase-client.js?v=20261118a';
 
 // Mediciones para el tablero de resultados (sin datos personales). Se cargan aparte:
 // si el archivo falta o falla, el sitio sigue igual. Lo que pasa antes de que cargue queda en espera.
@@ -455,7 +456,11 @@ function showProduct(product, { push = true } = {}) {
     product.code ? ['Código', product.code] : null,
     product.dateAdded ? ['Ingreso', product.dateAdded.split('-').reverse().join('/')] : null,
   ].filter(Boolean).map(([label, value]) => `<div><small>${label}</small><strong>${escapeHtml(value)}</strong></div>`).join('');
-  $('#dialogPrice').innerHTML = `${priceHtml(product)}${product.price !== null ? `<small>${product.demoPrice ? 'Precio de ejemplo' : 'Precio unitario publicado'}</small>` : ''}`;
+  // Con precio en las dos monedas se aclara la cotización usada (mejora "doble-moneda").
+  const dualPrice = cotizacion && product.price !== null && product.priceUsd != null;
+  const rateNote = dualPrice ? ` · dólar a ${formatoPesos(cotizacion.dolar)}${fechaCorta(cotizacion.fecha) ? ` (actualizado el ${fechaCorta(cotizacion.fecha)})` : ''}` : '';
+  const hasAnyPrice = product.price !== null || product.priceUsd != null;
+  $('#dialogPrice').innerHTML = `${priceHtml(product)}${hasAnyPrice ? `<small>${product.demoPrice ? 'Precio de ejemplo' : 'Precio unitario publicado'}${rateNote}</small>` : ''}`;
   const availabilityNode = $('#dialogAvailability');
   const soldOut = product.availability === 'agotado';
   const soldUsed = soldOut && product.condition === 'usado';

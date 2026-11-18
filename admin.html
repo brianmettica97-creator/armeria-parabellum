@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#0b0c0c">
   <title>Panel · Armería Parabellum</title>
   <link rel="icon" href="assets/iconos/favicon-armeria.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="admin.css?v=20261112a">
+  <link rel="stylesheet" href="admin.css?v=20261118a">
 </head>
 <body>
   <header class="adm-top">
@@ -67,6 +67,17 @@
   </nav>
 
   <main id="listView" class="adm-main" hidden>
+    <!-- Mejora "doble-moneda": oculta salvo que esté activa -->
+    <div class="dolar-bar" id="dolarBar" hidden>
+      <div class="dolar-main">
+        <strong>Cotización del dólar <span class="tag gold" id="dolarFlag" hidden>Solo nosotros</span></strong>
+        <label class="dolar-input"><span>$</span><input id="dolarValor" inputmode="decimal" placeholder="Ej.: 1200" aria-label="Cotización del dólar en pesos"></label>
+        <button class="btn primary" type="button" id="dolarGuardar">Guardar cotización</button>
+        <button class="btn ghost" type="button" id="dolarRefBtn">Ver cotizaciones de hoy</button>
+      </div>
+      <p class="hint" id="dolarInfo"></p>
+      <div class="dolar-ref" id="dolarRef"></div>
+    </div>
     <div class="adm-toolbar">
       <div class="adm-actions">
         <button class="btn primary" type="button" id="newBtn">+ Nuevo producto</button>
@@ -287,7 +298,10 @@
       <section class="ed-section">
         <h3>3 · Precio y stock</h3>
         <div class="row">
-          <label>Precio (en pesos)<input id="f_price" inputmode="decimal" placeholder="Vacío = Consultar precio"></label>
+          <label>Precio <span id="priceUnit">(en pesos)</span>
+            <span class="price-field"><input id="f_price" inputmode="decimal" placeholder="Vacío = Consultar precio"><select id="f_moneda" aria-label="Moneda del precio" hidden><option value="ARS">Pesos</option><option value="USD">Dólares</option></select></span>
+            <small class="hint" id="priceHint" hidden></small>
+          </label>
           <label>Disponibilidad<select id="f_availability">
             <option value="disponible">Disponible</option>
             <option value="consultar">Consultar</option>
@@ -296,7 +310,7 @@
           <label>Stock<input id="f_stock" inputmode="numeric" placeholder="Opcional"></label>
         </div>
         <label class="check"><input type="checkbox" id="f_offer"> Está en oferta</label>
-        <label id="prevWrap" hidden>Precio anterior (tachado)<input id="f_prev" inputmode="decimal" placeholder="Mayor al precio actual"></label>
+        <label id="prevWrap" hidden>Precio anterior (tachado)<span id="prevUnit"></span><input id="f_prev" inputmode="decimal" placeholder="Mayor al precio actual"></label>
       </section>
 
       <section class="ed-section">
@@ -369,6 +383,6 @@
   </dialog>
 
   <div class="toast" id="toast" role="status" hidden></div>
-  <script type="module" src="admin.js?v=20261113a"></script>
+  <script type="module" src="admin.js?v=20261118a"></script>
 </body>
 </html>

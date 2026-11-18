@@ -57,5 +57,6 @@ Del lado del sitio y del servidor ya está todo (pago probado dos veces en sandb
 1. Que Payway asigne el **técnico** y apruebe el pase a producción (Template ID).
 2. Las **claves de producción** (Site ID 93086686), generadas por el dueño en el panel de Payway.
 3. Que el dueño cierre con su ejecutivo **comisiones y plazo de acreditación**, y decida **Cybersource**.
-4. Correr en Supabase `20261112000000_pedidos_stock.sql`.
+4. Correr en Supabase `20261112000000_pedidos_stock.sql` y `20261118000000_doble_moneda.sql`.
+   **Volver a publicar `crear-pedido`** (`supabase functions deploy crear-pedido --no-verify-jwt`): desde el 18/11 convierte a pesos los precios cargados en dólares con la cotización del panel. La versión publicada antes de esa fecha tomaría USD 850 como $850, así que no activar el cobro con productos en dólares sin este paso.
 5. Cargar los secretos de producción, activar `ONLINE_PAYMENT_ENABLED = true`, hacer una compra real chica con devolución desde la consola, y recién entonces abrir el sitio (`MAINTENANCE_MODE = false`).

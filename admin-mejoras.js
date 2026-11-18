@@ -14,6 +14,7 @@
 // Si todavía no se corrió el SQL 20261111000000_mejoras.sql, no aparece nada.
 import { crearReel, grabarReel, tituloDe, MAX_PUNTOS } from './video-reel.js?v=20261111c';
 import { qrSvg } from './qr.js?v=20261111b';
+import { enPesos, enDolares, formatoDolares, formatoPesos, fechaCorta } from './moneda.js?v=20261118a';
 
 const $ = selector => document.querySelector(selector);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
@@ -33,8 +34,8 @@ export function mejoraActiva(id) {
   return estado === 'lanzada' || (estado === 'interna' && esDev);
 }
 
-export async function initMejoras(client, { notify, getProducts, money }) {
-  sb = client; toast = notify; productos = getProducts; formatMoney = money;
+export async function initMejoras(client, { notify, getProducts, money, refresh }) {
+  sb = client; toast = notify; productos = getProducts; formatMoney = money; refrescarListado = refresh || (() => {});
   const [dev, lista] = await Promise.all([sb.rpc('es_dev'), sb.from('mejoras').select('*').order('nombre')]);
   esDev = !dev.error && dev.data === true;
   mejoras = lista.error ? [] : (lista.data || []);
@@ -43,6 +44,7 @@ export async function initMejoras(client, { notify, getProducts, money }) {
   aplicarVideo();
   aplicarEtiquetas();
   aplicarTablero();
+  aplicarMoneda();
 }
 
 function renderMejoras() {
@@ -74,6 +76,7 @@ $('#devList').addEventListener('click', async event => {
   aplicarVideo();
   aplicarEtiquetas();
   aplicarTablero();
+  aplicarMoneda();
   toast(`“${mejora.nombre}”: ${ESTADOS.find(e => e[0] === estado)[1].toLowerCase()}.`);
 });
 
@@ -218,7 +221,7 @@ export function renderLabels() {
       <input type="checkbox" data-label="${esc(row.id)}"${marcados.has(row.id) ? ' checked' : ''}>
       <img src="${esc(row.photo?.thumb || row.photo?.src || 'assets/placeholder-producto.svg')}" alt="" loading="lazy" onerror="this.src='assets/placeholder-producto.svg'">
       <span><b>${esc(row.name)}</b><small>${esc([row.brand, row.caliber, row.code].filter(Boolean).join(' · '))}</small></span>
-      <span class="price">${row.price == null ? 'Consultar' : esc(formatMoney(row.price))}</span>
+      <span class="price">${esc(precioTexto(row))}</span>
     </label>`).join('') : '<p class="empty">No hay productos publicados con ese filtro.</p>';
   renderSheet();
 }
@@ -236,7 +239,7 @@ function renderSheet() {
         <img src="assets/new/logo-sello.png" alt="Armería Parabellum">
         <b>${esc(row.name)}</b>
         <small>${esc([row.brand, row.caliber].filter(Boolean).join(' · '))}</small>
-        ${conPrecio ? `<strong>${row.price == null ? 'Consultar precio' : esc(formatMoney(row.price))}</strong>` : ''}
+        ${conPrecio ? `<strong>${esc(precioTexto(row, 'Consultar precio'))}</strong>` : ''}
         <em>Escaneá y mirá la ficha</em>
       </div>
     </div>`).join('');
@@ -324,3 +327,117 @@ export async function renderStats() {
 }
 $('#statsDays').addEventListener('change', renderStats);
 $('#statsReload').addEventListener('click', renderStats);
+
+// ─────────────────────────── Precios en pesos y en dólares ───────────────────────────
+// Mejora `doble-moneda`: cada producto se carga con un precio y su moneda, y el
+// local carga la cotización del dólar acá. El sitio muestra los dos valores.
+let cotizacion = null;          // { dolar, updated_at } o null
+let refrescarListado = () => {};
+
+export const monedaActiva = () => mejoraActiva('doble-moneda');
+
+/** Precio de una fila del panel: "USD 850 · $ 1.020.000", o solo pesos sin la mejora. */
+export function precioTexto(row, vacio = 'Consultar') {
+  if (row.price == null) return vacio;
+  const valor = Number(row.price);
+  const usd = row.moneda === 'USD';
+  const principal = usd ? formatoDolares(valor) : formatoPesos(valor);
+  const dolar = monedaActiva() ? Number(cotizacion?.dolar) : null;
+  const otro = usd ? enPesos(valor, 'USD', dolar) : enDolares(valor, 'ARS', dolar);
+  return otro == null ? principal : `${principal} · ${usd ? formatoPesos(otro) : formatoDolares(otro)}`;
+}
+
+/** Moneda a guardar en el producto, o undefined si la mejora no está activa (no se toca la columna). */
+export function monedaValue() {
+  return monedaActiva() ? ($('#f_moneda').value === 'USD' ? 'USD' : 'ARS') : undefined;
+}
+
+/** Al abrir el editor: muestra la moneda del producto y el equivalente. */
+export function monedaLoad(row) {
+  $('#f_moneda').value = row?.moneda === 'USD' ? 'USD' : 'ARS';
+  actualizarEquivalente();
+}
+
+// "1.250.000" · "1250000" · "849,99" · "849.99" → número (igual criterio que la planilla).
+function leerNumero(texto) {
+  const limpio = String(texto ?? '').trim().replace(/\$|\s|usd|u\$s/gi, '');
+  if (!limpio) return NaN;
+  if (/,/.test(limpio)) return Number(limpio.replace(/\./g, '').replace(',', '.'));
+  if (/^\d{1,3}(\.\d{3})+$/.test(limpio)) return Number(limpio.replace(/\./g, ''));
+  return Number(limpio);
+}
+
+function actualizarEquivalente() {
+  const hint = $('#priceHint');
+  const usd = $('#f_moneda').value === 'USD';
+  $('#prevUnit').textContent = !monedaActiva() ? '' : usd ? ' (en dólares)' : ' (en pesos)';
+  const valor = leerNumero($('#f_price').value);
+  const dolar = Number(cotizacion?.dolar);
+  if (!monedaActiva() || !(valor > 0)) { hint.hidden = true; return; }
+  hint.hidden = false;
+  if (!(dolar > 0)) { hint.textContent = 'Cargá la cotización del dólar arriba del listado para ver el otro valor.'; return; }
+  hint.textContent = usd
+    ? `En el sitio: ${formatoDolares(valor)} · ${formatoPesos(enPesos(valor, 'USD', dolar))} (dólar a ${formatoPesos(dolar)})`
+    : `En el sitio: ${formatoPesos(valor)} · ${formatoDolares(enDolares(valor, 'ARS', dolar))} (dólar a ${formatoPesos(dolar)})`;
+}
+['#f_price', '#f_moneda'].forEach(sel => $(sel).addEventListener('input', actualizarEquivalente));
+
+async function aplicarMoneda() {
+  const activa = monedaActiva();
+  $('#dolarBar').hidden = !activa;
+  $('#dolarFlag').hidden = estadoDe('doble-moneda') !== 'interna';
+  $('#f_moneda').hidden = !activa;
+  $('#priceUnit').hidden = activa;
+  if (activa && !cotizacion) {
+    const { data } = await sb.from('cotizacion').select('dolar, updated_at').eq('id', 1).maybeSingle();
+    cotizacion = data && Number(data.dolar) > 0 ? data : null;
+  }
+  mostrarCotizacion();
+  actualizarEquivalente();
+  refrescarListado();
+}
+
+function mostrarCotizacion() {
+  $('#dolarValor').value = cotizacion ? String(cotizacion.dolar).replace('.', ',') : '';
+  $('#dolarInfo').textContent = cotizacion
+    ? `Vigente: ${formatoPesos(Number(cotizacion.dolar))}${fechaCorta(cotizacion.updated_at) ? `, cargada el ${fechaCorta(cotizacion.updated_at)}` : ''}.`
+    : 'Todavía no hay cotización: los precios en dólares no muestran su valor en pesos ni se pueden comprar online.';
+}
+
+$('#dolarGuardar').addEventListener('click', async () => {
+  const dolar = leerNumero($('#dolarValor').value);
+  if (!(dolar > 0) || dolar > 100000) { toast('Escribí la cotización con números, por ejemplo 1200 o 1235,50.', true); return; }
+  const { data, error } = await sb.from('cotizacion').upsert({ id: 1, dolar }).select('dolar, updated_at').single();
+  if (error || !data) {
+    toast(/cotizacion|does not exist|schema cache/i.test(error?.message || '') ? 'Falta correr el SQL 20261118000000_doble_moneda.sql en Supabase.' : `No se pudo guardar: ${error?.message || 'sin permiso'}`, true);
+    return;
+  }
+  cotizacion = data;
+  mostrarCotizacion();
+  actualizarEquivalente();
+  refrescarListado();
+  toast(`Cotización guardada: ${formatoPesos(Number(data.dolar))}. El sitio ya la usa.`);
+});
+
+// Referencia del día (dolarapi.com, no se manda ningún dato de la armería): tocar un
+// valor lo copia al campo. Igual hay que tocar "Guardar cotización": el local decide qué dólar usar.
+$('#dolarRefBtn').addEventListener('click', async () => {
+  const box = $('#dolarRef');
+  box.textContent = 'Buscando cotizaciones…';
+  try {
+    const response = await fetch('https://dolarapi.com/v1/dolares', { signal: AbortSignal.timeout(8000) });
+    const rows = response.ok ? await response.json() : [];
+    const nombres = { oficial: 'Oficial', blue: 'Blue', bolsa: 'MEP', tarjeta: 'Tarjeta' };
+    const opciones = Array.isArray(rows) ? rows.filter(r => nombres[r.casa] && Number(r.venta) > 0) : [];
+    if (!opciones.length) throw new Error('sin datos');
+    box.innerHTML = `${opciones.map(r => `<button type="button" class="btn ghost" data-dolar="${Number(r.venta)}">${nombres[r.casa]} ${esc(formatoPesos(Number(r.venta)))}</button>`).join('')}<small>Valores de venta del día. Tocá uno y después "Guardar cotización".</small>`;
+  } catch {
+    box.textContent = 'No se pudieron traer las cotizaciones. Escribila a mano.';
+  }
+});
+$('#dolarRef').addEventListener('click', event => {
+  const button = event.target.closest('[data-dolar]');
+  if (!button) return;
+  $('#dolarValor').value = String(button.dataset.dolar).replace('.', ',');
+  $('#dolarValor').focus();
+});

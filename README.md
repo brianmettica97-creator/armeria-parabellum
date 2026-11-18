@@ -48,3 +48,6 @@ Las marcas y logotipos pertenecen a sus respectivos titulares.
 - `metricas.js` y la pestaña **Resultados** del panel (mejora `tablero`): el sitio anota visitas, fichas vistas,
   consultas por WhatsApp y uso de cada mejora, sin datos personales, en la tabla `eventos`
   (`supabase/migrations/20261111020000_tablero.sql`). Con la mejora apagada, la base rechaza los eventos.
+- `moneda.js` y la barra **Cotización del dólar** del panel (mejora `doble-moneda`): cada producto se carga con un
+  precio en pesos o en dólares y el sitio muestra los dos (ej. USD 850 · $ 1.020.000). El cobro online es siempre
+  en pesos (`crear-pedido` convierte con la misma cotización). SQL: `supabase/migrations/20261118000000_doble_moneda.sql`.

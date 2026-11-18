@@ -1,7 +1,12 @@
 import { DEMO_MODE } from './config.js';
 import { findCategory, findSubcategory } from './taxonomy.js';
 import { demoNovedades, demoOfertas, demoUsados } from './demo-data.js';
-import { supabaseConfigured, fetchProductos } from './supabase-client.js';
+import { supabaseConfigured, fetchProductos, fetchCotizacion } from './supabase-client.js?v=20261118a';
+import { enPesos, enDolares } from './moneda.js';
+
+// Cotización del dólar (mejora "doble-moneda"): { dolar, fecha } o null.
+// Se lee junto con los productos, antes de normalizarlos.
+export let cotizacion = null;
 
 // 9x19 mm catalog references for the showroom concept. These are not claims of store stock.
 const sources = {
@@ -167,12 +172,22 @@ function normalizeProduct(raw, index) {
   const product = applyDemo(raw);
   const category = findCategory(product.sector, product.category);
   const subcategory = findSubcategory(product.sector, product.category, product.subcategory);
-  const price = Number.isFinite(product.price) && product.price > 0 ? product.price : null;
+  // Precio cargado en su moneda (pesos o dólares). `price` queda SIEMPRE en pesos
+  // (carrito, totales, orden y cobro) y `priceUsd` en dólares; cada uno es null si
+  // no se puede calcular. `currency` dice cuál cargó el local (se muestra primero).
+  const currency = product.currency === 'USD' ? 'USD' : 'ARS';
+  const loaded = Number.isFinite(product.price) && product.price > 0 ? product.price : null;
+  const dolar = cotizacion?.dolar;
+  const price = enPesos(loaded, currency, dolar);
+  const priceUsd = enDolares(loaded, currency, dolar);
   const condition = product.condition === 'usado' ? 'usado' : 'nuevo';
   const stock = Number.isInteger(product.stock) && product.stock >= 0 ? product.stock : condition === 'usado' ? 1 : null;
   let availability = AVAILABILITY.has(product.availability) ? product.availability : 'consultar';
   if (stock === 0) availability = 'agotado';
-  const previousPrice = Number.isFinite(product.offer?.previousPrice) && price !== null && product.offer.previousPrice > price ? product.offer.previousPrice : null;
+  const loadedPrevious = Number.isFinite(product.offer?.previousPrice) && loaded !== null && product.offer.previousPrice > loaded ? product.offer.previousPrice : null;
+  const previousPrice = enPesos(loadedPrevious, currency, dolar);
+  const previousPriceUsd = enDolares(loadedPrevious, currency, dolar);
+  const hasPrice = price !== null || priceUsd !== null;
   const dateAdded = /^\d{4}-\d{2}-\d{2}$/.test(product.dateAdded || '') ? product.dateAdded : null;
   return {
     ...product,
@@ -184,13 +199,15 @@ function normalizeProduct(raw, index) {
     categoryLabel: category?.label || 'Sin categoría',
     subcategoryLabel: subcategory?.label || '',
     price,
+    priceUsd,
+    currency,
     stock,
     availability,
     published: product.published !== false && Boolean(category),
     regulated: product.regulated ?? Boolean(subcategory?.regulated ?? category?.regulated),
     isNew: Boolean(product.isNew && dateAdded),
     dateAdded,
-    offer: product.offer?.active && price !== null ? { active: true, previousPrice, demo: Boolean(product.offer.demo) } : null,
+    offer: product.offer?.active && hasPrice ? { active: true, previousPrice, previousPriceUsd, demo: Boolean(product.offer.demo) } : null,
     photo: product.photo || PLACEHOLDER,
     photos: Array.isArray(product.photos) ? product.photos : [],
     order: Number.isFinite(product.order) ? product.order : index,
@@ -383,6 +400,7 @@ export function fromRow(row, index = 0) {
     shortDescription: row.short_description || undefined,
     description: row.description || undefined,
     price: row.price == null ? null : Number(row.price),
+    currency: row.moneda === 'USD' ? 'USD' : 'ARS',
     offer: row.offer_active ? { active: true, previousPrice: row.previous_price == null ? null : Number(row.previous_price) } : null,
     stock: row.stock ?? undefined,
     availability: row.availability || undefined,
@@ -404,6 +422,14 @@ export function fromRow(row, index = 0) {
   return normalizeProduct(product, index);
 }
 
+const COTIZACION_CACHE_KEY = 'parabellum-cotizacion-v1';
+function readCotizacionCache() {
+  try { const saved = JSON.parse(localStorage.getItem(COTIZACION_CACHE_KEY)); return saved?.dolar > 0 ? saved : null; } catch { return null; }
+}
+function writeCotizacionCache(value) {
+  try { if (value) localStorage.setItem(COTIZACION_CACHE_KEY, JSON.stringify(value)); else localStorage.removeItem(COTIZACION_CACHE_KEY); } catch { /* sin almacenamiento */ }
+}
+
 function readCache() {
   try { const rows = JSON.parse(localStorage.getItem(REMOTE_CACHE_KEY)); return Array.isArray(rows) ? rows : null; } catch { return null; }
 }
@@ -414,15 +440,18 @@ function writeCache(rows) {
 async function loadRemoteProducts() {
   if (!supabaseConfigured) return null;
   try {
-    const rows = await Promise.race([
-      fetchProductos(),
+    const [rows, dolar] = await Promise.race([
+      Promise.all([fetchProductos(), fetchCotizacion()]),
       new Promise((_, reject) => setTimeout(() => reject(new Error('tiempo de espera agotado')), REMOTE_TIMEOUT_MS)),
     ]);
     if (!Array.isArray(rows)) throw new Error('respuesta inválida');
     writeCache(rows);
+    writeCotizacionCache(dolar);
+    cotizacion = dolar;
     return rows.map(fromRow);
   } catch (error) {
     const cached = readCache();
+    cotizacion = readCotizacionCache();
     console.error(`Catálogo remoto no disponible, se usa ${cached ? 'la última copia guardada' : 'el local'}:`, error);
     return cached ? cached.map(fromRow) : null;
   }

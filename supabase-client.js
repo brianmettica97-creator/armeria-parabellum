@@ -33,6 +33,23 @@ export async function fetchProductos() {
 }
 
 /**
+ * Cotización del dólar (mejora "doble-moneda"): { dolar, fecha } o null si la
+ * mejora no está activa para esta visita, no hay cotización cargada o hay error.
+ */
+export async function fetchCotizacion() {
+  if (!supabaseConfigured || !(await mejoraLanzada('doble-moneda'))) return null;
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/cotizacion?select=dolar,updated_at&id=eq.1`, { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } });
+    if (!response.ok) return null;
+    const [row] = await response.json();
+    const dolar = Number(row?.dolar);
+    return dolar > 0 ? { dolar, fecha: row.updated_at || null } : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Mejoras por lanzar: dice si esta visita puede ver una mejora.
  * - Público y equipo de la armería: solo las que están lanzadas.
  * - Desarrollador con la sesión del panel abierta en este navegador: también

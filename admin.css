@@ -236,3 +236,18 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold)}
 .stats-rank li span:before{content:counter(r) ". ";color:var(--muted)}
 .stats-rank li i{position:absolute;inset:0 auto 0 0;background:#d5a75b26}
 @media(max-width:800px){.stats-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.stats-kpis.small,.stats-cols{grid-template-columns:minmax(0,1fr)}.stats-toolbar{grid-template-columns:1fr auto}.stats-toolbar>div{grid-column:1/-1}}
+
+/* ── Precios en pesos y en dólares (mejora "doble-moneda") ── */
+.dolar-bar{margin:0 0 12px;padding:12px 14px;border:1px solid #d5a75b55;border-radius:10px;background:#1b1912}
+.dolar-main{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.dolar-main strong{margin-right:auto}
+.dolar-input{display:flex;align-items:center;gap:6px;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel2)}
+.dolar-input input{width:110px;border:0;background:transparent;color:inherit;font:inherit;font-size:16px;outline:0}
+.dolar-bar .hint{margin-top:8px}
+.dolar-ref{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center}
+.dolar-ref small{flex-basis:100%;color:var(--muted);font-size:12px}
+.price-field{display:flex;gap:6px}
+.price-field input{flex:1;min-width:0}
+.price-field select{flex:none;width:auto}
+#priceHint{display:block;margin-top:4px;color:#d9c08a}
+#priceHint[hidden]{display:none}

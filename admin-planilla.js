@@ -2,6 +2,7 @@
 // Este módulo solo lee y valida: no toca la pantalla ni la base, así se puede
 // probar aparte. admin.js arma la vista previa y guarda.
 import { sectors, calibers, gunBrands, brands } from './taxonomy.js?v=20261112a';
+import { normalizarMoneda } from './moneda.js?v=20261118a';
 
 // Columnas del modelo. `aliases`: otros encabezados que se aceptan.
 export const COLUMNS = [
@@ -16,6 +17,8 @@ export const COLUMNS = [
   { key: 'short', label: 'Descripción corta', aliases: ['resumen'] },
   { key: 'description', label: 'Descripción', aliases: ['descripcion completa', 'detalle'] },
   { key: 'sector', label: 'Sector', aliases: [], optional: true },
+  // Mejora "doble-moneda": Pesos o Dólares. Vacía = pesos (o dólares si el precio dice USD).
+  { key: 'currency', label: 'Moneda', aliases: ['divisa', 'moneda del precio'], optional: true },
 ];
 
 export const TEMPLATE_ROWS = [
@@ -141,7 +144,8 @@ const SECTOR_NAMES = { armeria: 'armeria', armas: 'armeria', camping: 'camping',
 
 // Valida una fila. `existing`: productos cargados (para actualizar por código).
 // Devuelve { status: 'nuevo' | 'actualiza' | 'error', data, target, errors, notes }.
-export function normalizeRow({ line, values }, { existing = [], seenCodes = new Set(), today = '' } = {}) {
+// `monedas`: true si la mejora "doble-moneda" está activa (se aceptan precios en dólares).
+export function normalizeRow({ line, values }, { existing = [], seenCodes = new Set(), today = '', monedas = false } = {}) {
   const errors = [];
   const notes = [];
   const code = values.code?.trim() || '';
@@ -168,8 +172,19 @@ export function normalizeRow({ line, values }, { existing = [], seenCodes = new 
     }
   } else if (!target) errors.push('Falta el tipo (Pistola, Escopeta, Carabina…).');
 
-  const price = parseMoney(values.price);
+  // "USD 850" o "U$S 850" en la celda del precio también cuenta como dólares.
+  const USD_EN_PRECIO = /usd|u\$s|us\$|u\$d/gi;
+  const priceText = String(values.price ?? '');
+  const price = parseMoney(priceText.replace(USD_EN_PRECIO, ''));
   if (Number.isNaN(price)) errors.push(`Precio “${values.price}” no válido. Escribilo solo con números, ej.: 1250000.`);
+  let currency = null;
+  if (values.currency) {
+    const k = key(values.currency);
+    currency = /^(ars|pesos?|pesosargentinos?)$/.test(k) || values.currency.trim() === '$' ? 'ARS' : normalizarMoneda(values.currency) === 'USD' ? 'USD' : null;
+    if (!currency) errors.push(`Moneda “${values.currency}” no válida (Pesos o Dólares).`);
+  } else if (/usd|u\$s|us\$|u\$d/i.test(priceText)) currency = 'USD';
+  if (currency === 'USD' && !monedas) { errors.push('Los precios en dólares todavía no están habilitados en el panel.'); currency = null; }
+  if (!monedas) currency = null;   // sin la mejora no se toca la columna `moneda`
 
   let stock = null;
   if (values.stock) {
@@ -208,6 +223,7 @@ export function normalizeRow({ line, values }, { existing = [], seenCodes = new 
     if (brand) data.brand = brand;
     if (caliber.value && sector === 'armeria') data.caliber = caliber.value;
     if (price != null) data.price = price;
+    if (currency) data.moneda = currency;
     if (stock != null) {
       data.stock = stock;
       if (stock === 0) data.availability = 'agotado';
@@ -232,6 +248,7 @@ export function normalizeRow({ line, values }, { existing = [], seenCodes = new 
     short_description: values.short || null,
     description: values.description || null,
     price,
+    ...(currency ? { moneda: currency } : {}),
     offer_active: false,
     previous_price: null,
     stock,

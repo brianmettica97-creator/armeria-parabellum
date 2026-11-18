@@ -13,9 +13,10 @@ const aCentavos = valor => Math.round(Number(valor) * 100);
 /**
  * @param {Array<{id: string, qty: number}>} items   lo que mandó el navegador
  * @param {Array<object>} productos                  filas de la tabla `productos`
+ * @param {{dolar?: number|null}} [opciones]         cotización del dólar (tabla `cotizacion`)
  * @returns {{ok: true, lineas: object[], totalCentavos: number} | {ok: false, errores: {codigo: string, id?: string, detalle: string}[]}}
  */
-export function validarCarrito(items, productos) {
+export function validarCarrito(items, productos, { dolar = null } = {}) {
   if (!Array.isArray(items) || items.length === 0) {
     return { ok: false, errores: [{ codigo: 'carrito_vacio', detalle: 'El pedido está vacío.' }] };
   }
@@ -54,7 +55,12 @@ export function validarCarrito(items, productos) {
       errores.push({ codigo: 'no_disponible', id, detalle: `${p.name}: no está disponible.` });
       continue;
     }
-    const precio = p.price === null || p.price === undefined ? NaN : aCentavos(p.price);
+    // Precio en dólares (mejora "doble-moneda"): se cobra en pesos con la cotización
+    // cargada, redondeado a pesos enteros (igual que lo muestra el sitio). Sin
+    // cotización no se puede cobrar: NUNCA se toma el número en dólares como pesos.
+    const base = p.price === null || p.price === undefined ? NaN : Number(p.price);
+    const pesos = p.moneda === 'USD' ? (Number(dolar) > 0 ? Math.round(base * Number(dolar)) : NaN) : base;
+    const precio = Number.isFinite(pesos) ? aCentavos(pesos) : NaN;
     if (!Number.isFinite(precio) || precio <= 0) {
       errores.push({ codigo: 'sin_precio', id, detalle: `${p.name}: no tiene precio publicado, consultalo por WhatsApp.` });
       continue;

@@ -2,10 +2,10 @@
 // Usa Supabase: Auth para el ingreso, la tabla `productos` y el depósito de
 // fotos `productos`. Los permisos reales los controla la base (RLS): aunque
 // alguien abra esta página, sin estar en la lista de admins no puede escribir.
-import { getSupabase, supabaseConfigured } from './supabase-client.js';
+import { getSupabase, supabaseConfigured } from './supabase-client.js?v=20261118a';
 import { sectors, findCategory, findSubcategory, brands, gunBrands, calibers, canonicalBrand, brandList } from './taxonomy.js?v=20261112a';
-import { COLUMNS, TEMPLATE_ROWS, analyze, decodeText, parseCsv, parseMoney } from './admin-planilla.js?v=20261112a';
-import { initMejoras, initVideoEditor, videoLoad, videoPhotoChanged, videoValue, renderLabels, renderStats } from './admin-mejoras.js?v=20261111c';
+import { COLUMNS, TEMPLATE_ROWS, analyze, decodeText, parseCsv, parseMoney } from './admin-planilla.js?v=20261118a';
+import { initMejoras, initVideoEditor, videoLoad, videoPhotoChanged, videoValue, renderLabels, renderStats, precioTexto, monedaValue, monedaLoad, monedaActiva } from './admin-mejoras.js?v=20261118a';
 
 const BUCKET = 'productos';
 const MAX_SIDE = 1600;       // px del lado mayor después de achicar
@@ -19,6 +19,8 @@ const views = ['loginView', 'recoveryView', 'deniedView', 'listView', 'photosVie
 const tabViews = ['listView', 'photosView', 'contactsView', 'ordersView', 'labelsView', 'statsView', 'devView'];
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const money = value => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 2 }).format(value);
+// Precio de la vista previa de la planilla, en su moneda.
+const importPrice = d => (d.moneda === 'USD' ? `USD ${new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 }).format(d.price)}` : money(d.price));
 
 let sb = null;
 let all = [];
@@ -74,7 +76,7 @@ async function enter(session) {
   loadContacts();
   loadOrders();
   // Mejoras por lanzar: si falla (o falta el SQL), el panel sigue igual que siempre.
-  initMejoras(sb, { notify: toast, getProducts: () => all, money }).catch(error => console.error('Mejoras:', error));
+  initMejoras(sb, { notify: toast, getProducts: () => all, money, refresh: () => { if (!$('#listView').hidden) renderList(); } }).catch(error => console.error('Mejoras:', error));
 }
 
 $('#loginForm').addEventListener('submit', async event => {
@@ -188,7 +190,7 @@ function renderList() {
     return `${header}<button type="button" class="item" data-id="${esc(row.id)}">
       <img src="${esc(row.photo?.thumb || row.photo?.src || 'assets/placeholder-producto.svg')}" alt="" loading="lazy" onerror="this.src='assets/placeholder-producto.svg'">
       <div><h4>${esc(row.name)}</h4><p>${esc([row.brand, sub?.label || category?.label, row.caliber].filter(Boolean).join(' · '))}</p><div class="tags">${tags}</div></div>
-      <span class="price">${row.price == null ? 'Consultar' : money(row.price)}</span>
+      <span class="price">${esc(precioTexto(row))}</span>
     </button>`;
   }).join('') : '<p class="empty">No hay productos con ese filtro.</p>';
 }
@@ -289,6 +291,7 @@ function openEditor(row, preset = null) {
   f('short').value = row?.short_description || '';
   f('description').value = row?.description || '';
   f('price').value = row?.price ?? '';
+  monedaLoad(row);
   f('availability').value = row?.availability || 'disponible';
   f('stock').value = row?.stock ?? '';
   f('offer').checked = Boolean(row?.offer_active);
@@ -462,7 +465,7 @@ function collect() {
   const name = f('name').value.trim();
   if (!name) throw new Error('Falta el nombre del producto.');
   const price = parseMoney(f('price').value);
-  if (Number.isNaN(price)) throw new Error('El precio no es válido. Escribilo solo con números, por ejemplo 150000.');
+  if (Number.isNaN(price)) throw new Error('El precio no es válido. Escribilo solo con números, por ejemplo 150000 o 850.');
   const offer = f('offer').checked;
   const previous = offer ? parseMoney(f('prev').value) : null;
   if (offer && price == null) throw new Error('Para marcar una oferta hace falta cargar el precio.');
@@ -476,8 +479,11 @@ function collect() {
   const [main, ...extra] = photos.map(({ path, ...photo }) => photo);
   // Solo se manda la columna `video` si la mejora está activa para este usuario.
   const video = videoValue();
+  // Moneda del precio (mejora "doble-moneda"): solo se manda si la mejora está activa.
+  const moneda = monedaValue();
   return {
     ...(video === undefined ? {} : { video }),
+    ...(moneda === undefined ? {} : { moneda }),
     name,
     brand: canonicalBrand(f('brand').value, all.map(row => row.brand)) || null,
     code: f('code').value.trim() || null,
@@ -630,7 +636,7 @@ $('#sheetInput').addEventListener('change', async event => {
       // raw: los números llegan como número (sin el formato de moneda de la celda).
       grid = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, defval: '' });
     }
-    const result = analyze(grid, { existing: all, today: today() });
+    const result = analyze(grid, { existing: all, today: today(), monedas: monedaActiva() });
     if (!result.headerFound || result.missing.length) throw new Error('No encontré las columnas Nombre y Tipo. Usá el modelo descargado (la primera fila tiene que tener los títulos).');
     if (!result.results.length) throw new Error('La planilla no tiene productos cargados.');
     importRows = result.results;
@@ -655,10 +661,10 @@ function renderImport() {
   $('#impList').innerHTML = importRows.map(row => {
     const d = row.data || {};
     const changes = row.status === 'actualiza' ? Object.keys(d).filter(k => !['availability', 'regulated', 'sector', 'category', 'condition_grade', 'condition_notes'].includes(k))
-      .map(k => ({ name: 'nombre', subcategory: 'tipo', brand: 'marca', caliber: 'calibre', price: 'precio', stock: 'stock', condition: 'condición', short_description: 'desc. corta', description: 'descripción' }[k])).filter(Boolean) : [];
+      .map(k => ({ name: 'nombre', subcategory: 'tipo', brand: 'marca', caliber: 'calibre', price: 'precio', moneda: 'moneda', stock: 'stock', condition: 'condición', short_description: 'desc. corta', description: 'descripción' }[k])).filter(Boolean) : [];
     const detail = row.status === 'nuevo'
-      ? [row.typeLabel, d.brand, d.caliber, d.price == null ? 'Consultar precio' : money(d.price), d.stock != null && `stock ${d.stock}`].filter(Boolean).join(' · ')
-      : row.status === 'actualiza' ? `Cambia: ${changes.join(', ')}${d.price != null ? ` · ${money(d.price)}` : ''}` : '';
+      ? [row.typeLabel, d.brand, d.caliber, d.price == null ? 'Consultar precio' : importPrice(d), d.stock != null && `stock ${d.stock}`].filter(Boolean).join(' · ')
+      : row.status === 'actualiza' ? `Cambia: ${changes.join(', ')}${d.price != null ? ` · ${importPrice(d)}` : ''}` : '';
     return `<div class="imp-row is-${row.status}">
       <span class="tag ${row.status === 'error' ? 'off' : row.status === 'nuevo' ? 'gold' : row.status === 'actualiza' ? 'ok' : ''}">${label[row.status]}</span>
       <div><strong>${esc(row.name || '(sin nombre)')}</strong> <small class="muted">fila ${row.line}</small>

@@ -1,4 +1,5 @@
 import { formatMoney } from './cart.js';
+import { formatoDolares } from './moneda.js';
 
 export function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
@@ -24,14 +25,28 @@ export function productImage(product, className = '', alt = '') {
   return `<img class="${className}" src="${src}" alt="${escapeHtml(alt)}" loading="lazy" onerror="this.onerror=null;this.src='${PLACEHOLDER_IMG}'">`;
 }
 
+// Precio en pesos y en dólares (mejora "doble-moneda"): primero la moneda en la que
+// cargó el local y después el equivalente, si hay cotización. Sin dólares, como siempre.
+function priceParts(product) {
+  const ars = product.price ?? null;
+  const usd = product.priceUsd ?? null;
+  const usdFirst = product.currency === 'USD';
+  const main = usdFirst ? (usd !== null ? formatoDolares(usd) : null) : (ars !== null ? formatMoney(ars) : null);
+  const alt = usdFirst ? (ars !== null ? formatMoney(ars) : null) : (usd !== null ? formatoDolares(usd) : null);
+  const prevValue = usdFirst ? product.offer?.previousPriceUsd : product.offer?.previousPrice;
+  const previous = prevValue ? (usdFirst ? formatoDolares(prevValue) : formatMoney(prevValue)) : null;
+  return { main: main ?? alt, alt: main ? alt : null, previous: main ? previous : null };
+}
+
 export function priceLabel(product) {
-  return product.price === null ? 'Consultar precio' : formatMoney(product.price);
+  const { main, alt } = priceParts(product);
+  return main ? [main, alt].filter(Boolean).join(' · ') : 'Consultar precio';
 }
 
 export function priceHtml(product) {
-  if (product.price === null) return '<span class="price price-consult">Consultar precio</span>';
-  const previous = product.offer?.previousPrice ? `<s class="price-previous">${formatMoney(product.offer.previousPrice)}</s>` : '';
-  return `<span class="price">${previous}${formatMoney(product.price)}</span>`;
+  const { main, alt, previous } = priceParts(product);
+  if (!main) return '<span class="price price-consult">Consultar precio</span>';
+  return `<span class="price">${previous ? `<s class="price-previous">${previous}</s>` : ''}${main}${alt ? `<span class="price-alt">${alt}</span>` : ''}</span>`;
 }
 
 export function productBadges(product) {

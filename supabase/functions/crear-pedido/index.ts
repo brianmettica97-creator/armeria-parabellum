@@ -50,11 +50,19 @@ Deno.serve(async (req: Request) => {
     ? [...new Set(entrada.items.map((i: { id?: unknown }) => i?.id).filter((id): id is string => typeof id === 'string'))].slice(0, 60)
     : [];
   const { data: productos, error: errorProductos } = ids.length
-    ? await supabase.from('productos').select('id,code,name,price,stock,published,regulated,availability').in('id', ids)
+    // '*' incluye `moneda` si ya se corrió el SQL de doble moneda (y no falla si todavía no).
+    ? await supabase.from('productos').select('*').in('id', ids)
     : { data: [], error: null };
   if (errorProductos) return responder(500, { ok: false, error: 'catalogo_no_disponible' });
 
-  const carrito = validarCarrito(entrada.items as never, productos ?? []);
+  // Cotización del dólar: solo hace falta si hay productos con precio en dólares.
+  let dolar: number | null = null;
+  if ((productos ?? []).some((p: { moneda?: string }) => p.moneda === 'USD')) {
+    const { data: cotizacion } = await supabase.from('cotizacion').select('dolar').eq('id', 1).maybeSingle();
+    dolar = Number(cotizacion?.dolar) > 0 ? Number(cotizacion?.dolar) : null;
+  }
+
+  const carrito = validarCarrito(entrada.items as never, productos ?? [], { dolar });
   if (!carrito.ok) return responder(422, { ok: false, error: 'carrito_invalido', errores: carrito.errores });
 
   const hace1h = new Date(Date.now() - 3600_000).toISOString();
